@@ -1,0 +1,45 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandoraApi", "HandoraApi\HandoraApi.csproj", "{409144AA-D212-4AE4-B460-42498E354F4F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandoraInfrastructure", "HandoraInfrastructure\HandoraInfrastructure.csproj", "{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandoraDomain", "HandoraDomain\HandoraDomain.csproj", "{C975114E-4AB3-45FE-92A1-D09BDF928519}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandoraApplication", "HandoraApplication\HandoraApplication.csproj", "{DF25CEA8-FBED-48B1-BA37-95E96C2C30B6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandoraMVC", "HandoraMVC\HandoraMVC.csproj", "{D3D87705-C76E-47C5-909A-121A476FAD95}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+	
+		{409144AA-D212-4AE4-B460-42498E354F4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{409144AA-D212-4AE4-B460-42498E354F4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{409144AA-D212-4AE4-B460-42498E354F4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{409144AA-D212-4AE4-B460-42498E354F4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C975114E-4AB3-45FE-92A1-D09BDF928519}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C975114E-4AB3-45FE-92A1-D09BDF928519}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C975114E-4AB3-45FE-92A1-D09BDF928519}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C975114E-4AB3-45FE-92A1-D09BDF928519}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF25CEA8-FBED-48B1-BA37-95E96C2C30B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF25CEA8-FBED-48B1-BA37-95E96C2C30B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF25CEA8-FBED-48B1-BA37-95E96C2C30B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF25CEA8-FBED-48B1-BA37-95E96C2C30B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3D87705-C76E-47C5-909A-121A476FAD95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3D87705-C76E-47C5-909A-121A476FAD95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3D87705-C76E-47C5-909A-121A476FAD95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3D87705-C76E-47C5-909A-121A476FAD95}.Release|Any CPU.Build.0 = Release|Any CPUEndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

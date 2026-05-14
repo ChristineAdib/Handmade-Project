@@ -1,0 +1,6 @@
+@HandoraApi_HostAddress = http://localhost:5216
+
+GET {{HandoraApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

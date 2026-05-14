@@ -1,0 +1,9 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
+namespace HandoraInfrastructure.Data;
+
+public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbContext(options)
+{
+    
+}
