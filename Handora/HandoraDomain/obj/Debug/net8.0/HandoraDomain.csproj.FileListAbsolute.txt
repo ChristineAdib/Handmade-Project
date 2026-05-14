@@ -1,0 +1,13 @@
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/bin/Debug/net8.0/HandoraDomain.deps.json
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/bin/Debug/net8.0/HandoraDomain.dll
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/bin/Debug/net8.0/HandoraDomain.pdb
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/HandoraDomain.csproj.AssemblyReference.cache
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/HandoraDomain.GeneratedMSBuildEditorConfig.editorconfig
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/HandoraDomain.AssemblyInfoInputs.cache
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/HandoraDomain.AssemblyInfo.cs
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/HandoraDomain.csproj.CoreCompileInputs.cache
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/HandoraDomain.sourcelink.json
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/HandoraDomain.dll
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/refint/HandoraDomain.dll
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/HandoraDomain.pdb
+/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/ref/HandoraDomain.dll
