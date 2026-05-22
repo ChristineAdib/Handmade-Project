@@ -11,3 +11,16 @@
 /home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/refint/HandoraDomain.dll
 /home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/HandoraDomain.pdb
 /home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/obj/Debug/net8.0/ref/HandoraDomain.dll
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\bin\Debug\net8.0\HandoraDomain.deps.json
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\bin\Debug\net8.0\HandoraDomain.dll
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\bin\Debug\net8.0\HandoraDomain.pdb
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\obj\Debug\net8.0\HandoraDomain.csproj.AssemblyReference.cache
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\obj\Debug\net8.0\HandoraDomain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\obj\Debug\net8.0\HandoraDomain.AssemblyInfoInputs.cache
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\obj\Debug\net8.0\HandoraDomain.AssemblyInfo.cs
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\obj\Debug\net8.0\HandoraDomain.csproj.CoreCompileInputs.cache
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\obj\Debug\net8.0\HandoraDomain.sourcelink.json
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\obj\Debug\net8.0\HandoraDomain.dll
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\obj\Debug\net8.0\refint\HandoraDomain.dll
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\obj\Debug\net8.0\HandoraDomain.pdb
+C:\Users\EG.LAP\Desktop\Handmade Project\Handora\HandoraDomain\obj\Debug\net8.0\ref\HandoraDomain.dll

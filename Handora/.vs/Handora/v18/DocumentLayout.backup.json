@@ -1,0 +1,619 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handorainfrastructure\\seeders\\roleseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|solutionrelative:handorainfrastructure\\seeders\\roleseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{409144AA-D212-4AE4-B460-42498E354F4F}|HandoraApi\\HandoraApi.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoraapi\\extensions\\identityextension.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{409144AA-D212-4AE4-B460-42498E354F4F}|HandoraApi\\HandoraApi.csproj|solutionrelative:handoraapi\\extensions\\identityextension.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\appuser\\approles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\appuser\\approles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{409144AA-D212-4AE4-B460-42498E354F4F}|HandoraApi\\HandoraApi.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoraapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{409144AA-D212-4AE4-B460-42498E354F4F}|HandoraApi\\HandoraApi.csproj|solutionrelative:handoraapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\productentities\\product.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\productentities\\product.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{409144AA-D212-4AE4-B460-42498E354F4F}|HandoraApi\\HandoraApi.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoraapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{409144AA-D212-4AE4-B460-42498E354F4F}|HandoraApi\\HandoraApi.csproj|solutionrelative:handoraapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Migrations\\20260522001756_UpdatUserModels2.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:HandoraInfrastructure\\Migrations\\20260522001756_UpdatUserModels2.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Migrations\\20260522001526_UpdatUserModels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:HandoraInfrastructure\\Migrations\\20260522001526_UpdatUserModels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\appuser\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\appuser\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Migrations\\20260521235022_createModels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:HandoraInfrastructure\\Migrations\\20260521235022_createModels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\paymententities\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\paymententities\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\orderentity\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\orderentity\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\couponentities\\coupon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\couponentities\\coupon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\couponentities\\discounttype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\couponentities\\discounttype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\orderentity\\productitemordered.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\orderentity\\productitemordered.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\orderentity\\orderitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\orderentity\\orderitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\wishlistentoties\\wishlistitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\wishlistentoties\\wishlistitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\shopentities\\shoppolicy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\shopentities\\shoppolicy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\cartentities\\cartitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\cartentities\\cartitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\cartentities\\cart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\cartentities\\cart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handorainfrastructure\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|solutionrelative:handorainfrastructure\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\orderentity\\deliverymethod.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\orderentity\\deliverymethod.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\productentities\\tag.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\productentities\\tag.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\productentities\\review.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\productentities\\review.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\productentities\\productstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\productentities\\productstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\productentities\\category.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\productentities\\category.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\wishlistentoties\\wishlist.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\wishlistentoties\\wishlist.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\notificationentities\\notification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\notificationentities\\notification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handorainfrastructure\\data\\configuration\\deliverymethodconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|solutionrelative:handorainfrastructure\\data\\configuration\\deliverymethodconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handorainfrastructure\\data\\configuration\\orderconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|solutionrelative:handorainfrastructure\\data\\configuration\\orderconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handorainfrastructure\\data\\configuration\\couponconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|solutionrelative:handorainfrastructure\\data\\configuration\\couponconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handorainfrastructure\\data\\configuration\\reviewconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|solutionrelative:handorainfrastructure\\data\\configuration\\reviewconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handorainfrastructure\\data\\configuration\\productconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{74C392F8-4B9F-4C47-8B4F-DB3AD7CE9C20}|HandoraInfrastructure\\HandoraInfrastructure.csproj|solutionrelative:handorainfrastructure\\data\\configuration\\productconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\shopentities\\shop.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\shopentities\\shop.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|c:\\users\\eg.lap\\desktop\\handmade project\\handora\\handoradomain\\models\\notificationentities\\notificationtype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C975114E-4AB3-45FE-92A1-D09BDF928519}|HandoraDomain\\HandoraDomain.csproj|solutionrelative:handoradomain\\models\\notificationentities\\notificationtype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApi\\appsettings.json",
+              "RelativeDocumentMoniker": "HandoraApi\\appsettings.json",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApi\\appsettings.json",
+              "RelativeToolTip": "HandoraApi\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAACWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-05-21T23:57:19.698Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "RoleSeeder.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Seeders\\RoleSeeder.cs",
+              "RelativeDocumentMoniker": "HandoraInfrastructure\\Seeders\\RoleSeeder.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Seeders\\RoleSeeder.cs*",
+              "RelativeToolTip": "HandoraInfrastructure\\Seeders\\RoleSeeder.cs*",
+              "ViewState": "AgIAABYAAAAAAAAAAAAqwCIAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T23:24:19.633Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "20260522001756_UpdatUserModels2.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Migrations\\20260522001756_UpdatUserModels2.cs",
+              "RelativeDocumentMoniker": "HandoraInfrastructure\\Migrations\\20260522001756_UpdatUserModels2.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Migrations\\20260522001756_UpdatUserModels2.cs",
+              "RelativeToolTip": "HandoraInfrastructure\\Migrations\\20260522001756_UpdatUserModels2.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAsAAABFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T00:17:56.946Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApi\\Program.cs",
+              "RelativeDocumentMoniker": "HandoraApi\\Program.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApi\\Program.cs",
+              "RelativeToolTip": "HandoraApi\\Program.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAAAB4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T23:27:40.505Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Product.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ProductEntities\\Product.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\ProductEntities\\Product.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ProductEntities\\Product.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\ProductEntities\\Product.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAADwvygAAABgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T20:54:44.073Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "AppRoles.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\AppUser\\AppRoles.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\AppUser\\AppRoles.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\AppUser\\AppRoles.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\AppUser\\AppRoles.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T23:19:34.345Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "IdentityExtension.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApi\\Extensions\\IdentityExtension.cs",
+              "RelativeDocumentMoniker": "HandoraApi\\Extensions\\IdentityExtension.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApi\\Extensions\\IdentityExtension.cs",
+              "RelativeToolTip": "HandoraApi\\Extensions\\IdentityExtension.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T23:25:52.663Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "20260522001526_UpdatUserModels.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Migrations\\20260522001526_UpdatUserModels.cs",
+              "RelativeDocumentMoniker": "HandoraInfrastructure\\Migrations\\20260522001526_UpdatUserModels.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Migrations\\20260522001526_UpdatUserModels.cs",
+              "RelativeToolTip": "HandoraInfrastructure\\Migrations\\20260522001526_UpdatUserModels.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAQwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T00:15:26.665Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "20260521235022_createModels.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Migrations\\20260521235022_createModels.cs",
+              "RelativeDocumentMoniker": "HandoraInfrastructure\\Migrations\\20260521235022_createModels.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Migrations\\20260521235022_createModels.cs",
+              "RelativeToolTip": "HandoraInfrastructure\\Migrations\\20260521235022_createModels.cs",
+              "ViewState": "AgIAABMCAAAAAAAAAAAAAIEAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T23:50:23.261Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\AppUser\\User.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\AppUser\\User.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\AppUser\\User.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\AppUser\\User.cs",
+              "ViewState": "AgIAABUAAAAAAAAAAAAIwB0AAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T20:51:38.867Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "Payment.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\PaymentEntities\\Payment.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\PaymentEntities\\Payment.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\PaymentEntities\\Payment.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\PaymentEntities\\Payment.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABEAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T23:39:22.266Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Order.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\OrderEntity\\Order.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\OrderEntity\\Order.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\OrderEntity\\Order.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\OrderEntity\\Order.cs",
+              "ViewState": "AgIAACIAAAAAAAAAAAAwwA0AAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T22:11:27.881Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "Coupon.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\CouponEntities\\Coupon.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\CouponEntities\\Coupon.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\CouponEntities\\Coupon.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\CouponEntities\\Coupon.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAABLAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T21:35:27.082Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "DiscountType.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\CouponEntities\\DiscountType.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\CouponEntities\\DiscountType.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\CouponEntities\\DiscountType.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\CouponEntities\\DiscountType.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T21:35:00.646Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "ProductItemOrdered.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\OrderEntity\\ProductItemOrdered.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\OrderEntity\\ProductItemOrdered.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\OrderEntity\\ProductItemOrdered.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\OrderEntity\\ProductItemOrdered.cs",
+              "ViewState": "AgIAAAEAAAAAAAAAAAAQwA0AAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T23:36:36.788Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "WishListItem.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\WishListEntoties\\WishListItem.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\WishListEntoties\\WishListItem.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\WishListEntoties\\WishListItem.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\WishListEntoties\\WishListItem.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T20:58:43.66Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "ShopPolicy.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ShopEntities\\ShopPolicy.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\ShopEntities\\ShopPolicy.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ShopEntities\\ShopPolicy.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\ShopEntities\\ShopPolicy.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAArAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T20:46:56.02Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "OrderItem.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\OrderEntity\\OrderItem.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\OrderEntity\\OrderItem.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\OrderEntity\\OrderItem.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\OrderEntity\\OrderItem.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T22:54:35.704Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "CartItem.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\CartEntities\\CartItem.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\CartEntities\\CartItem.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\CartEntities\\CartItem.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\CartEntities\\CartItem.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAApAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T21:04:12.168Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "Cart.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\CartEntities\\Cart.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\CartEntities\\Cart.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\CartEntities\\Cart.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\CartEntities\\Cart.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwA4AAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T21:04:44.782Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "HandoraInfrastructure\\Data\\AppDbContext.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\AppDbContext.cs",
+              "RelativeToolTip": "HandoraInfrastructure\\Data\\AppDbContext.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAIwCYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T23:21:28.377Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "DeliveryMethod.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\OrderEntity\\DeliveryMethod.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\OrderEntity\\DeliveryMethod.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\OrderEntity\\DeliveryMethod.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\OrderEntity\\DeliveryMethod.cs",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAxwBoAAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T22:56:49.313Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "Tag.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ProductEntities\\Tag.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\ProductEntities\\Tag.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ProductEntities\\Tag.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\ProductEntities\\Tag.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAABRAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T21:27:45.223Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "Review.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ProductEntities\\Review.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\ProductEntities\\Review.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ProductEntities\\Review.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\ProductEntities\\Review.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABAAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T21:12:44.416Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "ProductStatus.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ProductEntities\\ProductStatus.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\ProductEntities\\ProductStatus.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ProductEntities\\ProductStatus.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\ProductEntities\\ProductStatus.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T20:52:59.1Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "Category.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ProductEntities\\Category.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\ProductEntities\\Category.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ProductEntities\\Category.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\ProductEntities\\Category.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAUwBYAAABRAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T21:21:11.112Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "WishList.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\WishListEntoties\\WishList.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\WishListEntoties\\WishList.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\WishListEntoties\\WishList.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\WishListEntoties\\WishList.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T21:01:26.692Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "Notification.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\NotificationEntities\\Notification.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\NotificationEntities\\Notification.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\NotificationEntities\\Notification.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\NotificationEntities\\Notification.cs",
+              "ViewState": "AgIAAAcAAAAAAAAAAAAgwBgAAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T21:32:18.066Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "DeliveryMethodConfiguration.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\Configuration\\DeliveryMethodConfiguration.cs",
+              "RelativeDocumentMoniker": "HandoraInfrastructure\\Data\\Configuration\\DeliveryMethodConfiguration.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\Configuration\\DeliveryMethodConfiguration.cs",
+              "RelativeToolTip": "HandoraInfrastructure\\Data\\Configuration\\DeliveryMethodConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACoAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T23:08:21.114Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "OrderConfiguration.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\Configuration\\OrderConfiguration.cs",
+              "RelativeDocumentMoniker": "HandoraInfrastructure\\Data\\Configuration\\OrderConfiguration.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\Configuration\\OrderConfiguration.cs",
+              "RelativeToolTip": "HandoraInfrastructure\\Data\\Configuration\\OrderConfiguration.cs",
+              "ViewState": "AgIAAFwAAAAAAAAAAAAAAE4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T22:53:00.313Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "CouponConfiguration.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\Configuration\\CouponConfiguration.cs",
+              "RelativeDocumentMoniker": "HandoraInfrastructure\\Data\\Configuration\\CouponConfiguration.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\Configuration\\CouponConfiguration.cs",
+              "RelativeToolTip": "HandoraInfrastructure\\Data\\Configuration\\CouponConfiguration.cs",
+              "ViewState": "AgIAADsAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T22:42:21.99Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "ReviewConfiguration.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\Configuration\\ReviewConfiguration.cs",
+              "RelativeDocumentMoniker": "HandoraInfrastructure\\Data\\Configuration\\ReviewConfiguration.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\Configuration\\ReviewConfiguration.cs",
+              "RelativeToolTip": "HandoraInfrastructure\\Data\\Configuration\\ReviewConfiguration.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T22:30:10.783Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "ProductConfiguration.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\Configuration\\ProductConfiguration.cs",
+              "RelativeDocumentMoniker": "HandoraInfrastructure\\Data\\Configuration\\ProductConfiguration.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\Data\\Configuration\\ProductConfiguration.cs",
+              "RelativeToolTip": "HandoraInfrastructure\\Data\\Configuration\\ProductConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAD4AAAAzAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T22:26:17.393Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "Shop.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ShopEntities\\Shop.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\ShopEntities\\Shop.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\ShopEntities\\Shop.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\ShopEntities\\Shop.cs",
+              "ViewState": "AgIAABEAAAAAAAAAAAA3wAsAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T20:44:46.885Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "NotificationType.cs",
+              "DocumentMoniker": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\NotificationEntities\\NotificationType.cs",
+              "RelativeDocumentMoniker": "HandoraDomain\\Models\\NotificationEntities\\NotificationType.cs",
+              "ToolTip": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\Models\\NotificationEntities\\NotificationType.cs",
+              "RelativeToolTip": "HandoraDomain\\Models\\NotificationEntities\\NotificationType.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T21:31:26.532Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
