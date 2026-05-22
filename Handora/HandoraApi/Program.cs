@@ -1,6 +1,8 @@
 using HandoraApi.Extensions;
 using HandoraApplication;
 using HandoraInfrastructure;
+using HandoraInfrastructure.Seeders;
+using Microsoft.AspNetCore.Identity;
 using OpenApiUi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +20,15 @@ builder.Services.AddInfrastructureServices().AddReposetoriesServices();
 builder.Services.ConfigureCors();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager =
+        scope.ServiceProvider
+        .GetRequiredService<RoleManager<IdentityRole>>();
+
+    await RoleSeeder.SeedAsync(roleManager);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

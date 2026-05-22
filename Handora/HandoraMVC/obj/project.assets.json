@@ -2993,35 +2993,43 @@
     ]
   },
   "packageFolders": {
-    "/home/kemo/.nuget/packages/": {}
+    "C:\\Users\\EG.LAP\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraMVC/HandoraMVC.csproj",
+      "projectUniqueName": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraMVC\\HandoraMVC.csproj",
       "projectName": "HandoraMVC",
-      "projectPath": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraMVC/HandoraMVC.csproj",
-      "packagesPath": "/home/kemo/.nuget/packages/",
-      "outputPath": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraMVC/obj/",
+      "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraMVC\\HandoraMVC.csproj",
+      "packagesPath": "C:\\Users\\EG.LAP\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraMVC\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "/home/kemo/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\EG.LAP\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraApplication/HandoraApplication.csproj": {
-              "projectPath": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraApplication/HandoraApplication.csproj"
+            "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApplication\\HandoraApplication.csproj": {
+              "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApplication\\HandoraApplication.csproj"
             },
-            "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraInfrastructure/HandoraInfrastructure.csproj": {
-              "projectPath": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraInfrastructure/HandoraInfrastructure.csproj"
+            "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj": {
+              "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj"
             }
           }
         }
@@ -3030,10 +3038,17 @@
         "warnAsError": [
           "NU1605"
         ]
-      }
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
       "net8.0": {
+        "framework": "net8.0",
         "targetAlias": "net8.0",
         "imports": [
           "net461",
@@ -3046,6 +3061,24 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.26, 8.0.26]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Host.win-x64",
+            "version": "[8.0.26, 8.0.26]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[8.0.26, 8.0.26]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[8.0.26, 8.0.26]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -3054,7 +3087,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/8.0.124/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

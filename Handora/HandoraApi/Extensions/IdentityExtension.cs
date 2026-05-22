@@ -1,3 +1,4 @@
+using HandoraDomain.Models.AppUser;
 using HandoraInfrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 
@@ -7,7 +8,7 @@ public static class IdentityExtension
 {
     public static void ConfigureIdentity(this IServiceCollection services)
     {
-        services.AddIdentity<IdentityUser, IdentityRole>(options =>
+        services.AddIdentity<User, IdentityRole>(options =>
         {
             // Configure password options
             options.Password.RequireDigit = false;
@@ -16,6 +17,9 @@ public static class IdentityExtension
             options.Password.RequireUppercase = false;
             options.Password.RequiredLength = 6;
             options.Password.RequiredUniqueChars = 0;
+
+            options.User.RequireUniqueEmail = true;
+
         })
         .AddEntityFrameworkStores<AppDbContext>()
         .AddDefaultTokenProviders();
