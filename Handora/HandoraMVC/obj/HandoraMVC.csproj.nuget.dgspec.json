@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraMVC\\HandoraMVC.csproj": {}
+    "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraMVC\\HandoraMVC.csproj": {}
   },
   "projects": {
-    "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApplication\\HandoraApplication.csproj": {
+    "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraApplication\\HandoraApplication.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApplication\\HandoraApplication.csproj",
+        "projectUniqueName": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraApplication\\HandoraApplication.csproj",
         "projectName": "HandoraApplication",
-        "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApplication\\HandoraApplication.csproj",
-        "packagesPath": "C:\\Users\\EG.LAP\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApplication\\obj\\",
+        "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraApplication\\HandoraApplication.csproj",
+        "packagesPath": "C:\\Users\\Steven\\.nuget\\packages\\",
+        "outputPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraApplication\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\EG.LAP\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Steven\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,6 +26,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -33,8 +34,8 @@
             "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\HandoraDomain.csproj": {
-                "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\HandoraDomain.csproj"
+              "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraDomain\\HandoraDomain.csproj": {
+                "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraDomain\\HandoraDomain.csproj"
               }
             }
           }
@@ -49,7 +50,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -76,43 +77,29 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\HandoraDomain.csproj": {
+    "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraDomain\\HandoraDomain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\HandoraDomain.csproj",
+        "projectUniqueName": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraDomain\\HandoraDomain.csproj",
         "projectName": "HandoraDomain",
-        "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\HandoraDomain.csproj",
-        "packagesPath": "C:\\Users\\EG.LAP\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\obj\\",
+        "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraDomain\\HandoraDomain.csproj",
+        "packagesPath": "C:\\Users\\Steven\\.nuget\\packages\\",
+        "outputPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraDomain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\EG.LAP\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Steven\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -121,6 +108,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -140,7 +128,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -163,43 +151,29 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj": {
+    "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj",
+        "projectUniqueName": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj",
         "projectName": "HandoraInfrastructure",
-        "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj",
-        "packagesPath": "C:\\Users\\EG.LAP\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\obj\\",
+        "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj",
+        "packagesPath": "C:\\Users\\Steven\\.nuget\\packages\\",
+        "outputPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraInfrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\EG.LAP\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Steven\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -208,6 +182,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -215,8 +190,8 @@
             "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\HandoraDomain.csproj": {
-                "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraDomain\\HandoraDomain.csproj"
+              "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraDomain\\HandoraDomain.csproj": {
+                "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraDomain\\HandoraDomain.csproj"
               }
             }
           }
@@ -231,7 +206,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -264,43 +239,29 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraMVC\\HandoraMVC.csproj": {
+    "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraMVC\\HandoraMVC.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraMVC\\HandoraMVC.csproj",
+        "projectUniqueName": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraMVC\\HandoraMVC.csproj",
         "projectName": "HandoraMVC",
-        "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraMVC\\HandoraMVC.csproj",
-        "packagesPath": "C:\\Users\\EG.LAP\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraMVC\\obj\\",
+        "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraMVC\\HandoraMVC.csproj",
+        "packagesPath": "C:\\Users\\Steven\\.nuget\\packages\\",
+        "outputPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraMVC\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\EG.LAP\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Steven\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -309,6 +270,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -316,11 +278,11 @@
             "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApplication\\HandoraApplication.csproj": {
-                "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraApplication\\HandoraApplication.csproj"
+              "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraApplication\\HandoraApplication.csproj": {
+                "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraApplication\\HandoraApplication.csproj"
               },
-              "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj": {
-                "projectPath": "C:\\Users\\EG.LAP\\Desktop\\Handmade Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj"
+              "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj": {
+                "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj"
               }
             }
           }
@@ -335,7 +297,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -352,24 +314,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.26, 8.0.26]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.26, 8.0.26]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -378,7 +322,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
