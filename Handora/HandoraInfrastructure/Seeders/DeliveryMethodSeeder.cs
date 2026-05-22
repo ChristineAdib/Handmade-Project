@@ -13,8 +13,6 @@ namespace HandoraInfrastructure.Seeders
     {
         public static async Task SeedAsync(AppDbContext context)
         {
-            if (await context.DeliveryMethods.AnyAsync()) return;
-
             var methods = new List<DeliveryMethod>
         {
             new("Standard",
@@ -24,6 +22,7 @@ namespace HandoraInfrastructure.Seeders
                 deliveryTimeAr: "من 5 إلى 7 أيام عمل",
                 cost: 30.00m)
             {
+                Id = Guid.Parse("dddddddd-0000-0000-0000-000000000001"),
                 IsActive = true,
             },
 
@@ -34,6 +33,7 @@ namespace HandoraInfrastructure.Seeders
                 deliveryTimeAr: "من 2 إلى 3 أيام عمل",
                 cost: 60.00m)
             {
+                Id = Guid.Parse("dddddddd-0000-0000-0000-000000000002"),
                 IsActive = true,
             },
 
@@ -44,6 +44,7 @@ namespace HandoraInfrastructure.Seeders
                 deliveryTimeAr: "يوم العمل التالي",
                 cost: 100.00m)
             {
+                Id = Guid.Parse("dddddddd-0000-0000-0000-000000000003"),
                 IsActive = true,
             },
 
@@ -54,12 +55,19 @@ namespace HandoraInfrastructure.Seeders
                 deliveryTimeAr: "نفس اليوم",
                 cost: 0.00m)
             {
+                Id = Guid.Parse("dddddddd-0000-0000-0000-000000000004"),
                 IsActive = true,
             },
         };
 
-            await context.DeliveryMethods.AddRangeAsync(methods);
-            await context.SaveChangesAsync();
+            var existingShortNames = await context.DeliveryMethods.Select(dm => dm.ShortName).ToListAsync();
+            var newMethods = methods.Where(m => !existingShortNames.Contains(m.ShortName)).ToList();
+
+            if (newMethods.Count != 0)
+            {
+                await context.DeliveryMethods.AddRangeAsync(newMethods);
+                await context.SaveChangesAsync();
+            }
         }
     }
 }

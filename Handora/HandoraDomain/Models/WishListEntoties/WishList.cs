@@ -16,6 +16,6 @@ namespace HandoraDomain.Models.WishListEntoties
         public User User { get; set; } = null!;
 
         // Navigation
-        public ICollection<WishListItem> Items { get; set; } = new List<WishListItem>();
+        public ICollection<WishListItem> Items { get; set; } = [];
     }
 }

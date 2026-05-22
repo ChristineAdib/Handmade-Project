@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HandoraInfrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+46774fb420b5ac14dc7803853207a954491dc9de")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+680ceed67eb899c6a7d7d87321a54c3dc0f86d9d")]
 [assembly: System.Reflection.AssemblyProductAttribute("HandoraInfrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HandoraInfrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

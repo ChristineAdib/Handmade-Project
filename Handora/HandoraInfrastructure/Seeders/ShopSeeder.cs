@@ -13,8 +13,6 @@ namespace HandoraInfrastructure.Seeders
     {
         public static async Task SeedAsync(AppDbContext context)
         {
-            if (await context.Shops.AnyAsync()) return;
-
             var shops = new List<Shop>
         {
             new()
@@ -61,8 +59,14 @@ namespace HandoraInfrastructure.Seeders
             },
         };
 
-            await context.Shops.AddRangeAsync(shops);
-            await context.SaveChangesAsync();
+            var existingIds = await context.Shops.Select(s => s.Id).ToListAsync();
+            var newShops = shops.Where(s => !existingIds.Contains(s.Id)).ToList();
+
+            if (newShops.Count != 0)
+            {
+                await context.Shops.AddRangeAsync(newShops);
+                await context.SaveChangesAsync();
+            }
         }
     }
 }

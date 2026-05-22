@@ -7,12 +7,11 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace HandoraInfrastructure.Repositries_UOW;
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork(AppDbContext context) : IUnitOfWork
 {
     private readonly ConcurrentDictionary<string, object> _repositories = new();
     private IDbContextTransaction? transaction;
-
-    private readonly AppDbContext _context;
+    private readonly AppDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
 
     public IGenericRepository<TEntity, TId> Repository<TEntity, TId>() where TEntity : BaseEntity<TId>

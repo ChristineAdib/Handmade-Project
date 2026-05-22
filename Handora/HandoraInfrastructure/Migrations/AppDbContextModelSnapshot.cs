@@ -132,9 +132,6 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("ProductId1")
-                        .HasColumnType("int");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
@@ -151,7 +148,7 @@ namespace HandoraInfrastructure.Migrations
 
                     b.HasIndex("CartId");
 
-                    b.HasIndex("ProductId1");
+                    b.HasIndex("ProductId");
 
                     b.ToTable("CartItems");
                 });
@@ -294,11 +291,9 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("HandoraDomain.Models.OrderEntity.DeliveryMethod", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Cost")
                         .HasPrecision(18, 2)
@@ -361,11 +356,9 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("HandoraDomain.Models.OrderEntity.Order", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("BuyerEmail")
                         .IsRequired()
@@ -384,8 +377,8 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DeliveryMethodId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("DeliveryMethodId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal?>("DiscountAmount")
                         .HasPrecision(18, 2)
@@ -440,11 +433,9 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("HandoraDomain.Models.OrderEntity.OrderItem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -458,17 +449,17 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("ProductId1")
-                        .HasColumnType("int");
+                    b.Property<Guid>("ProductId1")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -492,11 +483,9 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("HandoraDomain.Models.OrderEntity.ProductItemOrdered", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -514,8 +503,8 @@ namespace HandoraInfrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ProductName")
                         .IsRequired()
@@ -556,8 +545,8 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<int>("Method")
                         .HasColumnType("int");
 
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("PaidAt")
                         .HasColumnType("datetime2");
@@ -629,11 +618,9 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("HandoraDomain.Models.ProductEntities.Product", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("AverageRating")
                         .ValueGeneratedOnAdd()
@@ -725,8 +712,8 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<bool>("IsMain")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -762,9 +749,6 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("ProductId1")
-                        .HasColumnType("int");
-
                     b.Property<int>("Rating")
                         .HasColumnType("int");
 
@@ -780,7 +764,7 @@ namespace HandoraInfrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId1");
+                    b.HasIndex("ProductId");
 
                     b.HasIndex("UserId");
 
@@ -973,8 +957,8 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -1206,8 +1190,8 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("ProductTag", b =>
                 {
-                    b.Property<int>("ProductsId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("ProductsId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("TagsId")
                         .HasColumnType("uniqueidentifier");
@@ -1296,7 +1280,7 @@ namespace HandoraInfrastructure.Migrations
 
                     b.HasOne("HandoraDomain.Models.ProductEntities.Product", "Product")
                         .WithMany("CartItems")
-                        .HasForeignKey("ProductId1")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1348,8 +1332,8 @@ namespace HandoraInfrastructure.Migrations
 
                     b.OwnsOne("HandoraDomain.Models.OrderEntity.Address", "ShippingAddress", b1 =>
                         {
-                            b1.Property<int>("OrderId")
-                                .HasColumnType("int");
+                            b1.Property<Guid>("OrderId")
+                                .HasColumnType("uniqueidentifier");
 
                             b1.Property<string>("City")
                                 .IsRequired()
@@ -1472,7 +1456,7 @@ namespace HandoraInfrastructure.Migrations
                 {
                     b.HasOne("HandoraDomain.Models.ProductEntities.Product", "Product")
                         .WithMany("Reviews")
-                        .HasForeignKey("ProductId1")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

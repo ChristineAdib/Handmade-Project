@@ -29,12 +29,12 @@ namespace HandoraInfrastructure.Seeders
 
         // ─────────────────────────────────────────────────────────────────────────
         private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
-        {
-            string[] roles = [AppRoles.Admin, AppRoles.Seller, AppRoles.Buyer];
-            foreach (var role in roles)
-                if (!await roleManager.RoleExistsAsync(role))
-                    await roleManager.CreateAsync(new IdentityRole(role));
-        }
+{
+    string[] roles = new[] { AppRoles.Admin, AppRoles.Seller, AppRoles.Buyer };
+    foreach (var role in roles)
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+}
 
         // ─────────────────────────────────────────────────────────────────────────
         private static async Task SeedAdminAsync(UserManager<User> userManager)

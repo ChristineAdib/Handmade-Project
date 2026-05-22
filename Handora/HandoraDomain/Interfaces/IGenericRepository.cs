@@ -14,4 +14,5 @@ public interface IGenericRepository<TEntity, TId> where TEntity : BaseEntity<TId
 
         public Task<IQueryable<TEntity>> GetAllAsNoTracking();
         public Task<IQueryable<TEntity>> GetAllAsync();
+        public Task<TEntity?> GetByIdAsync(TId id);
     }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HandoraDomain.Models.OrderEntity
 {
-    public class DeliveryMethod:BaseEntity<int>
+    public class DeliveryMethod:BaseEntity<Guid>
     {
         public DeliveryMethod() { }
 

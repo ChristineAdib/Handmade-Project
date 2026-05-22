@@ -57,6 +57,7 @@
       "Microsoft.EntityFrameworkCore/8.0.26": {
         "dependencies": {
           "Microsoft.EntityFrameworkCore.Abstractions": "8.0.26",
+          "Microsoft.EntityFrameworkCore.Analyzers": "8.0.26",
           "Microsoft.Extensions.Caching.Memory": "8.0.1",
           "Microsoft.Extensions.Logging": "8.0.1"
         },
@@ -75,6 +76,7 @@
           }
         }
       },
+      "Microsoft.EntityFrameworkCore.Analyzers/8.0.26": {},
       "Microsoft.Extensions.Caching.Abstractions/8.0.0": {
         "dependencies": {
           "Microsoft.Extensions.Primitives": "8.0.0"
@@ -196,7 +198,7 @@
         },
         "runtime": {
           "HandoraDomain.dll": {
-            "assemblyVersion": "1.0.0.0",
+            "assemblyVersion": "1.0.0",
             "fileVersion": "1.0.0.0"
           }
         }
@@ -250,6 +252,13 @@
       "sha512": "sha512-UVXlDz6os+VLpCjEcCjxexXyrxlq7vM3OD2KnyQlnzM9Q8WCsKNI+1PJiR2B6Em+yDCROSHy1jPNXaqxrzrCPQ==",
       "path": "microsoft.entityframeworkcore.abstractions/8.0.26",
       "hashPath": "microsoft.entityframeworkcore.abstractions.8.0.26.nupkg.sha512"
+    },
+    "Microsoft.EntityFrameworkCore.Analyzers/8.0.26": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-uKIwY5fy7Xk3BrWMxryYyzQuzQxmhQADjZqXanXa27vE3vll8QHcUZuI1J1vyPu0bzyBITGdw9nJKDCsJmIHjg==",
+      "path": "microsoft.entityframeworkcore.analyzers/8.0.26",
+      "hashPath": "microsoft.entityframeworkcore.analyzers.8.0.26.nupkg.sha512"
     },
     "Microsoft.Extensions.Caching.Abstractions/8.0.0": {
       "type": "package",

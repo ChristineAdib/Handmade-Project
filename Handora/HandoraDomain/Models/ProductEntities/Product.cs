@@ -2,15 +2,11 @@
 using HandoraDomain.Models.OrderEntity;
 using HandoraDomain.Models.ShopEntities;
 using HandoraDomain.Models.WishListEntoties;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace HandoraDomain.Models.ProductEntities
 {
-    public class Product:BaseEntity<int>
+    public class Product:BaseEntity<Guid>
     {
         // [LOCALIZATION] bilingual title & description
         public string TitleEn { get; set; } = string.Empty;
@@ -33,11 +29,11 @@ namespace HandoraDomain.Models.ProductEntities
         public Shop Shop { get; set; } = null!;
 
         // Navigation Properties
-        public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
-        public ICollection<Review> Reviews { get; set; } = new List<Review>();
-        public ICollection<Tag> Tags { get; set; } = new List<Tag>();
-        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-        public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
-        public ICollection<WishListItem> WishListItems { get; set; } = new List<WishListItem>();
+        public ICollection<ProductImage> Images { get; set; } = [];
+        public ICollection<Review> Reviews { get; set; } = [];
+        public ICollection<Tag> Tags { get; set; } = [];
+        public ICollection<OrderItem> OrderItems { get; set; } = [];
+        public ICollection<CartItem> CartItems { get; set; } =[];
+        public ICollection<WishListItem> WishListItems { get; set; } =[];
     }
 }
