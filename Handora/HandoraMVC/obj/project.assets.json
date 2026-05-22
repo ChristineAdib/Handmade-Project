@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "targets": {
     "net8.0": {
       "Azure.Core/1.38.0": {
@@ -2993,35 +2993,44 @@
     ]
   },
   "packageFolders": {
-    "/home/kemo/.nuget/packages/": {}
+    "C:\\Users\\Steven\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraMVC/HandoraMVC.csproj",
+      "projectUniqueName": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraMVC\\HandoraMVC.csproj",
       "projectName": "HandoraMVC",
-      "projectPath": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraMVC/HandoraMVC.csproj",
-      "packagesPath": "/home/kemo/.nuget/packages/",
-      "outputPath": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraMVC/obj/",
+      "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraMVC\\HandoraMVC.csproj",
+      "packagesPath": "C:\\Users\\Steven\\.nuget\\packages\\",
+      "outputPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraMVC\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "/home/kemo/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\Steven\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraApplication/HandoraApplication.csproj": {
-              "projectPath": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraApplication/HandoraApplication.csproj"
+            "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraApplication\\HandoraApplication.csproj": {
+              "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraApplication\\HandoraApplication.csproj"
             },
-            "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraInfrastructure/HandoraInfrastructure.csproj": {
-              "projectPath": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraInfrastructure/HandoraInfrastructure.csproj"
+            "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj": {
+              "projectPath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraInfrastructure\\HandoraInfrastructure.csproj"
             }
           }
         }
@@ -3035,10 +3044,12 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      }
+      },
+      "SdkAnalysisLevel": "10.0.300"
     },
     "frameworks": {
       "net8.0": {
+        "framework": "net8.0",
         "targetAlias": "net8.0",
         "imports": [
           "net461",
@@ -3059,7 +3070,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/home/kemo/.dotnet/sdk/8.0.421/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

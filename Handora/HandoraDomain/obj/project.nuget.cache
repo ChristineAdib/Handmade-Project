@@ -1,20 +1,20 @@
 {
   "version": 2,
-  "dgSpecHash": "Us9Gv1Q2wwY=",
+  "dgSpecHash": "xvyREdegJrA=",
   "success": true,
-  "projectFilePath": "/home/kemo/Development/ItI/Final Project/Handmade-Project/Handora/HandoraDomain/HandoraDomain.csproj",
+  "projectFilePath": "G:\\ITI\\16- Handmade Project\\Handmade-Project\\Handora\\HandoraDomain\\HandoraDomain.csproj",
   "expectedPackageFiles": [
-    "/home/kemo/.nuget/packages/microsoft.aspnetcore.cryptography.internal/8.0.26/microsoft.aspnetcore.cryptography.internal.8.0.26.nupkg.sha512",
-    "/home/kemo/.nuget/packages/microsoft.aspnetcore.cryptography.keyderivation/8.0.26/microsoft.aspnetcore.cryptography.keyderivation.8.0.26.nupkg.sha512",
-    "/home/kemo/.nuget/packages/microsoft.extensions.caching.abstractions/8.0.0/microsoft.extensions.caching.abstractions.8.0.0.nupkg.sha512",
-    "/home/kemo/.nuget/packages/microsoft.extensions.dependencyinjection/8.0.1/microsoft.extensions.dependencyinjection.8.0.1.nupkg.sha512",
-    "/home/kemo/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.2/microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
-    "/home/kemo/.nuget/packages/microsoft.extensions.identity.core/8.0.26/microsoft.extensions.identity.core.8.0.26.nupkg.sha512",
-    "/home/kemo/.nuget/packages/microsoft.extensions.identity.stores/8.0.26/microsoft.extensions.identity.stores.8.0.26.nupkg.sha512",
-    "/home/kemo/.nuget/packages/microsoft.extensions.logging/8.0.1/microsoft.extensions.logging.8.0.1.nupkg.sha512",
-    "/home/kemo/.nuget/packages/microsoft.extensions.logging.abstractions/8.0.2/microsoft.extensions.logging.abstractions.8.0.2.nupkg.sha512",
-    "/home/kemo/.nuget/packages/microsoft.extensions.options/8.0.2/microsoft.extensions.options.8.0.2.nupkg.sha512",
-    "/home/kemo/.nuget/packages/microsoft.extensions.primitives/8.0.0/microsoft.extensions.primitives.8.0.0.nupkg.sha512"
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.aspnetcore.cryptography.internal\\8.0.26\\microsoft.aspnetcore.cryptography.internal.8.0.26.nupkg.sha512",
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.aspnetcore.cryptography.keyderivation\\8.0.26\\microsoft.aspnetcore.cryptography.keyderivation.8.0.26.nupkg.sha512",
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.extensions.caching.abstractions\\8.0.0\\microsoft.extensions.caching.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\8.0.1\\microsoft.extensions.dependencyinjection.8.0.1.nupkg.sha512",
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.2\\microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.extensions.identity.core\\8.0.26\\microsoft.extensions.identity.core.8.0.26.nupkg.sha512",
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.extensions.identity.stores\\8.0.26\\microsoft.extensions.identity.stores.8.0.26.nupkg.sha512",
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.extensions.logging\\8.0.1\\microsoft.extensions.logging.8.0.1.nupkg.sha512",
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.2\\microsoft.extensions.logging.abstractions.8.0.2.nupkg.sha512",
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.extensions.options\\8.0.2\\microsoft.extensions.options.8.0.2.nupkg.sha512",
+    "C:\\Users\\Steven\\.nuget\\packages\\microsoft.extensions.primitives\\8.0.0\\microsoft.extensions.primitives.8.0.0.nupkg.sha512"
   ],
   "logs": []
 }
