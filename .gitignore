@@ -1,0 +1,14 @@
+
+# Visual Studio
+.vs/
+**/bin/
+**/obj/
+
+# Build results
+**/bin/
+**/obj/
+**/Debug/
+**/Release/
+
+# User-specific files
+**/appsettings.Development.json
