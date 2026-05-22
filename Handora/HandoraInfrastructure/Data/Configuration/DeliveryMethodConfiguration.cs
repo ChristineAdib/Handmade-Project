@@ -19,13 +19,21 @@ namespace HandoraInfrastructure.Data.Configuration
 
             builder.Property(d => d.ShortName)
                 .IsRequired()
-                .HasMaxLength(100);
+                .HasMaxLength(50);
 
-            builder.Property(d => d.Description)
+            builder.Property(d => d.DescriptionEn)
                 .IsRequired()
-                .HasMaxLength(300);
+                .HasMaxLength(200);
 
-            builder.Property(d => d.DeliveryTime)
+            builder.Property(d => d.DescriptionAr)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            builder.Property(d => d.DeliveryTimeEn)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(d => d.DeliveryTimeAr)
                 .IsRequired()
                 .HasMaxLength(50);
 
@@ -33,12 +41,10 @@ namespace HandoraInfrastructure.Data.Configuration
                 .IsRequired()
                 .HasPrecision(18, 2);
 
-            // Seed initial data — no need for a migration every time you add a method
-            builder.HasData(
-                new DeliveryMethod { Id = 1, ShortName = "Standard", Description = "Standard Delivery", DeliveryTime = "5-7 Days", Cost = 15.00m, IsActive = true },
-                new DeliveryMethod { Id = 2, ShortName = "Express", Description = "Express Delivery", DeliveryTime = "2-3 Days", Cost = 35.00m, IsActive = true },
-                new DeliveryMethod { Id = 3, ShortName = "Next Day", Description = "Next Day Delivery", DeliveryTime = "1 Day", Cost = 60.00m, IsActive = true }
-            );
+            builder.Property(d => d.IsActive)
+                .HasDefaultValue(true);
+
+            builder.HasIndex(d => d.IsActive);
         }
     }
 }
