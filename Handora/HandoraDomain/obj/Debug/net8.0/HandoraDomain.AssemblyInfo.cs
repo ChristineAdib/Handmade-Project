@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HandoraDomain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8c2b200f25e869aafe1f6559c45db150ec112b36")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3010d20b7385782501cfcb653c61a208006d50d0")]
 [assembly: System.Reflection.AssemblyProductAttribute("HandoraDomain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HandoraDomain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
