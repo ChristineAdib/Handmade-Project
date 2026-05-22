@@ -13,8 +13,6 @@ namespace HandoraInfrastructure.Seeders
     {
         public static async Task SeedAsync(AppDbContext context)
         {
-            if (await context.Coupons.AnyAsync()) return;
-
             var coupons = new List<Coupon>
         {
             new()
@@ -58,8 +56,14 @@ namespace HandoraInfrastructure.Seeders
             },
         };
 
-            await context.Coupons.AddRangeAsync(coupons);
-            await context.SaveChangesAsync();
+            var existingIds = await context.Coupons.Select(c => c.Id).ToListAsync();
+            var newCoupons = coupons.Where(c => !existingIds.Contains(c.Id)).ToList();
+
+            if (newCoupons.Count != 0)
+            {
+                await context.Coupons.AddRangeAsync(newCoupons);
+                await context.SaveChangesAsync();
+            }
         }
     }
 }

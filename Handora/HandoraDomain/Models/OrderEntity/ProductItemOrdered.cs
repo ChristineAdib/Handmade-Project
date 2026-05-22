@@ -6,20 +6,20 @@ using System.Threading.Tasks;
 
 namespace HandoraDomain.Models.OrderEntity
 {
-    public class ProductItemOrdered:BaseEntity<int>
+    public class ProductItemOrdered:BaseEntity<Guid>
     {
         public ProductItemOrdered()
         {
             
         }
-        public ProductItemOrdered(int productId, string productName, string pictureUrl)
+        public ProductItemOrdered(Guid productId, string productName, string pictureUrl)
         {
             ProductId = productId;
             ProductName = productName;
             PictureUrl = pictureUrl;
         }
 
-        public int ProductId { get; set; }
+        public Guid ProductId { get; set; }
         public string ProductName { get; set; }
         public string PictureUrl { get; set; }
 

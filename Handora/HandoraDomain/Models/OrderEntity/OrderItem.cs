@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HandoraDomain.Models.OrderEntity
 {
-    public class OrderItem:BaseEntity<int>
+    public class OrderItem:BaseEntity<Guid>
     {
         public OrderItem() { }
         public OrderItem(ProductItemOrdered product, int quantity, decimal price)
@@ -20,7 +20,7 @@ namespace HandoraDomain.Models.OrderEntity
         public int Quantity { get; set; }
         public decimal Price { get; set; }
 
-        public int OrderId { get; set; }
+        public Guid OrderId { get; set; }
         public Order Order { get; set; }
     }
 }

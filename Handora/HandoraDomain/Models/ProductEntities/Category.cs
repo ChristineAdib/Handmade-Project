@@ -17,9 +17,9 @@ namespace HandoraDomain.Models.ProductEntities
         // Self-referencing FK for subcategories
         public Guid? ParentId { get; set; }
         public Category? Parent { get; set; }
-        public ICollection<Category> SubCategories { get; set; } = new List<Category>();
+        public ICollection<Category> SubCategories { get; set; } = [];
 
         // Navigation
-        public ICollection<Product> Products { get; set; } = new List<Product>();
+        public ICollection<Product> Products { get; set; } = [];
     }
 }

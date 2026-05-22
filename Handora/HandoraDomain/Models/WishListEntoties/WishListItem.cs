@@ -15,7 +15,7 @@ namespace HandoraDomain.Models.WishListEntoties
         public Guid WishListId { get; set; }
         public WishList WishList { get; set; } = null!;
 
-        public int ProductId { get; set; }
+        public Guid ProductId { get; set; }
         public Product Product { get; set; } = null!;
     }
 }

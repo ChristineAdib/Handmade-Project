@@ -13,13 +13,12 @@ namespace HandoraInfrastructure.Seeders
     {
         public static async Task SeedAsync(AppDbContext context)
         {
-            if (await context.Products.AnyAsync()) return;
-
             var products = new List<Product>
         {
             // ── Nour Handmade — Jewelry ───────────────────────────────────────
             new()
             {
+                Id              = Guid.Parse("bbbbbbbb-0000-0000-0000-000000000001"),
                 TitleEn         = "Silver Moon Necklace",
                 TitleAr         = "قلادة القمر الفضية",
                 DescriptionEn   = "Handcrafted sterling silver necklace with a crescent moon pendant. Each piece is unique and made to order.",
@@ -29,17 +28,18 @@ namespace HandoraInfrastructure.Seeders
                 Status          = ProductStatus.Active,
                 AverageRating   = 4.9m,
                 ReviewCount     = 38,
-                CategoryId      = Guid.Parse("22222222-0000-0000-0000-000000000001"), // Necklaces
+                CategoryId      = Guid.Parse("22222222-0000-0000-0000-000000000001"),
                 ShopId          = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"),
                 CreatedAt       = DateTime.UtcNow.AddMonths(-6),
                 Images = new List<ProductImage>
                 {
-                    new() { ImageUrl = "products/silver-moon-1.jpg", IsMain = true },
-                    new() { ImageUrl = "products/silver-moon-2.jpg", IsMain = false },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-000000000001"), ImageUrl = "products/silver-moon-1.jpg", IsMain = true },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-000000000002"), ImageUrl = "products/silver-moon-2.jpg", IsMain = false },
                 }
             },
             new()
             {
+                Id              = Guid.Parse("bbbbbbbb-0000-0000-0000-000000000002"),
                 TitleEn         = "Beaded Turquoise Bracelet",
                 TitleAr         = "سوار الفيروز المخرز",
                 DescriptionEn   = "Handmade bracelet with genuine turquoise beads and silver spacers. Adjustable size.",
@@ -50,17 +50,18 @@ namespace HandoraInfrastructure.Seeders
                 Status          = ProductStatus.Active,
                 AverageRating   = 4.7m,
                 ReviewCount     = 19,
-                CategoryId      = Guid.Parse("22222222-0000-0000-0000-000000000002"), // Bracelets
+                CategoryId      = Guid.Parse("22222222-0000-0000-0000-000000000002"),
                 ShopId          = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"),
                 CreatedAt       = DateTime.UtcNow.AddMonths(-5),
                 Images = new List<ProductImage>
                 {
-                    new() { ImageUrl = "products/turquoise-bracelet-1.jpg", IsMain = true },
-                    new() { ImageUrl = "products/turquoise-bracelet-2.jpg", IsMain = false },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-000000000003"), ImageUrl = "products/turquoise-bracelet-1.jpg", IsMain = true },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-000000000004"), ImageUrl = "products/turquoise-bracelet-2.jpg", IsMain = false },
                 }
             },
             new()
             {
+                Id              = Guid.Parse("bbbbbbbb-0000-0000-0000-000000000003"),
                 TitleEn         = "Pearl Drop Earrings",
                 TitleAr         = "أقراط اللؤلؤ المتدلية",
                 DescriptionEn   = "Elegant freshwater pearl earrings with gold-plated hooks. Perfect for weddings and special occasions.",
@@ -70,18 +71,19 @@ namespace HandoraInfrastructure.Seeders
                 Status          = ProductStatus.Active,
                 AverageRating   = 4.8m,
                 ReviewCount     = 25,
-                CategoryId      = Guid.Parse("22222222-0000-0000-0000-000000000003"), // Earrings
+                CategoryId      = Guid.Parse("22222222-0000-0000-0000-000000000003"),
                 ShopId          = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"),
                 CreatedAt       = DateTime.UtcNow.AddMonths(-4),
                 Images = new List<ProductImage>
                 {
-                    new() { ImageUrl = "products/pearl-earrings-1.jpg", IsMain = true },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-000000000005"), ImageUrl = "products/pearl-earrings-1.jpg", IsMain = true },
                 }
             },
- 
+
             // ── Layla Crafts — Home Decor ─────────────────────────────────────
             new()
             {
+                Id              = Guid.Parse("bbbbbbbb-0000-0000-0000-000000000004"),
                 TitleEn         = "Hand-Painted Ceramic Vase",
                 TitleAr         = "مزهرية سيراميك مرسومة يدويًا",
                 DescriptionEn   = "Medium-sized ceramic vase hand-painted with geometric patterns inspired by Islamic art. Food-safe glaze.",
@@ -91,18 +93,19 @@ namespace HandoraInfrastructure.Seeders
                 Status          = ProductStatus.Active,
                 AverageRating   = 4.6m,
                 ReviewCount     = 14,
-                CategoryId      = Guid.Parse("22222222-0000-0000-0000-000000000005"), // Pottery
+                CategoryId      = Guid.Parse("22222222-0000-0000-0000-000000000005"),
                 ShopId          = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000002"),
                 CreatedAt       = DateTime.UtcNow.AddMonths(-3),
                 Images = new List<ProductImage>
                 {
-                    new() { ImageUrl = "products/ceramic-vase-1.jpg", IsMain = true },
-                    new() { ImageUrl = "products/ceramic-vase-2.jpg", IsMain = false },
-                    new() { ImageUrl = "products/ceramic-vase-3.jpg", IsMain = false },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-000000000006"), ImageUrl = "products/ceramic-vase-1.jpg", IsMain = true },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-000000000007"), ImageUrl = "products/ceramic-vase-2.jpg", IsMain = false },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-000000000008"), ImageUrl = "products/ceramic-vase-3.jpg", IsMain = false },
                 }
             },
             new()
             {
+                Id              = Guid.Parse("bbbbbbbb-0000-0000-0000-000000000005"),
                 TitleEn         = "Macramé Wall Hanging",
                 TitleAr         = "لوحة ماكراميه للحائط",
                 DescriptionEn   = "Large boho-style macramé wall hanging made from 100% natural cotton rope. 60cm wide x 90cm long.",
@@ -112,19 +115,20 @@ namespace HandoraInfrastructure.Seeders
                 Status          = ProductStatus.Active,
                 AverageRating   = 4.9m,
                 ReviewCount     = 31,
-                CategoryId      = Guid.Parse("22222222-0000-0000-0000-000000000004"), // Wall Art
+                CategoryId      = Guid.Parse("22222222-0000-0000-0000-000000000004"),
                 ShopId          = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000002"),
                 CreatedAt       = DateTime.UtcNow.AddMonths(-4),
                 Images = new List<ProductImage>
                 {
-                    new() { ImageUrl = "products/macrame-1.jpg", IsMain = true },
-                    new() { ImageUrl = "products/macrame-2.jpg", IsMain = false },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-000000000009"), ImageUrl = "products/macrame-1.jpg", IsMain = true },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-00000000000a"), ImageUrl = "products/macrame-2.jpg", IsMain = false },
                 }
             },
- 
+
             // ── Mariam Art Studio — Paintings ─────────────────────────────────
             new()
             {
+                Id              = Guid.Parse("bbbbbbbb-0000-0000-0000-000000000006"),
                 TitleEn         = "Cairo Sunset — Acrylic Painting",
                 TitleAr         = "غروب القاهرة — لوحة أكريليك",
                 DescriptionEn   = "Original acrylic painting on canvas (50x70cm) depicting a Cairo sunset over the Nile. Signed by the artist. Comes ready to hang.",
@@ -134,17 +138,18 @@ namespace HandoraInfrastructure.Seeders
                 Status          = ProductStatus.Active,
                 AverageRating   = 5.0m,
                 ReviewCount     = 8,
-                CategoryId      = Guid.Parse("11111111-0000-0000-0000-000000000004"), // Art
+                CategoryId      = Guid.Parse("11111111-0000-0000-0000-000000000004"),
                 ShopId          = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000003"),
                 CreatedAt       = DateTime.UtcNow.AddMonths(-2),
                 Images = new List<ProductImage>
                 {
-                    new() { ImageUrl = "products/cairo-sunset-1.jpg", IsMain = true },
-                    new() { ImageUrl = "products/cairo-sunset-2.jpg", IsMain = false },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-00000000000b"), ImageUrl = "products/cairo-sunset-1.jpg", IsMain = true },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-00000000000c"), ImageUrl = "products/cairo-sunset-2.jpg", IsMain = false },
                 }
             },
             new()
             {
+                Id              = Guid.Parse("bbbbbbbb-0000-0000-0000-000000000007"),
                 TitleEn         = "Botanical Watercolor Print",
                 TitleAr         = "لوحة نباتية بالألوان المائية",
                 DescriptionEn   = "Delicate watercolor illustration of Egyptian wildflowers. High-quality print on 300gsm paper. A4 size.",
@@ -154,18 +159,24 @@ namespace HandoraInfrastructure.Seeders
                 Status          = ProductStatus.Active,
                 AverageRating   = 4.7m,
                 ReviewCount     = 15,
-                CategoryId      = Guid.Parse("11111111-0000-0000-0000-000000000004"), // Art
+                CategoryId      = Guid.Parse("11111111-0000-0000-0000-000000000004"),
                 ShopId          = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000003"),
                 CreatedAt       = DateTime.UtcNow.AddMonths(-1),
                 Images = new List<ProductImage>
                 {
-                    new() { ImageUrl = "products/botanical-print-1.jpg", IsMain = true },
+                    new() { Id = Guid.Parse("eeeeeeee-0000-0000-0000-00000000000d"), ImageUrl = "products/botanical-print-1.jpg", IsMain = true },
                 }
             },
         };
 
-            await context.Products.AddRangeAsync(products);
-            await context.SaveChangesAsync();
+            var existingTitles = await context.Products.Select(p => p.TitleEn).ToListAsync();
+            var newProducts = products.Where(p => !existingTitles.Contains(p.TitleEn)).ToList();
+
+            if (newProducts.Count != 0)
+            {
+                await context.Products.AddRangeAsync(newProducts);
+                await context.SaveChangesAsync();
+            }
         }
     }
 }

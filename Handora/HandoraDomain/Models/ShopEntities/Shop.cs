@@ -28,8 +28,8 @@ namespace HandoraDomain.Models.ShopEntities
         public User Owner { get; set; } = null!;
 
         // Navigation Properties
-        public ICollection<Product> Products { get; set; } = new List<Product>();
-        public ICollection<ShopPolicy> Policies { get; set; } = new List<ShopPolicy>();
-        public ICollection<Coupon> Coupons { get; set; } = new List<Coupon>();
+        public ICollection<Product> Products { get; set; } = [];
+        public ICollection<ShopPolicy> Policies { get; set; } = [];
+        public ICollection<Coupon> Coupons { get; set; } = [];
     }
 }

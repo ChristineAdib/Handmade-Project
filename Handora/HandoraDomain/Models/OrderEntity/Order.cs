@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace HandoraDomain.Models.OrderEntity
 {
-    public class Order:BaseEntity<int>
+    public class Order:BaseEntity<Guid>
     {
         public Order()
         {
@@ -28,7 +28,7 @@ namespace HandoraDomain.Models.OrderEntity
         public DateTime OrderDate { get; set; } = DateTime.Now;
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public Address ShippingAddress { get; set; }
-        public int DeliveryMethodId { get; set; }
+        public Guid DeliveryMethodId { get; set; }
         public DeliveryMethod DeliveryMethod { get; set; }
         public ICollection<OrderItem> Items { get; set; } = new HashSet<OrderItem>();
         public decimal SubTotal { get; set; }

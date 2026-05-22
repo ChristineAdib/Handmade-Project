@@ -13,7 +13,7 @@ namespace HandoraDomain.Models.ProductEntities
         public bool IsMain { get; set; } = false;
 
         // FK
-        public int ProductId { get; set; }
+        public Guid ProductId { get; set; }
         public Product Product { get; set; } = null!;
     }
 }

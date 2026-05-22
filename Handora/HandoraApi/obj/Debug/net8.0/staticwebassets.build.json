@@ -1,1 +1,11 @@
-{"Version":1,"Hash":"c4M+/9yb04TZ0sWmOf8lFT7myiMyEDOq5NF94FhbxUw=","Source":"HandoraApi","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
+{
+  "Version": 1,
+  "Hash": "QXn6rtmlZO0cfhIKVyBUQ2NI4kbABHgYOzrNm3BFK5I=",
+  "Source": "HandoraApi",
+  "BasePath": "_content/HandoraApi",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
