@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HandoraApplication")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3010d20b7385782501cfcb653c61a208006d50d0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+610d3fa12cc4d01df6d4511543faed4cc0265957")]
 [assembly: System.Reflection.AssemblyProductAttribute("HandoraApplication")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HandoraApplication")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
