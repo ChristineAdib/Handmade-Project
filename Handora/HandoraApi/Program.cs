@@ -21,6 +21,8 @@ builder.Services.ConfigureCors();
 
 var app = builder.Build();
 
+await app.InitialiseDatabaseAsync();
+
 using (var scope = app.Services.CreateScope())
 {
     var roleManager =
