@@ -18,12 +18,12 @@ public class ProductsController(IProductService productService) : ControllerBase
         return NotFound(result.Errors);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetProducts()
-    {
-        var result = await _productService.GetProducts();
-        if (result.IsSuccess)
-            return Ok(result.Data);
-        return NotFound(result.Errors);
-    }
+    //[HttpGet]
+    //public async Task<IActionResult> GetProducts()
+    //{
+    //    var result = await _productService.GetProducts();
+    //    if (result.IsSuccess)
+    //        return Ok(result.Data);
+    //    return NotFound(result.Errors);
+    //}
 }
