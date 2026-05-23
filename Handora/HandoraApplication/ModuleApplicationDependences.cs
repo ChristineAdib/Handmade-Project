@@ -12,6 +12,7 @@ public static class ModuleApplicationDependences
         MapsterSettings.Configure();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IEmailService, EmailService>();
         return services;
     }
 }

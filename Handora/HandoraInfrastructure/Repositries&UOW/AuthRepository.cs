@@ -23,6 +23,9 @@ namespace HandoraInfrastructure.Repositries_UOW
         public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
             => await _userManager.FindByEmailAsync(email);
 
+        public async Task<User?> GetByIdAsync(string id, CancellationToken ct = default)
+            => await _userManager.FindByIdAsync(id);
+
         public async Task<IdentityResult> CreateAsync(User user, string password, CancellationToken ct = default)
             => await _userManager.CreateAsync(user, password);
 

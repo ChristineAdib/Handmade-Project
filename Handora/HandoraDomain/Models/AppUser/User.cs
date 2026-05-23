@@ -22,6 +22,8 @@ public class User : IdentityUser
     public string? UpdatedBy { get; set; }
     public string Token { get; set; } = string.Empty;
     public bool IsBanned { get; set; }
+    public bool IsEmailVerified { get; set; } = false;
+    public DateTime? EmailVerifiedAt { get; set; }
 
     // Navigation Properties
     public ICollection<Address> Addresses { get; set; } = new List<Address>();
