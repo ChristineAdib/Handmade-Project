@@ -20,7 +20,8 @@ public class User : IdentityUser
     public DateTime? UpdatedAt { get; set; }
     public string? CreatedBy { get; set; }
     public string? UpdatedBy { get; set; }
-
+    public string Token { get; set; } = string.Empty;
+    public bool IsBanned { get; set; }
     // Navigation Properties
     public ICollection<Address> Addresses { get; set; } = new List<Address>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
