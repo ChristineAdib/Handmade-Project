@@ -6,7 +6,7 @@ namespace HandoraApplication.IServices;
 public interface IShopService
 {
     Task<Result<ShopDto>> GetShopById(Guid id);
-    Task<Result<ShopDto>> GetShopWithProducts(Guid id);
+    Task<Result<ShopWithProductsDto>> GetShopWithProducts(Guid id);
     Task<Result<ShopDto>> GetMyShop(string ownerId);
     Task<Result<ShopStatsDto>> GetShopStats(Guid id);
     Task<Result<IEnumerable<ShopDto>>> GetTopRatedShops(int count = 10);
