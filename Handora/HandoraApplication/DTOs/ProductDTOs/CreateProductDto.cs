@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HandoraApplication.DTOs.ProductDTOs
 {
-    internal class CreateProductDto
+    public class CreateProductDto
     {
         public string TitleEn { get; set; }
         public string TitleAr { get; set; }
@@ -16,7 +17,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public int Quantity { get; set; }
         public Guid CategoryId { get; set; }
         public Guid ShopId { get; set; }
-        //public List<IFormFile> Images { get; set; } // Multiple images
+        public List<IFormFile> Images { get; set; } // Multiple images
         public List<string> Tags { get; set; }
     }
 }
