@@ -1,4 +1,5 @@
-﻿using HandoraApplication.Helpers.AuthHelper;
+﻿using HandoraApi.Services;
+using HandoraApplication.Helpers.AuthHelper;
 using HandoraApplication.IServices;
 using HandoraApplication.Services;
 using HandoraDomain.Interfaces;
@@ -13,6 +14,7 @@ namespace HandoraApi.Extensions
             services.AddSingleton<JwtHelper>();
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IFileService, FileService>();
             return services;
         }
     }
