@@ -1,3 +1,5 @@
+using HandoraApplication.DTOs.Common;
+using HandoraApplication.DTOs.ProductDTOs;
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
@@ -8,15 +10,29 @@ namespace HandoraApplication.Services;
 public class ProductService(IUnitOfWork unitOfWork) : IProductService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
-    public async Task<Result<Product>> GetProduct(Guid id)
+
+    public async Task<Result<ProductResponseDto>> GetProduct(Guid id)
     {
-        var product = await _unitOfWork.Repository<Product, Guid>().GetByIdAsync(id);
-        return product is null ? Result<Product>.Failure("Product not found") : Result<Product>.Success(product);
+        throw new NotImplementedException();
     }
 
-    public async Task<Result<IEnumerable<Product>>> GetProducts()
+    public async Task<Result<PagedResultDto<ProductSummaryDto>>> GetProducts(ProductQueryDto query)
     {
-        var products = await _unitOfWork.Repository<Product, Guid>().GetAllAsNoTracking();
-        return Result<IEnumerable<Product>>.Success([..products]);
+        throw new NotImplementedException();
+    }
+
+    public async Task<Result<ProductResponseDto>> CreateProduct(CreateProductDto dto)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<Result<ProductResponseDto>> UpdateProduct(Guid id, UpdateProductDto dto)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<Result> DeleteProduct(Guid id)
+    {
+        throw new NotImplementedException();
     }
 }
