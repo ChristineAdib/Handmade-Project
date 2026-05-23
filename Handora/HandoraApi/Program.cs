@@ -17,6 +17,8 @@ builder.Services.ConfigureIdentity();
 builder.Services.ConfigureAuthentication(builder.Configuration);
 builder.Services.AddInfrastructureServices().AddReposetoriesServices();
 builder.Services.ConfigureCors();
+builder.Services.AddApplicationServices();
+
 var app = builder.Build();
 
 await app.InitialiseDatabaseAsync();
