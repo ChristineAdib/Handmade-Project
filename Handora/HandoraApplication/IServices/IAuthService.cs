@@ -11,5 +11,7 @@ namespace HandoraApplication.IServices
     {
         Task<AuthResponseDto> RegisterAsync(RegisterDto dto, CancellationToken ct = default);
         Task<AuthResponseDto> LoginAsync(LoginDto dto, CancellationToken ct = default);
+        Task<OtpResponseDto> VerifyOtpAsync(VerifyOtpDto dto, CancellationToken ct = default);
+        Task<bool> ResendOtpAsync(ResendOtpDto dto, CancellationToken ct = default);
     }
 }
