@@ -18,6 +18,7 @@ builder.Services.ConfigureAuthentication(builder.Configuration);
 builder.Services.AddInfrastructureServices().AddReposetoriesServices();
 builder.Services.ConfigureCors();
 builder.Services.AddApplicationServices();
+builder.Services.ConfigureRedis(builder.Configuration);
 
 var app = builder.Build();
 
