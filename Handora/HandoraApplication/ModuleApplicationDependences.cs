@@ -13,6 +13,7 @@ public static class ModuleApplicationDependences
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IShopService, ShopService>();
+        services.AddScoped<IFollowService, FollowService>();
         return services;
     }
 }
