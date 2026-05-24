@@ -1,5 +1,6 @@
 ﻿using HandoraApplication.DTOs.ShopDTOs;
 using HandoraApplication.IServices;
+using HandoraDomain.Models.AppUser;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -41,16 +42,16 @@ namespace HandoraApi.Controllers
             return Ok(result.Data);
         }
 
-        [Authorize]
-        [HttpGet("my-shop")]
+        [Authorize(Roles = AppRoles.Seller)]
+        [HttpGet("myShop")]
         public async Task<IActionResult> GetMyShop()
         {
             var result = await _shopService.GetMyShop(CurrentUserId);
             return result.IsSuccess ? Ok(result.Data) : NotFound(result.Errors);
         }
 
-        [Authorize]
-        [HttpGet("my-shop/stats")]
+        [Authorize(Roles = AppRoles.Seller)]
+        [HttpGet("myShop/stats")]
         public async Task<IActionResult> GetMyStats()
         {
             var shopResult = await _shopService.GetMyShop(CurrentUserId);
@@ -60,7 +61,7 @@ namespace HandoraApi.Controllers
             return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
         }
 
-        [Authorize]
+        [Authorize(Roles = AppRoles.Seller)]
         [HttpPost]
         public async Task<IActionResult> CreateShop(CreateShopDto dto)
         {
@@ -70,7 +71,7 @@ namespace HandoraApi.Controllers
                 : BadRequest(result.Errors);
         }
 
-        [Authorize]
+        [Authorize(Roles = AppRoles.Seller)]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateShop(Guid id, UpdateShopDto dto)
         {
@@ -78,7 +79,7 @@ namespace HandoraApi.Controllers
             return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
         }
 
-        [Authorize]
+        [Authorize(Roles = AppRoles.Seller)]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteShop(Guid id)
         {
