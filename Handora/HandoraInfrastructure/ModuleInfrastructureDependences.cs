@@ -12,6 +12,7 @@ public static class ModuleInfrastructureDependences
         service.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
         service.AddScoped<IProductRepository, ProductRepository>();
         service.AddScoped<IUnitOfWork, UnitOfWork>();
+        service.AddScoped<IOtpRepository, OtpRepository>();
         return service;
     }
 }

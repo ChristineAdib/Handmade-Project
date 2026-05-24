@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.26" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.10" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.26" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.26">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -17,5 +18,8 @@
   <ItemGroup>
     <ProjectReference Include="..\HandoraInfrastructure\HandoraInfrastructure.csproj" />
     <ProjectReference Include="..\HandoraApplication\HandoraApplication.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 </Project>
