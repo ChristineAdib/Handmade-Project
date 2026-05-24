@@ -1,4 +1,5 @@
 ﻿using HandoraDomain.Models.AppUser;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -31,5 +32,9 @@ namespace HandoraApplication.DTOs.AuthDTOs
         [RegularExpression($"^({AppRoles.Buyer}|{AppRoles.Seller})$",
         ErrorMessage = "Role must be 'Buyer' or 'Seller'.")]
         public string Role { get; init; } = AppRoles.Buyer;
+
+        public IFormFile? ProfileImage { get; set; }
+        public string? Bio { get; set; }
+
     }
 }
