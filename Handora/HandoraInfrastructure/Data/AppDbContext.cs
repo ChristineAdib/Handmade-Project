@@ -1,12 +1,14 @@
 using HandoraDomain.Models.AppUser;
 using HandoraDomain.Models.CartEntities;
 using HandoraDomain.Models.CouponEntities;
+using HandoraDomain.Models.FollowEntities;
 using HandoraDomain.Models.NotificationEntities;
 using HandoraDomain.Models.OrderEntity;
 using HandoraDomain.Models.PaymentEntities;
 using HandoraDomain.Models.ProductEntities;
 using HandoraDomain.Models.ShopEntities;
 using HandoraDomain.Models.WishListEntoties;
+using HandoraInfrastructure.Data.Configuration;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -30,8 +32,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Coupon> Coupons { get; set; }
+<<<<<<< HEAD
     public DbSet<HandoraDomain.Models.AppUser.Address> Addresses { get; set; }
     public DbSet<OtpVerification> OtpVerifications { get; set; }
+=======
+    public DbSet<Address> Addresses { get; set; }
+    public DbSet<Follow> Follows { get; set; }
+>>>>>>> main
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -39,5 +46,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        modelBuilder.ApplyConfiguration(new FollowConfiguration());
     }
 }
