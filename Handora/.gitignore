@@ -19,3 +19,45 @@ appsettings.Development.json
 Thumbs.db
 .idea/
 .vscode/
+bin/
+obj/
+
+# HandoraApi
+HandoraApi/bin/
+HandoraApi/obj/
+HandoraApi/bin/Debug/
+HandoraApi/bin/Release/
+HandoraApi/obj/Debug/
+HandoraApi/obj/Release/
+
+# HandoraMVC
+HandoraMVC/bin/
+HandoraMVC/obj/
+HandoraMVC/bin/Debug/
+HandoraMVC/bin/Release/
+HandoraMVC/obj/Debug/
+HandoraMVC/obj/Release/
+
+# HandoraDomain
+HandoraDomain/bin/
+HandoraDomain/obj/
+HandoraDomain/bin/Debug/
+HandoraDomain/bin/Release/
+HandoraDomain/obj/Debug/
+HandoraDomain/obj/Release/
+
+# HandoraInfrastructure
+HandoraInfrastructure/bin/
+HandoraInfrastructure/obj/
+HandoraInfrastructure/bin/Debug/
+HandoraInfrastructure/bin/Release/
+HandoraInfrastructure/obj/Debug/
+HandoraInfrastructure/obj/Release/
+
+# HandoraApplication
+HandoraApplication/bin/
+HandoraApplication/obj/
+HandoraApplication/bin/Debug/
+HandoraApplication/bin/Release/
+HandoraApplication/obj/Debug/
+HandoraApplication/obj/Release/
