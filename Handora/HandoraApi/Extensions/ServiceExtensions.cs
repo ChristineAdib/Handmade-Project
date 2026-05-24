@@ -15,6 +15,7 @@ namespace HandoraApi.Extensions
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IFileService, FileService>();
+            services.AddScoped<ICartService, CartService>();
             return services;
         }
     }
