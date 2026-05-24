@@ -24,6 +24,6 @@ namespace HandoraDomain.Models.CouponEntities
         public Shop Shop { get; set; } = null!;
 
         // One coupon can be used across many orders
-        public ICollection<Order> Orders { get; set; } = new List<Order>();
+        public ICollection<Order> Orders { get; set; } = [];
     }
 }
