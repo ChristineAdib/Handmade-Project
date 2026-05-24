@@ -1,4 +1,5 @@
 using HandoraDomain.Models.CartEntities;
+using HandoraDomain.Models.FollowEntities;
 using HandoraDomain.Models.NotificationEntities;
 using HandoraDomain.Models.OrderEntity;
 using HandoraDomain.Models.PaymentEntities;
@@ -23,6 +24,8 @@ public class User : IdentityUser
     public string? UpdatedBy { get; set; }
     public string Token { get; set; } = string.Empty;
     public bool IsBanned { get; set; }
+    public bool IsEmailVerified { get; set; } = false;
+    public DateTime? EmailVerifiedAt { get; set; }
 
     // Navigation Properties
     public ICollection<Address> Addresses { get; set; } = new List<Address>();
@@ -40,4 +43,5 @@ public class User : IdentityUser
 
 
     public ICollection<SellerBalanceTransaction> SellerBalanceTransactions { get; set; } = [];
+    public ICollection<Follow> Following { get; set; } = [];
 }
