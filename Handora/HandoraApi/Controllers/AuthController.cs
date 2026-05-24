@@ -1,5 +1,6 @@
 ﻿using HandoraApplication.DTOs.AuthDTOs;
 using HandoraApplication.IServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,11 +19,22 @@ namespace HandoraApi.Controllers
             _authService = authService;
         }
 
+        private List<string> ResolveImageUrls(List<string> relativePaths)
+        {
+            var images = relativePaths?.Select(p => $"{Request.Scheme}://{Request.Host}{p}").ToList();
+            return images;
+        }
+        private string ResolveImageUrl(string relativePath)
+        {
+            var img = $"{Request.Scheme}://{Request.Host}{relativePath}";
+            return img;
+        }
+
         [HttpPost("register")]
         [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Register(
-            [FromBody] RegisterDto dto,
+            [FromForm] RegisterDto dto,
             CancellationToken ct)
         {
             var result = await _authService.RegisterAsync(dto, ct);
@@ -61,5 +73,55 @@ namespace HandoraApi.Controllers
             var result = await _authService.LoginAsync(dto, ct);
             return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Login successful."));
         }
+
+        // GET api/auth/users
+        [HttpGet("users")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<GetUserDto>>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAll(CancellationToken ct)
+        {
+            var users = await _authService.GetAllUsersAsync(ct);
+
+            foreach (var user in users)
+                user.ProfileImage = ResolveImageUrl(user.ProfileImage);
+
+            return Ok(ApiResponse<IEnumerable<GetUserDto>>.Ok(users, "Users retrieved successfully."));
+        }
+
+        // GET api/auth/users/{id}
+        [HttpGet("users/{id}")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<GetUserDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetById(string id, CancellationToken ct)
+        {
+            var user = await _authService.GetUserByIdAsync(id, ct);
+            user.ProfileImage = ResolveImageUrl(user.ProfileImage);
+            return Ok(ApiResponse<GetUserDto>.Ok(user, "User retrieved successfully."));
+        }
+
+        // PUT api/auth/users/{id}
+        [HttpPut("users/{id}")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<GetUserDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Update(string id, [FromForm] UpdateUserDto dto, CancellationToken ct)
+        {
+            var user = await _authService.UpdateUserAsync(id, dto, ct);
+            user.ProfileImage = ResolveImageUrl(user.ProfileImage);
+            return Ok(ApiResponse<GetUserDto>.Ok(user, "User updated successfully."));
+        }
+
+        // DELETE api/auth/users/{id}
+        [HttpDelete("users/{id}")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete(string id, CancellationToken ct)
+        {
+            await _authService.DeleteUserAsync(id, ct);
+            return Ok(ApiResponse<object>.Ok(null, "User deleted successfully."));
+        }
     }
 }
+

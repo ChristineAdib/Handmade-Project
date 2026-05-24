@@ -17,6 +17,7 @@ namespace HandoraDomain.Interfaces
         Task<IList<string>> GetRolesAsync(User user);
         Task<IdentityResult> UpdateAsync(User user, CancellationToken ct = default);
         Task AddToRoleAsync(User user, string role);
-
+        Task<IEnumerable<User>> GetAllAsync(CancellationToken ct = default);
+        Task<IdentityResult> DeleteAsync(User user, CancellationToken ct = default);
     }
 }

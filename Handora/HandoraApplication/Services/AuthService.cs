@@ -1,4 +1,5 @@
 ﻿using HandoraApplication.DTOs.AuthDTOs;
+using HandoraApplication.Helpers;
 using HandoraApplication.Helpers.AuthHelper;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
@@ -21,26 +22,33 @@ namespace HandoraApplication.Services
         private readonly ILogger<AuthService> _logger;
         private const int OTP_EXPIRY_MINUTES = 5;
         private const int OTP_LENGTH = 6;
+        private readonly ImageHelper _imageHelper;
 
         public AuthService(
             IAuthRepository authRepo,
             IOtpRepository otpRepo,
             IEmailService emailService,
             JwtHelper jwtHelper,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            ImageHelper imageHelper)
         {
             _authRepo = authRepo;
             _otpRepo = otpRepo;
             _emailService = emailService;
             _jwtHelper = jwtHelper;
             _logger = logger;
+            _imageHelper = imageHelper;
         }
 
-        public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto, CancellationToken ct = default)
+        public async Task<AuthResponseDto> RegisterAsync( RegisterDto dto, CancellationToken ct = default)
         {
             var existing = await _authRepo.GetByEmailAsync(dto.Email, ct);
             if (existing is not null)
                 throw new AuthException("An account with this email already exists.");
+
+            string? profilePictureUrl = null;
+            if (dto.ProfileImage is not null)
+                profilePictureUrl = await _imageHelper.SaveImageAsync(dto.ProfileImage);
 
             var user = new User
             {
@@ -50,9 +58,12 @@ namespace HandoraApplication.Services
                 PhoneNumber = dto.PhoneNumber,
                 CreatedAt = DateTime.UtcNow,
                 Token = string.Empty,
-                IsEmailVerified = false
+                IsEmailVerified = false,
+                Bio = dto.Bio,
+                ProfileImage = profilePictureUrl
             };
 
+            
             var result = await _authRepo.CreateAsync(user, dto.Password, ct);
 
             if (!result.Succeeded)
@@ -223,5 +234,74 @@ namespace HandoraApplication.Services
                 Roles = roles
             };
         }
+
+        public async Task<IEnumerable<GetUserDto>> GetAllUsersAsync(CancellationToken ct = default)
+        {
+            var users = await _authRepo.GetAllAsync(ct);
+            var result = new List<GetUserDto>();
+
+            foreach (var user in users)
+            {
+                var roles = await _authRepo.GetRolesAsync(user);
+                result.Add(MapToDto(user, roles));
+            }
+
+            return result;
+        }
+
+        public async Task<GetUserDto> GetUserByIdAsync(string id, CancellationToken ct = default)
+        {
+            var user = await _authRepo.GetByIdAsync(id, ct)
+                ?? throw new Exception("User not found.");
+
+            var roles = await _authRepo.GetRolesAsync(user);
+            return MapToDto(user, roles);
+        }
+
+        public async Task<GetUserDto> UpdateUserAsync(string id, UpdateUserDto dto, CancellationToken ct = default)
+        {
+            var user = await _authRepo.GetByIdAsync(id, ct)
+                ?? throw new Exception("User not found.");
+
+            if (dto.Name is not null) user.Name = dto.Name;
+            if (dto.PhoneNumber is not null) user.PhoneNumber = dto.PhoneNumber;
+            if (dto.Bio is not null) user.Bio = dto.Bio;
+
+            if (dto.ProfileImage is not null)
+            {
+                if (user.ProfileImage is not null)
+                    await _imageHelper.DeleteImage(user.ProfileImage);
+
+                user.ProfileImage = await _imageHelper.SaveImageAsync(dto.ProfileImage);
+            }
+
+            user.UpdatedAt = DateTime.UtcNow;
+            await _authRepo.UpdateAsync(user, ct);
+
+            var roles = await _authRepo.GetRolesAsync(user);
+            return MapToDto(user, roles);
+        }
+
+        public async Task DeleteUserAsync(string id, CancellationToken ct = default)
+        {
+            var user = await _authRepo.GetByIdAsync(id, ct)
+                ?? throw new Exception("User not found.");
+
+            await _authRepo.DeleteAsync(user, ct);
+        }
+
+        private static GetUserDto MapToDto(User user, IList<string> roles) => new()
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email!,
+            PhoneNumber = user.PhoneNumber,
+            ProfileImage = user.ProfileImage,
+            Bio = user.Bio,
+            IsActive = user.IsActive,
+            IsBanned = user.IsBanned,
+            CreatedAt = user.CreatedAt,
+            Roles = roles
+        };
     }
 }

@@ -37,5 +37,16 @@ namespace HandoraInfrastructure.Repositries_UOW
 
         public async Task<IdentityResult> UpdateAsync(User user, CancellationToken ct = default)
             => await _userManager.UpdateAsync(user);
+
+        public Task<IEnumerable<User>> GetAllAsync(CancellationToken ct = default)
+       => Task.FromResult<IEnumerable<User>>(
+           _userManager.Users.Where(u => !u.IsDeleted).ToList());
+
+        public async Task<IdentityResult> DeleteAsync(User user, CancellationToken ct = default)
+        {
+            user.IsDeleted = true;
+            user.DeletedAt = DateTime.UtcNow;
+            return await _userManager.UpdateAsync(user);
+        }
     }
 }
