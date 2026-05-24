@@ -1,6 +1,8 @@
 using HandoraApplication.DTOs.ProductDTOs;
 using HandoraApplication.DTOs.ReviewDTOs;
+using HandoraApplication.DTOs.WishlistDTOs;
 using HandoraDomain.Models.ProductEntities;
+using HandoraDomain.Models.WishListEntoties;
 using Mapster;
 
 namespace HandoraApplication.Mappers;
@@ -31,5 +33,20 @@ public class MapsterSettings
                 .Where(i => i.IsMain)
                 .Select(i => i.ImageUrl)
                 .FirstOrDefault() ?? src.Images.Select(i => i.ImageUrl).FirstOrDefault());
+
+        TypeAdapterConfig<WishList, WishListDto>.NewConfig()
+    .Map(dest => dest.Items, src => src.Items
+        .Where(i => !i.IsDeleted)
+        .Adapt<List<WishListItemDto>>());
+
+        TypeAdapterConfig<WishListItem, WishListItemDto>.NewConfig()
+            .Map(dest => dest.TitleEn, src => src.Product.TitleEn)
+            .Map(dest => dest.TitleAr, src => src.Product.TitleAr)
+            .Map(dest => dest.Price, src => src.Product.Price)
+            .Map(dest => dest.DiscountPrice, src => src.Product.DiscountPrice)
+            .Map(dest => dest.ImageUrl, src => src.Product.Images
+                .Where(i => i.IsMain)
+                .Select(i => i.ImageUrl)
+                .FirstOrDefault());
     }
 }
