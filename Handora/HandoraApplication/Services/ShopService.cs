@@ -4,6 +4,7 @@ using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.ProductEntities;
 using HandoraDomain.Models.ShopEntities;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandoraApplication.Services
@@ -11,21 +12,6 @@ namespace HandoraApplication.Services
     public class ShopService(IUnitOfWork unitOfWork) : IShopService
     {
         private readonly IUnitOfWork _uow = unitOfWork;
-
-        private static ShopDto ToDto(Shop s, int productCount = 0) => new()
-        {
-            Id = s.Id,
-            Name = s.Name,
-            DescriptionEn = s.DescriptionEn,
-            DescriptionAr = s.DescriptionAr,
-            Logo = s.Logo,
-            Rating = s.Rating,
-            ReviewCount = s.ReviewCount,
-            TotalSales = s.TotalSales,
-            IsVerified = s.IsVerified,
-            OwnerName = s.Owner?.Name ?? string.Empty,
-            ProductCount = productCount
-        };
 
         public async Task<Result<ShopDto>> GetShopById(Guid id)
         {
@@ -38,10 +24,10 @@ namespace HandoraApplication.Services
 
             return shop is null
                 ? Result<ShopDto>.Failure("Shop not found")
-                : Result<ShopDto>.Success(ToDto(shop));
+                : Result<ShopDto>.Success(shop.Adapt<ShopDto>());
         }
 
-        public async Task<Result<ShopDto>> GetShopWithProducts(Guid id)
+        public async Task<Result<ShopWithProductsDto>> GetShopWithProducts(Guid id)
         {
             var repo = _uow.Repository<Shop, Guid>();
             var query = await repo.GetAllAsNoTracking();
@@ -50,11 +36,13 @@ namespace HandoraApplication.Services
                 .Include(s => s.Owner)
                 .Include(s => s.Products.Where(p => !p.IsDeleted))
                     .ThenInclude(p => p.Images)
+                .Include(s => s.Products.Where(p => !p.IsDeleted))
+                    .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
 
             return shop is null
-                ? Result<ShopDto>.Failure("Shop not found")
-                : Result<ShopDto>.Success(ToDto(shop, shop.Products.Count));
+                ? Result<ShopWithProductsDto>.Failure("Shop not found")
+                : Result<ShopWithProductsDto>.Success(shop.Adapt<ShopWithProductsDto>());
         }
 
         public async Task<Result<ShopDto>> GetMyShop(string ownerId)
@@ -68,7 +56,7 @@ namespace HandoraApplication.Services
 
             return shop is null
                 ? Result<ShopDto>.Failure("You don't have a shop yet")
-                : Result<ShopDto>.Success(ToDto(shop));
+                : Result<ShopDto>.Success(shop.Adapt<ShopDto>());
         }
 
         public async Task<Result<ShopStatsDto>> GetShopStats(Guid id)
@@ -101,13 +89,14 @@ namespace HandoraApplication.Services
             var query = await repo.GetAllAsNoTracking();
 
             var shops = await query
-                .Where(s => !s.IsDeleted && s.IsVerified)
-                .OrderByDescending(s => s.Rating)
-                .ThenByDescending(s => s.ReviewCount)
-                .Take(count)
-                .ToListAsync();
+     .Include(s => s.Owner)
+     .Where(s => !s.IsDeleted && s.IsVerified)
+     .OrderByDescending(s => s.Rating)
+     .ThenByDescending(s => s.ReviewCount)
+     .Take(count)
+     .ToListAsync();
 
-            return Result<IEnumerable<ShopDto>>.Success(shops.Select(s => ToDto(s)));
+            return Result<IEnumerable<ShopDto>>.Success(shops.Adapt<IEnumerable<ShopDto>>());
         }
 
         public async Task<Result<IEnumerable<ShopDto>>> SearchShops(ShopFilterDto filter)
@@ -115,13 +104,15 @@ namespace HandoraApplication.Services
             var repo = _uow.Repository<Shop, Guid>();
             var query = await repo.GetAllAsNoTracking();
 
-            var shops = query.Where(s => !s.IsDeleted);
+            var shops = query
+     .Include(s => s.Owner)
+     .Where(s => !s.IsDeleted);
 
             if (!string.IsNullOrEmpty(filter.Search))
                 shops = shops.Where(s =>
                     s.Name.Contains(filter.Search) ||
-                    s.DescriptionEn!.Contains(filter.Search) ||
-                    s.DescriptionAr!.Contains(filter.Search));
+                    (s.DescriptionEn != null && s.DescriptionEn.Contains(filter.Search)) ||
+                    (s.DescriptionAr != null && s.DescriptionAr.Contains(filter.Search)));
 
             if (filter.MinRating.HasValue)
                 shops = shops.Where(s => s.Rating >= filter.MinRating.Value);
@@ -142,7 +133,7 @@ namespace HandoraApplication.Services
                 .Take(filter.PageSize)
                 .ToListAsync();
 
-            return Result<IEnumerable<ShopDto>>.Success(result.Select(s => ToDto(s)));
+            return Result<IEnumerable<ShopDto>>.Success(result.Adapt<IEnumerable<ShopDto>>());
         }
 
         public async Task<Result<ShopDto>> CreateShop(string ownerId, CreateShopDto dto)
@@ -174,15 +165,14 @@ namespace HandoraApplication.Services
             await repo.AddAsync(shop);
             await _uow.SaveChangesAsync();
 
-            return Result<ShopDto>.Success(ToDto(shop));
+            return Result<ShopDto>.Success(shop.Adapt<ShopDto>());
         }
 
         public async Task<Result<ShopDto>> UpdateShop(Guid id, string ownerId, UpdateShopDto dto)
         {
             var repo = _uow.Repository<Shop, Guid>();
-            var query = await repo.GetAllAsync();
 
-            var shop = await query
+            var shop = await (await repo.GetAllAsync())
                 .FirstOrDefaultAsync(s => s.Id == id && s.OwnerId == ownerId && !s.IsDeleted);
 
             if (shop is null)
@@ -207,15 +197,14 @@ namespace HandoraApplication.Services
             await repo.UpdateAsync(shop);
             await _uow.SaveChangesAsync();
 
-            return Result<ShopDto>.Success(ToDto(shop));
+            return Result<ShopDto>.Success(shop.Adapt<ShopDto>());
         }
 
         public async Task<Result> DeleteShop(Guid id, string ownerId)
         {
             var repo = _uow.Repository<Shop, Guid>();
-            var query = await repo.GetAllAsync();
 
-            var shop = await query
+            var shop = await (await repo.GetAllAsync())
                 .FirstOrDefaultAsync(s => s.Id == id && s.OwnerId == ownerId && !s.IsDeleted);
 
             if (shop is null)
