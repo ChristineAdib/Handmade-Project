@@ -43,7 +43,7 @@ namespace HandoraApi.Controllers
         }
 
         [Authorize(Roles = AppRoles.Seller)]
-        [HttpGet("my-shop")]
+        [HttpGet("myShop")]
         public async Task<IActionResult> GetMyShop()
         {
             var result = await _shopService.GetMyShop(CurrentUserId);
@@ -51,7 +51,7 @@ namespace HandoraApi.Controllers
         }
 
         [Authorize(Roles = AppRoles.Seller)]
-        [HttpGet("my-shop/stats")]
+        [HttpGet("myShop/stats")]
         public async Task<IActionResult> GetMyStats()
         {
             var shopResult = await _shopService.GetMyShop(CurrentUserId);
