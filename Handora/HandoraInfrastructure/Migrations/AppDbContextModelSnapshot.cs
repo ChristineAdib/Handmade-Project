@@ -226,6 +226,50 @@ namespace HandoraInfrastructure.Migrations
                     b.ToTable("Coupons", (string)null);
                 });
 
+            modelBuilder.Entity("HandoraDomain.Models.FollowEntities.Follow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FollowedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ShopId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShopId");
+
+                    b.HasIndex("UserId", "ShopId")
+                        .IsUnique();
+
+                    b.ToTable("Follows");
+                });
+
             modelBuilder.Entity("HandoraDomain.Models.NotificationEntities.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1430,6 +1474,25 @@ namespace HandoraInfrastructure.Migrations
                     b.Navigation("Shop");
                 });
 
+            modelBuilder.Entity("HandoraDomain.Models.FollowEntities.Follow", b =>
+                {
+                    b.HasOne("HandoraDomain.Models.ShopEntities.Shop", "Shop")
+                        .WithMany("Followers")
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HandoraDomain.Models.AppUser.User", "User")
+                        .WithMany("Following")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Shop");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("HandoraDomain.Models.NotificationEntities.Notification", b =>
                 {
                     b.HasOne("HandoraDomain.Models.AppUser.User", "User")
@@ -1835,6 +1898,8 @@ namespace HandoraInfrastructure.Migrations
 
                     b.Navigation("Coupons");
 
+                    b.Navigation("Followers");
+
                     b.Navigation("Policies");
 
                     b.Navigation("Products");
@@ -1852,6 +1917,8 @@ namespace HandoraInfrastructure.Migrations
                     b.Navigation("Addresses");
 
                     b.Navigation("Cart");
+
+                    b.Navigation("Following");
 
                     b.Navigation("Notifications");
 

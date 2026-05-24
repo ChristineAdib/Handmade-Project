@@ -15,6 +15,7 @@ public static class ModuleInfrastructureDependences
         service.AddScoped<IUnitOfWork, UnitOfWork>();
         service.Configure<PaymobSettings>(
         configuration.GetSection("Paymob"));
+        service.AddScoped<IOtpRepository, OtpRepository>();
         return service;
     }
 }

@@ -16,6 +16,10 @@ public static class ModuleApplicationDependences
         services.AddScoped<IPayoutService, PayoutService>();
         services.AddScoped<IEscrowService, EscrowService>();
         services.AddScoped<ICommissionService, CommissionService>();
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IShopService, ShopService>();
+        services.AddScoped<ISellerService, SellerService>();
+        services.AddScoped<IFollowService, FollowService>();
         return services;
     }
 }

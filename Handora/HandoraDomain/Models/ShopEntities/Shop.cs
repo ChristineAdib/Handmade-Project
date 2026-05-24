@@ -1,6 +1,7 @@
 ﻿using HandoraDomain.Models.AppUser;
 using HandoraDomain.Models.CouponEntities;
 using HandoraDomain.Models.PaymentEntities;
+using HandoraDomain.Models.FollowEntities;
 using HandoraDomain.Models.ProductEntities;
 using System;
 using System.Collections.Generic;
@@ -45,5 +46,6 @@ namespace HandoraDomain.Models.ShopEntities
 
         public ICollection<SellerBalanceTransaction> BalanceTransactions { get; set; } = [];
         public ICollection<WithdrawalRequest> WithdrawalRequests { get; set; } = [];
+        public ICollection<Follow> Followers { get; set; } = [];
     }
 }
