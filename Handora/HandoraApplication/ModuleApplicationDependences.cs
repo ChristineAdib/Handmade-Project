@@ -14,6 +14,7 @@ public static class ModuleApplicationDependences
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IShopService, ShopService>();
         services.AddScoped<ISellerService, SellerService>();
+        services.AddScoped<IFollowService, FollowService>();
         return services;
     }
 }
