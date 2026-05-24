@@ -10,7 +10,9 @@ public static class ModuleInfrastructureDependences
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection service)
     {
         service.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
+        service.AddScoped<IProductRepository, ProductRepository>();
         service.AddScoped<IUnitOfWork, UnitOfWork>();
+        service.AddScoped<IOtpRepository, OtpRepository>();
         return service;
     }
 }

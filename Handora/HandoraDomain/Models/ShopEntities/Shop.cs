@@ -1,5 +1,6 @@
 ﻿using HandoraDomain.Models.AppUser;
 using HandoraDomain.Models.CouponEntities;
+using HandoraDomain.Models.FollowEntities;
 using HandoraDomain.Models.ProductEntities;
 using System;
 using System.Collections.Generic;
@@ -31,5 +32,6 @@ namespace HandoraDomain.Models.ShopEntities
         public ICollection<Product> Products { get; set; } = [];
         public ICollection<ShopPolicy> Policies { get; set; } = [];
         public ICollection<Coupon> Coupons { get; set; } = [];
+        public ICollection<Follow> Followers { get; set; } = [];
     }
 }
