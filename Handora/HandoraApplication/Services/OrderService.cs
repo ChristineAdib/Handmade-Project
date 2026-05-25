@@ -91,7 +91,7 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
         }
 
         // 5. Create Order
-        var shippingAddress = new Address(dto.FirstName, dto.LastName, dto.Street, dto.City, dto.Country);
+        var shippingAddress = new OrderShippingAddress(dto.FirstName, dto.LastName, dto.Street, dto.City, dto.Country);
 
         var order = new Order
         {

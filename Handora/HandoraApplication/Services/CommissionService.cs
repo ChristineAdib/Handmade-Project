@@ -6,11 +6,11 @@ public class CommissionService : ICommissionService
 {
     public decimal CalculateCommission(decimal amount, decimal rate)
     {
-        throw new NotImplementedException();
+        return Math.Round(amount * rate, 2);
     }
 
     public decimal CalculateSellerNet(decimal amount, decimal commission)
     {
-        throw new NotImplementedException();
+        return Math.Round(amount - commission, 2);
     }
 }

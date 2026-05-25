@@ -1736,7 +1736,6 @@ namespace HandoraInfrastructure.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders");
                             b1.ToTable("OrderShippingAddresses");
 
                             b1.WithOwner()
