@@ -1736,11 +1736,8 @@ namespace HandoraInfrastructure.Migrations
 
                             b1.HasKey("OrderId");
 
-<<<<<<< HEAD
                             b1.ToTable("Orders");
-=======
                             b1.ToTable("OrderShippingAddresses");
->>>>>>> main
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
