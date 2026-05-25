@@ -33,10 +33,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Coupon> Coupons { get; set; }
-<<<<<<< HEAD
     public DbSet<HandoraDomain.Models.AppUser.Address> Addresses { get; set; }
     public DbSet<OtpVerification> OtpVerifications { get; set; }
-=======
     public DbSet<OrderShippingAddress> OrderShippingAddresses { get; set; }
 
     public DbSet<SellerBalanceTransaction> SellerBalanceTransactions { get; set; }
@@ -46,7 +44,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
     public DbSet<OtpVerification> OtpVerifications { get; set; }
     public DbSet<Address> Addresses { get; set; }
     public DbSet<Follow> Follows { get; set; }
->>>>>>> main
 
     //public DbSet<Address> Addresses { get; set; }
     public DbSet<Follow> Follows { get; set; }
