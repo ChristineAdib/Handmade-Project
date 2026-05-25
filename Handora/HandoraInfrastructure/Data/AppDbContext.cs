@@ -1,5 +1,6 @@
 using HandoraDomain.Models.AppUser;
 using HandoraDomain.Models.CartEntities;
+using HandoraDomain.Models.ChatEntities;
 using HandoraDomain.Models.CouponEntities;
 using HandoraDomain.Models.FollowEntities;
 using HandoraDomain.Models.NotificationEntities;
@@ -32,14 +33,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Coupon> Coupons { get; set; }
-<<<<<<< HEAD
     public DbSet<HandoraDomain.Models.AppUser.Address> Addresses { get; set; }
     public DbSet<OtpVerification> OtpVerifications { get; set; }
-=======
-    public DbSet<Address> Addresses { get; set; }
-    public DbSet<Follow> Follows { get; set; }
->>>>>>> main
 
+    //public DbSet<Address> Addresses { get; set; }
+    public DbSet<Follow> Follows { get; set; }
+    // في AppDbContext.cs
+    public DbSet<Conversation> Conversations { get; set; }
+    public DbSet<Message> Messages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

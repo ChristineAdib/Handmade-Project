@@ -10,11 +10,7 @@ namespace HandoraInfrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "IsBanned",
-                table: "AspNetUsers",
-                type: "bit",
-                nullable: true);
+            
 
             migrationBuilder.AddColumn<string>(
                 name: "Token",
@@ -26,9 +22,7 @@ namespace HandoraInfrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "IsBanned",
-                table: "AspNetUsers");
+            
 
             migrationBuilder.DropColumn(
                 name: "Token",
