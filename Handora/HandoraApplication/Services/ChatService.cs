@@ -1,5 +1,6 @@
 ﻿using HandoraApplication.DTOs.ChatDTOs;
 using HandoraApplication.Helpers.AuthHelper;
+using HandoraApplication.Hubs;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.ChatEntities;
