@@ -1,3 +1,4 @@
+using HandoraApi.Hubs;
 using HandoraApi.Middleware;
 
 namespace HandoraApi.Extensions;
@@ -13,5 +14,7 @@ public static class BuilderExtension
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
+        app.MapHub<NotificationHub>("/hubs/notifications");
+        app.MapHub<ChatHub>("/hubs/chat");
     }
 }
