@@ -12,6 +12,11 @@ public static class ModuleApplicationDependences
         MapsterSettings.Configure();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IPayoutService, PayoutService>();
+        services.AddScoped<IEscrowService, EscrowService>();
+        services.AddScoped<ICommissionService, CommissionService>();
+        services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IShopService, ShopService>();
         services.AddScoped<ISellerService, SellerService>();
         services.AddScoped<IFollowService, FollowService>();
