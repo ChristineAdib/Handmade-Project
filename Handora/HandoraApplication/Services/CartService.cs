@@ -71,7 +71,11 @@ namespace HandoraApplication.Services
 
             if (existingItem is not null)
             {
-                existingItem.Quantity += dto.Quantity;
+                var newQuantity = existingItem.Quantity + dto.Quantity;
+                if (product.Quantity < newQuantity)
+                    return Result<CartDto>.Failure("Not enough stock");
+
+                existingItem.Quantity = newQuantity;
             }
             else
             {
