@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace HandoraDomain.Models.OrderEntity
 {
-    public class Address
+    public class OrderShippingAddress
     {
-        public Address()
+        public OrderShippingAddress()
         {
             
         }
-        public Address(string firstName, string lastName, string street, string city, string country)
+        public OrderShippingAddress(string firstName, string lastName, string street, string city, string country)
         {
             FirstName = firstName;
             LastName = lastName;

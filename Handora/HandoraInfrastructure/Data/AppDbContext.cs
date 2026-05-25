@@ -1,3 +1,4 @@
+using HandoraDomain.Models.AppUser;
 using HandoraDomain.Models.CartEntities;
 using HandoraDomain.Models.CouponEntities;
 using HandoraDomain.Models.FollowEntities;
@@ -31,6 +32,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Coupon> Coupons { get; set; }
+    public DbSet<OrderShippingAddress> OrderShippingAddresses { get; set; }
+
+    public DbSet<SellerBalanceTransaction> SellerBalanceTransactions { get; set; }
+
+    public DbSet<WithdrawalRequest> WithdrawalRequests { get; set; }
+    public DbSet<HandoraDomain.Models.AppUser.Address> Addresses { get; set; }
+    public DbSet<OtpVerification> OtpVerifications { get; set; }
     public DbSet<Address> Addresses { get; set; }
     public DbSet<Follow> Follows { get; set; }
 
@@ -40,6 +48,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        modelBuilder.Entity<OrderItem>()
+            .OwnsOne(o => o.Product);
         modelBuilder.ApplyConfiguration(new FollowConfiguration());
     }
 }
