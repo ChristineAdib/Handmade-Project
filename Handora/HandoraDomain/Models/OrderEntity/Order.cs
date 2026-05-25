@@ -9,25 +9,42 @@ using System.Threading.Tasks;
 
 namespace HandoraDomain.Models.OrderEntity
 {
-    public class Order:BaseEntity<Guid>
+    public class Order : BaseEntity<Guid>
     {
         public Order()
         {
 
         }
-        public Order(string buyerEmail, Address shippingAddress, DeliveryMethod deliveryMethod, ICollection<OrderItem> items, decimal subTotal, string paymentIntentId)
+        public Order(
+    string buyerEmail,
+    OrderShippingAddress shippingAddress,
+    DeliveryMethod deliveryMethod,
+    ICollection<OrderItem> items,
+    decimal subTotal,
+    string? paymentIntentId)
         {
             BuyerEmail = buyerEmail;
             ShippingAddress = shippingAddress;
             DeliveryMethod = deliveryMethod;
             Items = items;
             SubTotal = subTotal;
+            PaymentIntentId = paymentIntentId;
+            OrderDate = DateTime.UtcNow;
         }
+        // New Paymob-related fields
+        public string? PaymentIntentId { get; set; }         // store Paymob payment intent ID
+        public bool IsFundsReleased { get; set; } = false;  // whether 14-day hold is released
+        public DateTime? DeliveredAt { get; set; }          // timestamp when order was marked delivered
+        public decimal TotalAmount { get; set; }
+        public decimal SellerAmount { get; set; }
+        public decimal PlatformCommission { get; set; }
+
+
 
         public string BuyerEmail { get; set; }
-        public DateTime OrderDate { get; set; } = DateTime.Now;
+        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
-        public Address ShippingAddress { get; set; }
+        public OrderShippingAddress ShippingAddress { get; set; }
         public Guid DeliveryMethodId { get; set; }
         public DeliveryMethod DeliveryMethod { get; set; }
         public ICollection<OrderItem> Items { get; set; } = new HashSet<OrderItem>();
