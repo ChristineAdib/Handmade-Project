@@ -23,6 +23,9 @@ namespace HandoraInfrastructure.Repositries_UOW
         public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
             => await _userManager.FindByEmailAsync(email);
 
+        public async Task<User?> GetByIdAsync(string id, CancellationToken ct = default)
+            => await _userManager.FindByIdAsync(id);
+
         public async Task<IdentityResult> CreateAsync(User user, string password, CancellationToken ct = default)
             => await _userManager.CreateAsync(user, password);
 
@@ -34,5 +37,16 @@ namespace HandoraInfrastructure.Repositries_UOW
 
         public async Task<IdentityResult> UpdateAsync(User user, CancellationToken ct = default)
             => await _userManager.UpdateAsync(user);
+
+        public Task<IEnumerable<User>> GetAllAsync(CancellationToken ct = default)
+       => Task.FromResult<IEnumerable<User>>(
+           _userManager.Users.Where(u => !u.IsDeleted).ToList());
+
+        public async Task<IdentityResult> DeleteAsync(User user, CancellationToken ct = default)
+        {
+            user.IsDeleted = true;
+            user.DeletedAt = DateTime.UtcNow;
+            return await _userManager.UpdateAsync(user);
+        }
     }
 }

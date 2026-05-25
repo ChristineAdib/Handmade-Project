@@ -4,6 +4,8 @@ using HandoraApplication.DTOs.WishlistDTOs;
 using HandoraDomain.Models.ProductEntities;
 using HandoraDomain.Models.WishListEntoties;
 using Mapster;
+using HandoraApplication.DTOs.ShopDTOs;
+using HandoraDomain.Models.ShopEntities;
 
 namespace HandoraApplication.Mappers;
 
@@ -33,6 +35,16 @@ public class MapsterSettings
                 .Where(i => i.IsMain)
                 .Select(i => i.ImageUrl)
                 .FirstOrDefault() ?? src.Images.Select(i => i.ImageUrl).FirstOrDefault());
+
+        TypeAdapterConfig<Shop, ShopDto>.NewConfig()
+    .Map(dest => dest.OwnerName, src => src.Owner.Name)
+    .Map(dest => dest.ProductCount, src => src.Products.Count(p => !p.IsDeleted));
+
+        TypeAdapterConfig<Shop, ShopWithProductsDto>.NewConfig()
+            .Map(dest => dest.OwnerName, src => src.Owner.Name)
+            .Map(dest => dest.Products, src => src.Products
+                .Where(p => !p.IsDeleted)
+                .Adapt<List<ProductSummaryDto>>());
 
         TypeAdapterConfig<WishList, WishListDto>.NewConfig()
     .Map(dest => dest.Items, src => src.Items

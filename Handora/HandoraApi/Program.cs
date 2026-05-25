@@ -15,9 +15,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.ConfigureDbContext(builder.Configuration);
 builder.Services.ConfigureIdentity();
 builder.Services.ConfigureAuthentication(builder.Configuration);
-builder.Services.AddInfrastructureServices().AddReposetoriesServices();
+builder.Services.AddInfrastructureServices(builder.Configuration).AddReposetoriesServices();
 builder.Services.ConfigureCors();
 builder.Services.AddApplicationServices();
+builder.Services.ConfigureRedis(builder.Configuration);
 
 var app = builder.Build();
 
