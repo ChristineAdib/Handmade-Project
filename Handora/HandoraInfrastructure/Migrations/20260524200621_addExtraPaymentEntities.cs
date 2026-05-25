@@ -143,17 +143,17 @@ namespace HandoraInfrastructure.Migrations
                 nullable: false,
                 defaultValue: "");
 
-            migrationBuilder.AddColumn<bool>(
-                name: "IsBanned",
-                table: "AspNetUsers",
-                type: "bit",
-                nullable: true);
+            //migrationBuilder.AddColumn<bool>(
+            //    name: "IsBanned",
+            //    table: "AspNetUsers",
+            //    type: "bit",
+            //    nullable: true);
 
-            migrationBuilder.AddColumn<string>(
-                name: "Token",
-                table: "AspNetUsers",
-                type: "nvarchar(max)",
-                nullable: true);
+            //migrationBuilder.AddColumn<string>(
+            //    name: "Token",
+            //    table: "AspNetUsers",
+            //    type: "nvarchar(max)",
+            //    nullable: true);
 
             migrationBuilder.CreateTable(
                 name: "OrderShippingAddresses",
@@ -376,13 +376,13 @@ namespace HandoraInfrastructure.Migrations
                 name: "Product_ProductName",
                 table: "OrderItems");
 
-            migrationBuilder.DropColumn(
-                name: "IsBanned",
-                table: "AspNetUsers");
+            //migrationBuilder.DropColumn(
+            //    name: "IsBanned",
+            //    table: "AspNetUsers");
 
-            migrationBuilder.DropColumn(
-                name: "Token",
-                table: "AspNetUsers");
+            //migrationBuilder.DropColumn(
+            //    name: "Token",
+            //    table: "AspNetUsers");
 
             migrationBuilder.RenameColumn(
                 name: "ShopId",

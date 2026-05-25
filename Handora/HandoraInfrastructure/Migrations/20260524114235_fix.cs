@@ -10,17 +10,17 @@ namespace HandoraInfrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "IsBanned",
-                table: "AspNetUsers",
-                type: "bit",
-                nullable: true);
+        //    migrationBuilder.AddColumn<bool>(
+        //        name: "IsBanned",
+        //        table: "AspNetUsers",
+        //        type: "bit",
+        //        nullable: true);
 
-            migrationBuilder.AddColumn<string>(
-                name: "Token",
-                table: "AspNetUsers",
-                type: "nvarchar(max)",
-                nullable: true);
+        //    migrationBuilder.AddColumn<string>(
+        //        name: "Token",
+        //        table: "AspNetUsers",
+        //        type: "nvarchar(max)",
+        //        nullable: true);
         }
 
         /// <inheritdoc />
