@@ -1,4 +1,5 @@
 ﻿using HandoraApi.Services;
+using HandoraApplication.Helpers;
 using HandoraApplication.Helpers.AuthHelper;
 using HandoraApplication.IServices;
 using HandoraApplication.Services;
@@ -16,6 +17,11 @@ namespace HandoraApi.Extensions
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<ICartService, CartService>();
+            services.AddScoped<ImageHelper>(provider =>
+            {
+                var env = provider.GetRequiredService<IWebHostEnvironment>();
+                return new ImageHelper(env.WebRootPath);
+            });
             return services;
         }
     }
