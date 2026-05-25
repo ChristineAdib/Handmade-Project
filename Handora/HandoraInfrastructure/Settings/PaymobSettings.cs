@@ -8,5 +8,6 @@ namespace HandoraInfrastructure.Settings
         public string SecretKey { get; set; } = string.Empty;
         public string Hmac { get; set; } = string.Empty;
         public int IntegrationId { get; set; }
+        public int IframeId { get; set; }
     }
 }

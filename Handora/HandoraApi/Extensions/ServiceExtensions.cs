@@ -2,6 +2,7 @@
 using HandoraApi.Services;
 using HandoraApplication.Helpers;
 using HandoraApplication.Helpers.AuthHelper;
+using HandoraApplication.Hubs;
 using HandoraApplication.IServices;
 using HandoraApplication.Services;
 using HandoraDomain.Interfaces;

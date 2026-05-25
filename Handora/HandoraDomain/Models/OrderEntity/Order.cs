@@ -21,18 +21,19 @@ namespace HandoraDomain.Models.OrderEntity
     DeliveryMethod deliveryMethod,
     ICollection<OrderItem> items,
     decimal subTotal,
-    string? paymentIntentId)
+    string? paymentToken)
         {
             BuyerEmail = buyerEmail;
             ShippingAddress = shippingAddress;
             DeliveryMethod = deliveryMethod;
             Items = items;
             SubTotal = subTotal;
-            PaymentIntentId = paymentIntentId;
+            PaymentIntentId = paymentToken;
             OrderDate = DateTime.UtcNow;
         }
-        // New Paymob-related fields
-        public string? PaymentIntentId { get; set; }         // store Paymob payment intent ID
+        // Paymob fields
+        public string? PaymentIntentId { get; set; }         // Paymob payment token (iframe key)
+        public string? PaymobOrderId { get; set; }           // Paymob order ID (for webhook)
         public bool IsFundsReleased { get; set; } = false;  // whether 14-day hold is released
         public DateTime? DeliveredAt { get; set; }          // timestamp when order was marked delivered
         public decimal TotalAmount { get; set; }

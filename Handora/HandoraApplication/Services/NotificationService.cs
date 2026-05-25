@@ -3,24 +3,16 @@ using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.NotificationEntities;
 using Microsoft.Extensions.Logging;
-
 namespace HandoraApplication.Services
 {
-    public sealed class NotificationService : INotificationService
+    public sealed class NotificationService(
+        INotificationRepository repo,
+        INotificationHubContext hubContext,
+        ILogger<NotificationService> logger) : INotificationService
     {
-        private readonly INotificationRepository _repo;
-        private readonly INotificationHubContext _hubContext; 
-        private readonly ILogger<NotificationService> _logger;
-
-        public NotificationService(
-            INotificationRepository repo,
-            INotificationHubContext hubContext, 
-            ILogger<NotificationService> logger)
-        {
-            _repo = repo;
-            _hubContext = hubContext;
-            _logger = logger;
-        }
+        private readonly INotificationRepository _repo = repo;
+        private readonly INotificationHubContext _hubContext = hubContext; 
+        private readonly ILogger<NotificationService> _logger = logger;
 
         public async Task SendAsync(SendNotificationDto dto, CancellationToken ct = default)
         {
