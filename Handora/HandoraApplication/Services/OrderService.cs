@@ -54,7 +54,8 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
             var orderItem = new OrderItem(productItemOrdered, cartItem.Quantity, unitPrice)
             {
-                Id = Guid.NewGuid()
+                Id = Guid.NewGuid(),
+                ShopId = product.ShopId
             };
 
             orderItems.Add(orderItem);
@@ -107,6 +108,11 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
             UserId = userId,
             Status = OrderStatus.Pending
         };
+
+        var deliveryCost = deliveryMethod.Cost;
+        order.TotalAmount = subTotal + deliveryCost - discountAmount;
+        order.PlatformCommission = order.TotalAmount * 0.10m;
+        order.SellerAmount = order.TotalAmount - order.PlatformCommission;
 
         // 6. Deduct product stock
         var productRepo = _unitOfWork.Repository<Product, Guid>();

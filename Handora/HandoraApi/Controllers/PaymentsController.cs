@@ -15,10 +15,12 @@ namespace HandoraApi.Controllers;
 [Route("api/[controller]")]
 public class PaymentsController(
     IPaymentService paymentService,
-    IUnitOfWork unitOfWork) : ControllerBase
+    IUnitOfWork unitOfWork,
+    ILogger<PaymentsController> logger) : ControllerBase
 {
     private readonly IPaymentService _paymentService = paymentService;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ILogger<PaymentsController> _logger = logger;
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
     [Authorize(Roles = AppRoles.Buyer)]
@@ -59,6 +61,9 @@ public class PaymentsController(
         var hmacHeader = Request.Headers["X-Paymob-Signature"].FirstOrDefault()
                       ?? Request.Headers["x-paymob-signature"].FirstOrDefault()
                       ?? "";
+
+        _logger.LogInformation("Webhook RAW BODY: {Body}", body);
+        _logger.LogInformation("Webhook HMAC: {Hmac}", hmacHeader);
 
         var result = await _paymentService.VerifyWebhookAsync(body, hmacHeader);
 

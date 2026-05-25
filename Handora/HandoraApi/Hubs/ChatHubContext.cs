@@ -1,6 +1,5 @@
 ﻿using HandoraApplication.DTOs.ChatDTOs;
-using HandoraApplication.IServices;
-using HandoraDomain.Interfaces;
+using HandoraApplication.Hubs;
 using Microsoft.AspNetCore.SignalR;
 
 namespace HandoraApi.Hubs
