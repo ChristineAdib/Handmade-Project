@@ -40,13 +40,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
     public DbSet<SellerBalanceTransaction> SellerBalanceTransactions { get; set; }
 
     public DbSet<WithdrawalRequest> WithdrawalRequests { get; set; }
-    public DbSet<HandoraDomain.Models.AppUser.Address> Addresses { get; set; }
-    public DbSet<OtpVerification> OtpVerifications { get; set; }
-    public DbSet<Address> Addresses { get; set; }
     public DbSet<Follow> Follows { get; set; }
 
     //public DbSet<Address> Addresses { get; set; }
-    public DbSet<Follow> Follows { get; set; }
     // في AppDbContext.cs
     public DbSet<Conversation> Conversations { get; set; }
     public DbSet<Message> Messages { get; set; }
