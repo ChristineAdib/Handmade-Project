@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HandoraInfrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260524032943_UpdateFollowEntity")]
-    partial class UpdateFollowEntity
+    [Migration("20260525140631_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -72,7 +72,47 @@ namespace HandoraInfrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Address");
+                    b.ToTable("Addresses");
+                });
+
+            modelBuilder.Entity("HandoraDomain.Models.AppUser.OtpVerification", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OtpCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OtpVerifications");
                 });
 
             modelBuilder.Entity("HandoraDomain.Models.CartEntities.Cart", b =>
@@ -424,6 +464,9 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<Guid>("DeliveryMethodId")
                         .HasColumnType("uniqueidentifier");
 
@@ -434,6 +477,9 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsFundsReleased")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -441,10 +487,19 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("PaymentIntentId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("PlatformCommission")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("SellerAmount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -453,6 +508,9 @@ namespace HandoraInfrastructure.Migrations
 
                     b.Property<decimal>("SubTotal")
                         .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -505,11 +563,11 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<Guid?>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("ProductId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
+
+                    b.Property<Guid>("ShopId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -523,21 +581,27 @@ namespace HandoraInfrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.HasIndex("ProductId1");
+                    b.HasIndex("ShopId");
 
                     b.ToTable("OrderItems");
                 });
 
-            modelBuilder.Entity("HandoraDomain.Models.OrderEntity.ProductItemOrdered", b =>
+            modelBuilder.Entity("HandoraDomain.Models.PaymentEntities.Payment", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Currency")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("DeletedAt")
@@ -546,15 +610,31 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("PictureUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
 
-                    b.Property<Guid>("ProductId")
+                    b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ProductName")
-                        .IsRequired()
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Provider")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProviderOrderId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProviderTransactionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RawResponse")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TransactionId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -565,10 +645,79 @@ namespace HandoraInfrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductItemOrdered");
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.ToTable("Payments");
                 });
 
-            modelBuilder.Entity("HandoraDomain.Models.PaymentEntities.Payment", b =>
+            modelBuilder.Entity("HandoraDomain.Models.PaymentEntities.SellerBalanceTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("CommissionAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("GrossAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("HoldUntil")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsReleased")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("NetAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReleasedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SellerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("ShopId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("SellerId");
+
+                    b.HasIndex("ShopId");
+
+                    b.ToTable("SellerBalanceTransactions");
+                });
+
+            modelBuilder.Entity("HandoraDomain.Models.PaymentEntities.WithdrawalRequest", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -589,19 +738,23 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("Method")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime?>("PaidAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SellerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("ShopId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("TransactionId")
+                    b.Property<string>("TransferReference")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -612,10 +765,11 @@ namespace HandoraInfrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId")
-                        .IsUnique();
+                    b.HasIndex("SellerId");
 
-                    b.ToTable("Payments");
+                    b.HasIndex("ShopId");
+
+                    b.ToTable("WithdrawalRequests");
                 });
 
             modelBuilder.Entity("HandoraDomain.Models.ProductEntities.Category", b =>
@@ -857,6 +1011,12 @@ namespace HandoraInfrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("AvailableBalance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("CommissionRate")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -888,6 +1048,9 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("PendingBalance")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Rating")
                         .HasColumnType("decimal(18,2)");
@@ -1267,6 +1430,9 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("EmailVerifiedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -1279,6 +1445,9 @@ namespace HandoraInfrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -1403,7 +1572,7 @@ namespace HandoraInfrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("HandoraDomain.Models.OrderEntity.Address", "ShippingAddress", b1 =>
+                    b.OwnsOne("HandoraDomain.Models.OrderEntity.OrderShippingAddress", "ShippingAddress", b1 =>
                         {
                             b1.Property<Guid>("OrderId")
                                 .HasColumnType("uniqueidentifier");
@@ -1436,7 +1605,7 @@ namespace HandoraInfrastructure.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Addresses");
+                            b1.ToTable("OrderShippingAddresses");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
@@ -1464,15 +1633,42 @@ namespace HandoraInfrastructure.Migrations
                         .WithMany("OrderItems")
                         .HasForeignKey("ProductId");
 
-                    b.HasOne("HandoraDomain.Models.OrderEntity.ProductItemOrdered", "Product")
+                    b.HasOne("HandoraDomain.Models.ShopEntities.Shop", "Shop")
                         .WithMany()
-                        .HasForeignKey("ProductId1")
+                        .HasForeignKey("ShopId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsOne("HandoraDomain.Models.OrderEntity.ProductItemOrdered", "Product", b1 =>
+                        {
+                            b1.Property<Guid>("OrderItemId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("PictureUrl")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("ProductName")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("OrderItemId");
+
+                            b1.ToTable("OrderItems");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderItemId");
+                        });
+
                     b.Navigation("Order");
 
-                    b.Navigation("Product");
+                    b.Navigation("Product")
+                        .IsRequired();
+
+                    b.Navigation("Shop");
                 });
 
             modelBuilder.Entity("HandoraDomain.Models.PaymentEntities.Payment", b =>
@@ -1484,6 +1680,52 @@ namespace HandoraInfrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("HandoraDomain.Models.PaymentEntities.SellerBalanceTransaction", b =>
+                {
+                    b.HasOne("HandoraDomain.Models.OrderEntity.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HandoraDomain.Models.AppUser.User", "Seller")
+                        .WithMany("SellerBalanceTransactions")
+                        .HasForeignKey("SellerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HandoraDomain.Models.ShopEntities.Shop", "Shop")
+                        .WithMany("BalanceTransactions")
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Seller");
+
+                    b.Navigation("Shop");
+                });
+
+            modelBuilder.Entity("HandoraDomain.Models.PaymentEntities.WithdrawalRequest", b =>
+                {
+                    b.HasOne("HandoraDomain.Models.AppUser.User", "Seller")
+                        .WithMany()
+                        .HasForeignKey("SellerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HandoraDomain.Models.ShopEntities.Shop", "Shop")
+                        .WithMany("WithdrawalRequests")
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Seller");
+
+                    b.Navigation("Shop");
                 });
 
             modelBuilder.Entity("HandoraDomain.Models.ProductEntities.Category", b =>
@@ -1701,6 +1943,8 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("HandoraDomain.Models.ShopEntities.Shop", b =>
                 {
+                    b.Navigation("BalanceTransactions");
+
                     b.Navigation("Coupons");
 
                     b.Navigation("Followers");
@@ -1708,6 +1952,8 @@ namespace HandoraInfrastructure.Migrations
                     b.Navigation("Policies");
 
                     b.Navigation("Products");
+
+                    b.Navigation("WithdrawalRequests");
                 });
 
             modelBuilder.Entity("HandoraDomain.Models.WishListEntoties.WishList", b =>
@@ -1728,6 +1974,8 @@ namespace HandoraInfrastructure.Migrations
                     b.Navigation("Orders");
 
                     b.Navigation("Reviews");
+
+                    b.Navigation("SellerBalanceTransactions");
 
                     b.Navigation("Shop");
 

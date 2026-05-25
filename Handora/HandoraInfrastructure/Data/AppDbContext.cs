@@ -39,7 +39,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
     public DbSet<WithdrawalRequest> WithdrawalRequests { get; set; }
     public DbSet<HandoraDomain.Models.AppUser.Address> Addresses { get; set; }
     public DbSet<OtpVerification> OtpVerifications { get; set; }
-    public DbSet<Address> Addresses { get; set; }
     public DbSet<Follow> Follows { get; set; }
 
 
