@@ -22,6 +22,7 @@ namespace HandoraApi.Extensions
                 var env = provider.GetRequiredService<IWebHostEnvironment>();
                 return new ImageHelper(env.WebRootPath);
             });
+           services.AddScoped<IWishListService, WishListService>();
             return services;
         }
     }
