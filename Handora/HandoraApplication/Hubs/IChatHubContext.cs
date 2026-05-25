@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HandoraApplication.IServices
+namespace HandoraApplication.Hubs
 {
     public interface IChatHubContext
     {

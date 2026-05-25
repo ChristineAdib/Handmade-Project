@@ -1,0 +1,1210 @@
+{
+  "info": {
+    "name": "Handora API",
+    "description": "Complete API collection for Handora marketplace. All 58 endpoints across 14 controllers.\n\n## Authentication\n- Register → Verify OTP → Login (gets JWT token automatically saved)\n- Protected endpoints use `Authorization: Bearer {{token}}`\n\n## Variables\n- `baseUrl`: API base URL (default: http://localhost:5216)\n- `token`: Auto-set after login\n- `userId`, `orderId`, `productId`, `shopId`, `conversationId`: IDs for chaining requests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5216",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "shopId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conversationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "description": "Authentication endpoints - Register, Verify OTP, Login, and User Management",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('userId', jsonData.userId || jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "Name", "value": "John Doe", "type": "text" },
+                { "key": "Email", "value": "john@example.com", "type": "text" },
+                { "key": "Password", "value": "Password123!", "type": "text" },
+                { "key": "ConfirmPassword", "value": "Password123!", "type": "text" },
+                { "key": "PhoneNumber", "value": "+201234567890", "type": "text" },
+                { "key": "Role", "value": "Buyer", "type": "text", "description": "Buyer or Seller" },
+                { "key": "Bio", "value": "Handmade enthusiast", "type": "text" },
+                { "key": "ProfileImage", "value": "", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new user. Sends OTP to email. Supports Buyer and Seller roles."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"otpCode\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "verify-otp"]
+            },
+            "description": "Verify the OTP code sent to email after registration."
+          },
+          "response": []
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/resend-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "resend-otp"]
+            },
+            "description": "Resend a new OTP code to the user's email."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('token', jsonData.token || jsonData.accessToken);",
+                  "    pm.collectionVariables.set('userId', jsonData.userId || jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login with email and password. JWT token is automatically saved to `{{token}}` variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users [Admin]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "users"]
+            },
+            "description": "Get all users. Requires Admin role."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "users", "{{userId}}"]
+            },
+            "description": "Get user by ID. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "Name", "value": "John Updated", "type": "text" },
+                { "key": "PhoneNumber", "value": "+201234567891", "type": "text" },
+                { "key": "Bio", "value": "Updated bio", "type": "text" },
+                { "key": "ProfileImage", "value": "", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "users", "{{userId}}"]
+            },
+            "description": "Update user profile. Multipart form-data."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "users", "{{userId}}"]
+            },
+            "description": "Delete user by ID. Requires Admin role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🏪 Shops",
+      "description": "Shop management - create, update, search, and browse shops",
+      "item": [
+        {
+          "name": "Get Shop",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/{{shopId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shops", "{{shopId}}"]
+            },
+            "description": "Get shop details by ID. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Shop Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/{{shopId}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shops", "{{shopId}}", "products"]
+            },
+            "description": "Get all products for a shop. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Top Rated Shops",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/top?count=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shops", "top"],
+              "query": [
+                { "key": "count", "value": "10", "description": "Number of top shops to return" }
+              ]
+            },
+            "description": "Get top-rated shops. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Shops",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/search?search=&minRating=&isVerified=&sortBy=&pageNumber=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shops", "search"],
+              "query": [
+                { "key": "search", "value": "", "description": "Search by name" },
+                { "key": "minRating", "value": "", "description": "Minimum rating filter" },
+                { "key": "isVerified", "value": "", "description": "Filter by verified status" },
+                { "key": "sortBy", "value": "", "description": "Sort field" },
+                { "key": "pageNumber", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            },
+            "description": "Search shops with filters. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Shop [Seller]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/myShop",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shops", "myShop"]
+            },
+            "description": "Get current seller's shop. Requires Seller role."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Shop Stats [Seller]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/myShop/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shops", "myShop", "stats"]
+            },
+            "description": "Get statistics for current seller's shop. Requires Seller role."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Shop [Seller]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Handmade Shop\",\n  \"descriptionEn\": \"Beautiful handmade crafts\",\n  \"descriptionAr\": \"حرف يدوية جميلة\",\n  \"logo\": \"https://example.com/logo.png\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/shops",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shops"]
+            },
+            "description": "Create a new shop. Requires Seller role."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Shop [Seller]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Shop Name\",\n  \"descriptionEn\": \"Updated description\",\n  \"descriptionAr\": \"وصف محدث\",\n  \"logo\": \"https://example.com/new-logo.png\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/{{shopId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shops", "{{shopId}}"]
+            },
+            "description": "Update shop details. Requires Seller role."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Shop [Seller]",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/{{shopId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shops", "{{shopId}}"]
+            },
+            "description": "Delete a shop. Requires Seller role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📦 Products",
+      "description": "Product CRUD and browsing with filtering, sorting, and pagination",
+      "item": [
+        {
+          "name": "Get Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?search=&categoryId=&shopId=&minPrice=&maxPrice=&minRating=&sortBy=&sortDescending=false&pageNumber=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "search", "value": "", "description": "Search term" },
+                { "key": "categoryId", "value": "", "description": "Filter by category" },
+                { "key": "shopId", "value": "", "description": "Filter by shop" },
+                { "key": "minPrice", "value": "", "description": "Minimum price" },
+                { "key": "maxPrice", "value": "", "description": "Maximum price" },
+                { "key": "minRating", "value": "", "description": "Minimum rating" },
+                { "key": "sortBy", "value": "", "description": "price, rating, or newest" },
+                { "key": "sortDescending", "value": "false" },
+                { "key": "pageNumber", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            },
+            "description": "Get paginated products with filters. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "Get product details by ID. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Product [Seller]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "TitleEn", "value": "Handmade Vase", "type": "text" },
+                { "key": "TitleAr", "value": "مزهرية يدوية", "type": "text" },
+                { "key": "DescriptionEn", "value": "Beautiful ceramic vase", "type": "text" },
+                { "key": "DescriptionAr", "value": "مزهرية سيراميك جميلة", "type": "text" },
+                { "key": "Price", "value": "49.99", "type": "text" },
+                { "key": "Quantity", "value": "10", "type": "text" },
+                { "key": "CategoryId", "value": "{{categoryId}}", "type": "text" },
+                { "key": "ShopId", "value": "{{shopId}}", "type": "text" },
+                { "key": "Tags", "value": "ceramic,vase,handmade", "type": "text", "description": "Comma-separated tags" },
+                { "key": "Images", "value": "", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Create a new product. Multipart form-data. Requires Seller role."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product [Seller]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "TitleEn", "value": "Updated Vase", "type": "text" },
+                { "key": "TitleAr", "value": "مزهرية محدثة", "type": "text" },
+                { "key": "DescriptionEn", "value": "Updated description", "type": "text" },
+                { "key": "Price", "value": "39.99", "type": "text" },
+                { "key": "Quantity", "value": "15", "type": "text" },
+                { "key": "Status", "value": "Active", "type": "text" },
+                { "key": "Tags", "value": "ceramic,vase", "type": "text" },
+                { "key": "NewImages", "value": "", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "Update a product. Multipart form-data. Requires Seller role."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product [Seller]",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "Delete a product. Requires Seller role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🛒 Cart",
+      "description": "Shopping cart management - items persist via cart cookie",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart"]
+            },
+            "description": "Get current cart (identified by cartId cookie). Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Item to Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart"]
+            },
+            "description": "Add a product to cart. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Cart Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart"]
+            },
+            "description": "Update item quantity in cart. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Item from Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart", "{{productId}}"]
+            },
+            "description": "Remove a product from cart. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart"]
+            },
+            "description": "Clear all items from cart. Public."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Orders",
+      "description": "Order placement, tracking, and status management",
+      "item": [
+        {
+          "name": "Create Order [Auth]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"street\": \"123 Main St\",\n  \"city\": \"Cairo\",\n  \"country\": \"Egypt\",\n  \"deliveryMethodId\": \"00000000-0000-0000-0000-000000000000\",\n  \"couponCode\": \"\",\n  \"notes\": \"Leave at door\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"]
+            },
+            "description": "Create a new order from cart items. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Orders [Auth]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?status=&sortBy=&sortDescending=true&pageNumber=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"],
+              "query": [
+                { "key": "status", "value": "", "description": "Filter by order status" },
+                { "key": "sortBy", "value": "", "description": "Sort field" },
+                { "key": "sortDescending", "value": "true" },
+                { "key": "pageNumber", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            },
+            "description": "Get current user's orders with pagination. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order By ID [Auth]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "{{orderId}}"]
+            },
+            "description": "Get order details by ID. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order Status [Admin/Seller]",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "{{orderId}}", "status"]
+            },
+            "description": "Update order status. Requires Admin or Seller role."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Order [Auth]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "{{orderId}}", "cancel"]
+            },
+            "description": "Cancel an order. Requires authentication (order owner)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💳 Payments",
+      "description": "Payment processing with Stripe integration",
+      "item": [
+        {
+          "name": "Create Payment Intent [Buyer]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/create-intent/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "create-intent", "{{orderId}}"]
+            },
+            "description": "Create a Stripe payment intent for an order. Requires Buyer role."
+          },
+          "response": []
+        },
+        {
+          "name": "Payment Webhook [Anonymous]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"payment_intent.succeeded\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"pi_example\",\n      \"metadata\": {\n        \"orderId\": \"{{orderId}}\"\n      }\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/webhook",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "webhook"]
+            },
+            "description": "Stripe/Paymob webhook endpoint. Public (AllowAnonymous)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💰 Payouts",
+      "description": "Seller withdrawal requests and admin processing",
+      "item": [
+        {
+          "name": "Request Withdrawal [Seller]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shopId\": \"{{shopId}}\",\n  \"amount\": 150.00,\n  \"notes\": \"Monthly withdrawal\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payouts/request",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payouts", "request"]
+            },
+            "description": "Request a withdrawal/payout. Requires Seller role."
+          },
+          "response": []
+        },
+        {
+          "name": "Process Pending Payouts [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payouts/process-pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payouts", "process-pending"]
+            },
+            "description": "Process all pending payout requests. Requires Admin role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👤 Sellers",
+      "description": "Seller profile management",
+      "item": [
+        {
+          "name": "Get Seller Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sellers/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sellers", "{{userId}}"]
+            },
+            "description": "Get a seller's public profile by ID. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Seller Profile [Seller]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sellers/MyProfile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sellers", "MyProfile"]
+            },
+            "description": "Get current seller's own profile. Requires Seller role."
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Seller Profile [Seller]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Seller Name\",\n  \"bio\": \"Handmade crafts specialist\",\n  \"profileImage\": \"https://example.com/profile.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sellers/MyProfile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sellers", "MyProfile"]
+            },
+            "description": "Update seller profile. Requires Seller role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🏷️ Categories",
+      "description": "Product categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"]
+            },
+            "description": "Get all product categories. Public."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "❤️ Wishlist",
+      "description": "Wishlist management - add, remove, and view saved products",
+      "item": [
+        {
+          "name": "Get Wishlist",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wishlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wishlist"]
+            },
+            "description": "Get current user's wishlist. Uses JWT claim. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Item to Wishlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/wishlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wishlist"]
+            },
+            "description": "Add a product to wishlist. Public."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Item from Wishlist",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wishlist/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wishlist", "{{productId}}"]
+            },
+            "description": "Remove a product from wishlist. Public."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👥 Follows",
+      "description": "Shop following system - follow/unfollow shops",
+      "item": [
+        {
+          "name": "Follow Shop [Auth]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/follows/{{shopId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "follows", "{{shopId}}"]
+            },
+            "description": "Follow a shop. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Unfollow Shop [Auth]",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/follows/{{shopId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "follows", "{{shopId}}"]
+            },
+            "description": "Unfollow a shop. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Is Following [Auth]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/follows/{{shopId}}/isFollowing",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "follows", "{{shopId}}", "isFollowing"]
+            },
+            "description": "Check if current user follows a shop. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Followed Shops [Auth]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/follows/myShops",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "follows", "myShops"]
+            },
+            "description": "Get shops the current user follows. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Shop Followers [Seller]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/follows/{{shopId}}/followers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "follows", "{{shopId}}", "followers"]
+            },
+            "description": "Get followers of a shop. Requires Seller role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💬 Chat",
+      "description": "Buyer-Seller messaging system",
+      "item": [
+        {
+          "name": "Start Conversation [Buyer]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sellerId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "start"]
+            },
+            "description": "Start a new conversation with a seller. Requires Buyer role."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Conversations [Auth]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/conversations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "conversations"]
+            },
+            "description": "Get all conversations for current user. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Messages [Auth]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/{{conversationId}}/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "{{conversationId}}", "messages"]
+            },
+            "description": "Get messages for a conversation. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Send Message [Auth]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"content\": \"Hello! I'm interested in your products.\",\n  \"type\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "send"]
+            },
+            "description": "Send a message in a conversation. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Conversation as Read [Auth]",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/{{conversationId}}/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "{{conversationId}}", "read"]
+            },
+            "description": "Mark all messages in a conversation as read. Requires authentication."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notifications",
+      "description": "User notifications - list, read, and manage",
+      "item": [
+        {
+          "name": "Get All Notifications [Auth]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notification",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notification"]
+            },
+            "description": "Get all notifications for current user. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unread Count [Auth]",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notification/unread-count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notification", "unread-count"]
+            },
+            "description": "Get count of unread notifications. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read [Auth]",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notification/{{notificationId}}/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notification", "{{notificationId}}", "read"]
+            },
+            "description": "Mark a single notification as read. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All Notifications as Read [Auth]",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notification/read-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notification", "read-all"]
+            },
+            "description": "Mark all notifications as read. Requires authentication."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🌤️ Weather",
+      "description": "Weather forecast (sample endpoint)",
+      "item": [
+        {
+          "name": "Get Weather Forecast",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/weatherforecast",
+              "host": ["{{baseUrl}}"],
+              "path": ["weatherforecast"]
+            },
+            "description": "Get sample weather forecast (scaffold endpoint). Public."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

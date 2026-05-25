@@ -1,4 +1,4 @@
-﻿using HandoraDomain.Interfaces;
+﻿using HandoraApplication.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
