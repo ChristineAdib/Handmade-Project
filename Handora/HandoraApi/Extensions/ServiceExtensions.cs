@@ -24,11 +24,13 @@ namespace HandoraApi.Extensions
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IFileService, FileService>();
+            services.AddScoped<ICartService, CartService>();
             services.AddScoped<ImageHelper>(provider =>
             {
                 var env = provider.GetRequiredService<IWebHostEnvironment>();
                 return new ImageHelper(env.WebRootPath);
             });
+           services.AddScoped<IWishListService, WishListService>();
             return services;
         }
     }
