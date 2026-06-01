@@ -3,6 +3,7 @@ using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.ProductEntities;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandoraApplication.Services;
 
@@ -12,16 +13,78 @@ public class CategoryService(IUnitOfWork unitOfWork) : ICategoryService
 
     public async Task<Result<IEnumerable<CategoryResponseDto>>> GetAllCategories()
     {
-        throw new NotImplementedException();
+        var repo = _unitOfWork.Repository<Category, Guid>();
+        var query = await repo.GetAllAsNoTracking();
+
+        var categories = await query
+            .Include(c => c.SubCategories)
+            .Where(c => c.ParentId == null)
+            .ToListAsync();
+
+        var result = categories.Select(c => new CategoryResponseDto
+        {
+            Id = c.Id,
+            NameEn = c.NameEn,
+            NameAr = c.NameAr,
+            ImageUrl = c.ImageUrl,
+            ParentId = c.ParentId,
+            SubCategories = c.SubCategories.Select(sub => new CategorySummaryDto
+            {
+                Id = sub.Id,
+                NameEn = sub.NameEn,
+                NameAr = sub.NameAr
+            }).ToList()
+        });
+
+        return Result<IEnumerable<CategoryResponseDto>>.Success(result);
     }
 
     public async Task<Result<CategoryResponseDto>> GetCategoryById(Guid id)
     {
-        throw new NotImplementedException();
+        var repo = _unitOfWork.Repository<Category, Guid>();
+        var query = await repo.GetAllAsNoTracking();
+
+        var category = await query
+            .Include(c => c.SubCategories)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (category is null)
+            return Result<CategoryResponseDto>.Failure("Category not found");
+
+        var dto = new CategoryResponseDto
+        {
+            Id = category.Id,
+            NameEn = category.NameEn,
+            NameAr = category.NameAr,
+            ImageUrl = category.ImageUrl,
+            ParentId = category.ParentId,
+            SubCategories = category.SubCategories.Select(sub => new CategorySummaryDto
+            {
+                Id = sub.Id,
+                NameEn = sub.NameEn,
+                NameAr = sub.NameAr
+            }).ToList()
+        };
+
+        return Result<CategoryResponseDto>.Success(dto);
     }
 
     public async Task<Result<IEnumerable<CategorySummaryDto>>> GetSubCategories(Guid parentId)
     {
-        throw new NotImplementedException();
+        var repo = _unitOfWork.Repository<Category, Guid>();
+        var query = await repo.GetAllAsNoTracking();
+
+        var subCategories = await query
+            .Where(c => c.ParentId == parentId)
+            .ToListAsync();
+
+        var result = subCategories.Select(c => new CategorySummaryDto
+        {
+            Id = c.Id,
+            NameEn = c.NameEn,
+            NameAr = c.NameAr
+        });
+
+        return Result<IEnumerable<CategorySummaryDto>>.Success(result);
     }
 }
