@@ -1,5 +1,6 @@
 using HandoraApplication.DTOs.ProductDTOs;
 using HandoraApplication.IServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HandoraApi.Controllers;
@@ -10,6 +11,7 @@ public class ProductsController(IProductService productService) : ControllerBase
 {
     private readonly IProductService _productService = productService;
 
+    [AllowAnonymous]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProduct(Guid id)
     {
@@ -19,6 +21,7 @@ public class ProductsController(IProductService productService) : ControllerBase
         return NotFound(result.Errors);
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> GetProducts([FromQuery] ProductQueryDto query)
     {
@@ -28,6 +31,7 @@ public class ProductsController(IProductService productService) : ControllerBase
         return BadRequest(result.Errors);
     }
 
+    [Authorize(Roles = "Seller")]
     [HttpPost]
     public async Task<IActionResult> CreateProduct([FromForm] CreateProductDto dto)
     {
@@ -37,6 +41,8 @@ public class ProductsController(IProductService productService) : ControllerBase
         return BadRequest(result.Errors);
     }
 
+
+    [Authorize(Roles = "Seller")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProduct(Guid id, [FromForm] UpdateProductDto dto)
     {
@@ -46,6 +52,8 @@ public class ProductsController(IProductService productService) : ControllerBase
         return BadRequest(result.Errors);
     }
 
+
+    [Authorize(Roles = "Seller")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProduct(Guid id)
     {

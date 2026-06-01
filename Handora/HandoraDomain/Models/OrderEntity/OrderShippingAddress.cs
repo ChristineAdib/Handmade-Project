@@ -1,3 +1,4 @@
+using HandoraDomain.Models.AppUser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,5 +27,10 @@ namespace HandoraDomain.Models.OrderEntity
         public string Street { get; set; }
         public string City { get; set; }
         public string Country { get; set; }
+
+        public static implicit operator OrderShippingAddress(Address v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
