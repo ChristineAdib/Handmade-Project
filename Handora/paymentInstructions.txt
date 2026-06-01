@@ -1,0 +1,601 @@
+# Integration of Paymob in .NET 8 Marketplace
+
+## Executive Summary  
+We reviewed the existing C# e-commerce models and identified missing fields for payment intents, commissions, and payouts. In the **data model**, we need to add properties like `PaymentIntentId`, `DeliveredAt`, `CommissionAmount`, and track seller balances. We also introduce new entities (e.g. `WithdrawalRequest`) for holding and releasing funds. For **payment integration**, Paymob’s API flow (create payment intent, get payment key, handle webhooks) must be implemented in a payment service and connected via controller endpoints. We propose a service layer with interfaces such as `IPaymentService`, `IEscrowService`, and `IPayoutService` to manage these processes. Controller endpoints will include routes for creating payments, handling Paymob webhooks, managing payouts, and seller withdrawal requests. 
+
+The **workflow** is: customer places order → system creates Paymob intent → customer pays → Paymob sends webhook → order marked paid and shipped → on delivery, record timestamp → after 14 days, funds are released (split between platform commission and seller earnings) → seller can request withdrawal → payout executed. We include mermaid diagrams to illustrate this timeline. Security measures (HMAC verification for webhooks, idempotency, secrets in env variables) and testing strategies (Paymob sandbox, mock services) are discussed. Example .NET 8 code (payment intent creation, HMAC verification, scheduled release job, commission calculation) and EF Core migrations for schema changes are provided. Finally, an implementation checklist with estimated effort (small/medium/large) guides the development process.
+
+## 1. Model Changes (with Code Snippets)  
+The existing models lack fields for Paymob integration and the escrow workflow. We propose the following changes:
+
+- **Order Model**:  
+  ```csharp
+  public class Order : BaseEntity<Guid>
+  {
+      // New Paymob-related fields
+      public string PaymentIntentId { get; set; }         // store Paymob payment intent ID
+      public decimal CommissionAmount { get; set; }       // platform commission for this order
+      public bool IsFundsReleased { get; set; } = false;  // whether 14-day hold is released
+      public DateTime? DeliveredAt { get; set; }          // timestamp when order was marked delivered
+
+      // Existing fields...
+      public OrderStatus Status { get; set; } = OrderStatus.Pending;
+      public DeliveryMethod DeliveryMethod { get; set; }
+      public ICollection<OrderItem> Items { get; set; } = new HashSet<OrderItem>();
+      public decimal SubTotal { get; set; }
+      public string UserId { get; set; }
+      public User User { get; set; } = null!;
+      public Payment? Payment { get; set; }
+      public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
+      // ...
+  }
+  ```
+  *Rationale:* `PaymentIntentId` links the order to Paymob’s payment. `DeliveredAt` records when delivery happened (to start the 14-day timer). `CommissionAmount` records the platform’s cut (calculated at capture time). `IsFundsReleased` tracks if funds have been released to seller after the hold.
+
+- **Shop (Seller) Model**:  
+  ```csharp
+  public class Shop : BaseEntity<Guid>
+  {
+      // existing fields...
+      public string OwnerId { get; set; }
+      public User Owner { get; set; } = null!;
+
+      // New fields for payouts
+      public decimal AvailableBalance { get; set; } = 0m; // funds available for withdrawal
+      public decimal CommissionRate { get; set; } = 0.10m; // e.g., 10% commission (configurable per shop)
+      // ...
+  }
+  ```
+  *Rationale:* `AvailableBalance` tracks money due to the seller after holds. `CommissionRate` allows per-shop commission (otherwise use a global config).
+
+- **Payment Model**:  
+  Optionally add a provider field (if supporting multiple gateways):
+  ```csharp
+  public class Payment : BaseEntity<Guid>
+  {
+      public decimal Amount { get; set; }
+      public string TransactionId { get; set; } = string.Empty;   // Paymob transaction ID
+      public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
+      public string? Method { get; set; }       // e.g. "Card"
+      public string? Provider { get; set; }     // e.g. "Paymob"
+      public string? GatewayResponse { get; set; } // raw response or status from Paymob
+      // ...
+      public Guid OrderId { get; set; }
+      public Order Order { get; set; } = null!;
+  }
+  ```
+  *Rationale:* Storing `Provider` or `Method` is optional but useful if multiple gateways might be supported in future. `GatewayResponse` can store JSON or status details for debugging.
+
+- **New Entity: WithdrawalRequest** (or Payout)  
+  ```csharp
+  public class WithdrawalRequest : BaseEntity<Guid>
+  {
+      public string SellerId { get; set; }      // User.Id of seller or Shop.OwnerId
+      public Guid ShopId { get; set; }
+      public decimal Amount { get; set; }
+      public WithdrawalStatus Status { get; set; } = WithdrawalStatus.Pending;
+      public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
+      public DateTime? PaidAt { get; set; }
+      public string? TransferReference { get; set; } // e.g., bank txn id or Paymob payout ID
+
+      public User Seller { get; set; } = null!;
+      public Shop Shop { get; set; } = null!;
+  }
+
+  public enum WithdrawalStatus { Pending, Approved, Paid, Cancelled }
+  ```
+  *Rationale:* Tracks seller payout requests. `Amount` is usually equal to `AvailableBalance` requested. `Status` shows progression. `TransferReference` logs external payment confirmation. 
+
+- **Other Additions:**  
+  - On **User** or **Shop**, consider adding fields for the seller’s bank or Paymob payout account (e.g., `PayoutAccountId`), so the platform can pay them via Paymob Payouts or bank transfer. The specifics depend on how Paymob disbursements are set up (not covered in base models; could be managed in app settings).
+  - Update any DTOs or view models correspondingly to include new fields.
+
+**Summary of Model Changes:** We add payment-intent linkage (`PaymentIntentId`), delivery timestamp (`DeliveredAt`), commission and balance fields on orders/shops, and a new `WithdrawalRequest` entity for payouts. These changes ensure we can track the entire payment/cashflow lifecycle.
+
+## 2. New Entities and Database Schema  
+In addition to modifying existing models, we define new tables for holding/escrow and payouts:
+
+- **WithdrawalRequests Table:**  
+  | Column            | Type       | Description                         |
+  |-------------------|------------|-------------------------------------|
+  | Id                | UNIQUEIDENTIFIER (PK) | Auto ID of the request.   |
+  | SellerId          | NVARCHAR   | Foreign key to AspNetUsers (seller). |
+  | ShopId            | UNIQUEIDENTIFIER | FK to Shops table.             |
+  | Amount            | DECIMAL    | Requested payout amount.            |
+  | Status            | INT        | Enum WithdrawalStatus (Pending/Paid). |
+  | RequestedAt       | DATETIME   | When seller made the request.       |
+  | PaidAt            | DATETIME   | When funds were actually paid out.  |
+  | TransferReference | NVARCHAR   | External payment reference (if any).|
+  | CreatedAt         | DATETIME   | (from BaseEntity)                   |
+  | ... (audit columns) |
+
+  SQL (EF Core migration) example:
+  ```csharp
+  migrationBuilder.CreateTable(
+      name: "WithdrawalRequests",
+      columns: table => new
+      {
+          Id = table.Column<Guid>(nullable: false),
+          SellerId = table.Column<string>(nullable: false),
+          ShopId = table.Column<Guid>(nullable: false),
+          Amount = table.Column<decimal>(nullable: false),
+          Status = table.Column<int>(nullable: false),
+          RequestedAt = table.Column<DateTime>(nullable: false),
+          PaidAt = table.Column<DateTime>(nullable: true),
+          TransferReference = table.Column<string>(nullable: true),
+          CreatedAt = table.Column<DateTime>(nullable: false),
+          UpdatedAt = table.Column<DateTime>(nullable: true),
+          IsDeleted = table.Column<bool>(nullable: false),
+          DeletedAt = table.Column<DateTime>(nullable: true)
+      },
+      constraints: table =>
+      {
+          table.PrimaryKey("PK_WithdrawalRequests", x => x.Id);
+          table.ForeignKey(
+              name: "FK_WithdrawalRequests_AspNetUsers_SellerId",
+              column: x => x.SellerId,
+              principalTable: "AspNetUsers",
+              principalColumn: "Id");
+          table.ForeignKey(
+              name: "FK_WithdrawalRequests_Shops_ShopId",
+              column: x => x.ShopId,
+              principalTable: "Shops",
+              principalColumn: "Id");
+      });
+  ```
+
+- **Escrow / Transaction Table (Optional):**  
+  If we want an explicit “escrow” ledger, we could create a table like `EscrowTransactions` to log all payment-related fund movements:
+  | Column       | Type    | Description                                 |
+  |--------------|---------|---------------------------------------------|
+  | Id           | GUID    | PK                                          |
+  | OrderId      | GUID    | FK to Orders                                |
+  | Event        | NVARCHAR | Description (e.g., "Payment Received", "Released to Seller"). |
+  | Amount       | DECIMAL | Amount involved.                            |
+  | CreatedAt    | DATETIME | Timestamp.                                 |
+  
+  This is optional if Order/Payment captures suffice, but useful for auditing. 
+
+- **Database Migration Snippets:** (EF Core example to alter `Orders` and `Shops` tables)
+  ```csharp
+  // Add columns to Orders
+  migrationBuilder.AddColumn<string>(
+      name: "PaymentIntentId",
+      table: "Orders",
+      nullable: true);
+  migrationBuilder.AddColumn<decimal>(
+      name: "CommissionAmount",
+      table: "Orders",
+      nullable: false,
+      defaultValue: 0m);
+  migrationBuilder.AddColumn<bool>(
+      name: "IsFundsReleased",
+      table: "Orders",
+      nullable: false,
+      defaultValue: false);
+  migrationBuilder.AddColumn<DateTime>(
+      name: "DeliveredAt",
+      table: "Orders",
+      nullable: true);
+
+  // Add columns to Shops
+  migrationBuilder.AddColumn<decimal>(
+      name: "AvailableBalance",
+      table: "Shops",
+      nullable: false,
+      defaultValue: 0m);
+  migrationBuilder.AddColumn<decimal>(
+      name: "CommissionRate",
+      table: "Shops",
+      nullable: false,
+      defaultValue: 0.10m); // default 10%
+  ```
+  In SQL, these would be `ALTER TABLE` statements adding columns with defaults as shown.
+
+**Summary of New Entities:** We create `WithdrawalRequests` to handle payout flows, and optionally an escrow log. We update the database schema via migrations to support the added fields on existing tables (`Orders`, `Shops`, etc.).
+
+## 3. Service Layer Design  
+We recommend defining clear service interfaces to encapsulate logic:
+
+- **IPaymentService**: Handles payment creation and verification.
+  ```csharp
+  public interface IPaymentService
+  {
+      Task<string> CreatePaymentIntentAsync(Order order);
+      Task<PaymentResult> CapturePaymentAsync(string paymentIntentId);
+      Task VerifyWebhookAsync(string requestBody, string hmacHeader);
+  }
+  ```
+  - *CreatePaymentIntentAsync:* Calls Paymob API to create a payment intent (amount, currency, orderRef) and returns a `paymentIntentId` or a payment key.
+  - *CapturePaymentAsync:* Finalizes payment if needed (some gateways auto-capture). Here it could mark `PaymentStatus = Paid` after confirmation.
+  - *VerifyWebhookAsync:* Validates HMAC signature (using secret key from config) and parses the webhook payload; updates order/payment status based on event (e.g. `invoice.paid`). Throws if invalid.
+
+- **IEscrowService**: Manages the 14-day hold and fund release.
+  ```csharp
+  public interface IEscrowService
+  {
+      void RecordDelivery(Order order);
+      Task CheckAndReleaseFundsAsync(); // to be called by scheduler
+  }
+  ```
+  - *RecordDelivery:* Called when order is delivered; sets `order.DeliveredAt = now`.
+  - *CheckAndReleaseFundsAsync:* Scans delivered orders older than 14 days, calculates commissions, updates `Shop.AvailableBalance` and order’s `IsFundsReleased`, and creates any payout transactions.
+
+- **IPayoutService**: Handles seller withdrawals and actual transfers.
+  ```csharp
+  public interface IPayoutService
+  {
+      Task<WithdrawalRequest> RequestWithdrawalAsync(User seller, decimal amount);
+      Task ProcessPendingWithdrawalsAsync(); // e.g. admin-triggered or automatic
+      Task<bool> ExecutePayoutAsync(WithdrawalRequest request);
+  }
+  ```
+  - *RequestWithdrawalAsync:* Validates seller’s available balance and creates a `WithdrawalRequest`.
+  - *ProcessPendingWithdrawalsAsync:* Finds pending/approved requests and executes them (via Paymob payout or manual transfer).
+  - *ExecutePayoutAsync:* Performs the actual transfer (calling Paymob Payout API or other) and updates `request.Status` to Paid or Failed.
+
+- **ICommissionService** (optional): Calculates commission.
+  ```csharp
+  public interface ICommissionService
+  {
+      decimal CalculateCommission(Shop shop, decimal orderAmount);
+  }
+  ```
+  Implements logic like `commission = orderAmount * shop.CommissionRate`.
+
+- **Dependencies:** Each service can use Repositories/DbContexts and HttpClient for Paymob API. E.g. `PaymentService` needs Paymob API credentials from configuration.
+
+**Summary of Services:** PaymentService interacts with Paymob API (create intent, handle webhooks). EscrowService handles order delivery and 14-day logic. PayoutService manages seller withdrawal requests and executes payouts. Each interface has method stubs above showing key responsibilities.
+
+## 4. Controller Endpoints (API Routes)  
+We define web API endpoints for frontend and callbacks:
+
+| Route                        | HTTP | Description                                   | Request / Response                                       |
+|------------------------------|------|-----------------------------------------------|----------------------------------------------------------|
+| `/api/payments/create`       | POST | Initiate payment (create intent) for an order | Body: `{ orderId, amount, currency, returnUrl }` <br> Response: `{ paymentUrl or paymentKey }` |
+| `/api/paymob/webhook`        | POST | Paymob callback URL (HMAC-signed)            | Body: raw webhook JSON (Paymob posts here). Return 200 OK. |
+| `/api/orders/{id}/deliver`   | POST | Mark order as delivered (seller action)      | Body: none or confirm. Response: updated order status. |
+| `/api/payouts/request`       | POST | Seller requests a withdrawal                 | Body: `{ amount }`. Auth: seller. Response: `{ requestId }`. |
+| `/api/payouts/{id}`          | GET  | Get status of a withdrawal request           | Response: `{ status, amount, paidAt }`. Auth: seller or admin. |
+| `/api/payouts/process`       | POST | Admin endpoint to process pending payouts    | Auth: admin. Triggers processing (or this could be automatic). |
+| `/api/shops/{id}/balance`    | GET  | Get seller’s current available balance       | Auth: shop owner. Response: `{ availableBalance }`. |
+
+- **Payment Creation:**  
+  The `POST /api/payments/create` endpoint calls `PaymentService.CreatePaymentIntentAsync`, which contacts Paymob. It returns a payment URL or key that the frontend can use to redirect the user to Paymob’s checkout. Example request: 
+  ```json
+  { "orderId": "abc-123", "amount": 5000, "currency": "EGP", "returnUrl": "https://myshop.com/payment-complete" }
+  ```
+  Response might be:
+  ```json
+  { "paymentUrl": "https://accept.paymob.com/pay/XYZ" }
+  ```
+  or a `paymentKey` to use in a JS widget.
+
+- **Webhook Endpoint:**  
+  `POST /api/paymob/webhook` is called by Paymob after payment events. This controller reads headers (including `X-Paymob-Signature`), verifies HMAC, and then updates the corresponding order’s payment status. It should be idempotent (ignore duplicate webhooks for same payment). Always respond with 200 OK to acknowledge receipt.
+
+- **Order Delivery:**  
+  `POST /api/orders/{id}/deliver` is called by the shop/seller when they ship the item. It marks `Order.Status = Delivered` and sets `DeliveredAt = DateTime.UtcNow`. After calling this, the 14-day hold timer starts.
+
+- **Withdrawal Requests:**  
+  - Sellers call `POST /api/payouts/request` with the amount they want. The controller checks `shop.AvailableBalance`, subtracts the amount, and creates a `WithdrawalRequest` with status Pending.
+  - Sellers or admins can get status via `GET /api/payouts/{id}`.
+  - Admins trigger processing via `POST /api/payouts/process`, which runs through pending requests and calls Paymob payout or marks as paid.
+
+**API Request/Response Shapes:** Example withdrawal request body:
+```json
+{ "amount": 1500.00 }
+```
+Response:
+```json
+{ "requestId": "f47ac10b-58cc-4372-a567-0e02b2c3d479", "status": "Pending", "requestedAt": "2026-05-24T12:34:56Z" }
+```
+
+**Summary of Endpoints:** We provide endpoints for creating payments, receiving Paymob webhooks, marking delivery, and handling seller withdrawals. Each endpoint has clear auth (e.g., only seller can request withdrawals from their shop) and works with the services above.
+
+## 5. Workflow Diagrams  
+
+```mermaid
+sequenceDiagram
+    participant C as Customer
+    participant S as Store Backend
+    participant P as Paymob
+    participant W as Seller
+
+    C->>S: Place Order (OrderId)
+    S->>S: Validate order, create Order record
+    S->>P: Create Payment Intent (orderId, amount) 
+    P-->>S: Returns paymentIntentId, paymentKey
+    S-->>C: Redirect to Paymob Checkout with paymentKey
+    C->>P: Completes payment (card entry)
+    P-->>P: (internal processing)
+    P->>S: Webhook "payment.success" (with orderId, amount)
+    S->>S: Verify HMAC, update Order.PaymentStatus = Paid, record TransactionId
+    S-->>W: (Later) Order shipped by seller
+    S->>S: Order.Status = Shipped
+    S-->>C: Customer receives items
+    S->>S: Order.Status = Delivered, set DeliveredAt = now
+
+    Note right of S: 14-day timer starts
+    loop after 14 days
+        S->>S: Check delivered orders older than 14d
+        S->>S: For each, calculate commission = SubTotal*rate
+        S->>Shop: Add (SubTotal - commission) to Shop.AvailableBalance
+        S->>Order: Mark IsFundsReleased = true
+    end
+
+    W->>S: Seller requests withdrawal (amount)
+    S->>S: Validate funds, create WithdrawalRequest
+    S->>P: (Or Bank API) Execute Payout of amount to seller
+    S->>W: Send confirmation of completed payout
+```
+
+```mermaid
+flowchart TD
+    A[Customer Places Order] --> B[Create Order in DB]
+    B --> C[PaymentService.CreatePaymentIntent] 
+    C --> D[Paymob Payment Intent]
+    D --> E[Get paymentKey & URL]
+    E --> F[Customer Pays via Paymob UI]
+    F --> G{Payment Success?}
+    G -->|Yes| H[Paymob Webhook -> Update Order as Paid]
+    G -->|No| I[Order PaymentStatus = Failed]
+    H --> J[Seller Ships Item]
+    J --> K[Order marked Delivered (timestamp)]
+    K --> L[Wait 14 days (hold period)]
+    L --> M{14 days passed?}
+    M -->|Yes| N[EscrowService.ReleaseFunds]
+    N --> O[Calculate commission; update Shop.AvailableBalance]
+    O --> P[Order.IsFundsReleased = true]
+    P --> Q{Seller Withdrawal Request}
+    Q -->|Requested| R[PayoutService.ExecutePayout]
+    R --> S[Transfer funds to seller account]
+    S --> T[PayoutRequest.Status = Paid]
+```
+
+*Diagrams:* The first is a sequence diagram of the request/payment/delivery flow. The second is a flowchart showing the timeline of events from order through payout, including the 14-day wait and fund release.
+
+## 6. Security, Idempotency, Testing
+
+- **HMAC Webhook Verification:** Paymob signs webhook requests using HMAC-SHA512 (or similar) with the **provided secret key**. In the webhook handler, compute the HMAC of the raw request body using the secret key (loaded from configuration/environment) and compare to the `X-Paymob-Signature` header. Reject (throw 401) if they don’t match. Example:
+  ```csharp
+  // Example verification in webhook controller
+  var secret = configuration["Paymob:CallbackSecret"]; // from env
+  var body = await new StreamReader(Request.Body).ReadToEndAsync();
+  var providedHmac = Request.Headers["X-Paymob-Signature"];
+  var computed = ComputeHmacSha512(body, secret);
+  if (!computed.Equals(providedHmac, StringComparison.OrdinalIgnoreCase))
+      throw new SecurityException("Invalid webhook signature");
+  ```
+  This ensures only Paymob can trigger updates.
+
+- **Idempotency:** Webhooks can retry, so ensure processing is idempotent. For example, only update the order payment status if it was still Pending. Use a unique constraint or check on `Payment.TransactionId` or `Order.PaymentIntentId`. If the same webhook arrives twice, ignore the second.
+
+- **Secret Management:** Store Paymob API keys (public, secret) and webhook secret in environment variables or secure config. Never hardcode. For example, use:
+  ```csharp
+  builder.Services.Configure<PaymobSettings>(configuration.GetSection("Paymob"));
+  ```
+  And inject the settings into services.
+
+- **Sandbox/Test Mode:** Use Paymob’s sandbox (test mode) credentials to run end-to-end tests. Simulate successful and failed payments. Verify all code paths (success, failure, expiration). For HMAC, use the test secret key provided by Paymob.
+
+- **Testing:** Write unit tests for service logic (e.g., `CommissionService.CalculateCommission`, `EscrowService` releasing funds). Mock Paymob API calls (use a fake `HttpMessageHandler` or an abstraction). For integration tests, one could use Postman to simulate Paymob webhooks with correct HMAC.
+
+- **Validation:** Ensure API requests (like withdrawal amount) are validated (non-negative, <= balance). Use ASP.NET Core model validation attributes as needed.
+
+- **Error Handling:** Log errors but don’t expose secrets. For example, if HMAC fails, return 401. If payment creation fails, return 400/500 to client with safe message.
+
+- **Concurrency:** When releasing funds, ensure thread-safety. If using async jobs, lock or transaction to avoid race conditions (e.g. two jobs releasing the same order). Example: use a database transaction when updating `Order.IsFundsReleased` and `Shop.AvailableBalance`.
+
+## 7. Example .NET 8 Code Snippets
+
+- **Creating a Paymob Payment Intent (HttpClient)**:  
+  ```csharp
+  public async Task<string> CreatePaymentIntentAsync(Order order)
+  {
+      var client = _httpClientFactory.CreateClient();
+      client.DefaultRequestHeaders.Add("Authorization", $"Bearer {paymobApiKey}");
+      var payload = new
+      {
+          amount_cents = (int)(order.SubTotal * 100), // in cents/piasters
+          currency = "EGP",
+          order_id = order.Id.ToString(),
+          expiration = 3600,  // e.g., expire in 1 hour
+          delivery_needed = false
+      };
+      var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+      var response = await client.PostAsync("https://accept.paymob.com/api/acceptance/payment_keys", content);
+      response.EnsureSuccessStatusCode();
+      var json = await response.Content.ReadAsStringAsync();
+      var data = JsonConvert.DeserializeObject<JObject>(json);
+      string paymentKey = data["token"].Value<string>();
+      return paymentKey;
+  }
+  ```
+  This gets a **payment key** (not shown fully due to brevity; real flow may involve first creating an "order" on Paymob). The returned `paymentKey` is sent to the frontend to open Paymob’s checkout.
+
+- **Verifying Paymob Webhook HMAC:**  
+  ```csharp
+  public void VerifyPaymobWebhook(string requestBody, string providedSignature)
+  {
+      var secret = _configuration["Paymob:WebhookSecret"]; // e.g. HMAC key
+      using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(secret));
+      var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(requestBody));
+      var computedSignature = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+      if (!computedSignature.Equals(providedSignature.ToLower()))
+      {
+          throw new InvalidOperationException("Invalid HMAC signature");
+      }
+  }
+  ```
+
+- **Scheduling a 14-Day Release (Hangfire example):**  
+  In `Startup` or `Program`:
+  ```csharp
+  RecurringJob.AddOrUpdate<IEscrowService>(
+      "ReleaseFundsJob",
+      service => service.CheckAndReleaseFundsAsync(),
+      Cron.Daily);
+  ```
+  This runs the `CheckAndReleaseFundsAsync` daily (or use a specific Cron for every midnight). Inside that method, iterate delivered orders older than 14 days.
+
+- **Computing Commission:**  
+  ```csharp
+  public decimal CalculateCommission(Shop shop, decimal orderAmount)
+  {
+      return Math.Round(orderAmount * shop.CommissionRate, 2);
+  }
+  ```
+  Example usage when releasing funds:
+  ```csharp
+  decimal commission = commissionService.CalculateCommission(order.Shop, order.SubTotal);
+  order.CommissionAmount = commission;
+  order.Shop.AvailableBalance += (order.SubTotal - commission);
+  _dbContext.Orders.Update(order);
+  _dbContext.Shops.Update(order.Shop);
+  ```
+
+- **Database Migration Snippet (EF Core)**:  
+  The EF Core snippet under section 2 shows how new columns/tables are created. These translate to SQL `ALTER TABLE ADD COLUMN` and `CREATE TABLE` statements.
+
+## 8. Security, Idempotency, Testing (details)  
+- **HMAC Verification:** Ensure we compute HMAC over the *raw JSON body* exactly as received. Use the same hashing algorithm Paymob uses. Never trim or modify the request body or JSON before computing HMAC.
+- **Idempotency:** When processing a webhook, check if the order’s `PaymentStatus` is already `Paid` or if `IsFundsReleased` is true, to avoid double processing.
+- **Rate Limiting / Retries:** Implement retry logic for transient failures (e.g., network timeouts). Paymob will retry webhook on 500 errors, so return 200 only on success.
+- **Sensitive Data:** Do not log full HMAC secrets or API keys. Log only transaction IDs or amounts.
+- **Integration Testing:** Simulate Paymob webhooks using tools like Postman or a staging Paymob account. Use test credit cards or sandbox tokens to fully test the end-to-end flow (create intent → complete payment → trigger webhook).
+- **Error Scenarios:** Plan for refunds or chargebacks (if supported by Paymob). The webhook handler can catch events like `refund.succeeded` to adjust balances (e.g., subtract from seller balance).
+- **Concurrency Control:** When multiple payouts or holds release concurrently, use DB transactions. Example:
+  ```csharp
+  using var transaction = await _dbContext.Database.BeginTransactionAsync();
+  // update order, shop, withdrawal request
+  await _dbContext.SaveChangesAsync();
+  await transaction.CommitAsync();
+  ```
+
+## 9. Example EF Core Migrations  
+For completeness, example EF Core migration code (C#):
+
+```csharp
+public partial class AddPaymentsAndWithdrawals : Migration
+{
+    protected override void Up(MigrationBuilder migrationBuilder)
+    {
+        // Orders
+        migrationBuilder.AddColumn<string>(
+            name: "PaymentIntentId",
+            table: "Orders",
+            type: "nvarchar(450)",
+            nullable: true);
+        migrationBuilder.AddColumn<decimal>(
+            name: "CommissionAmount",
+            table: "Orders",
+            type: "decimal(18,2)",
+            nullable: false,
+            defaultValue: 0m);
+        migrationBuilder.AddColumn<bool>(
+            name: "IsFundsReleased",
+            table: "Orders",
+            type: "bit",
+            nullable: false,
+            defaultValue: false);
+        migrationBuilder.AddColumn<DateTime>(
+            name: "DeliveredAt",
+            table: "Orders",
+            type: "datetime2",
+            nullable: true);
+
+        // Shops
+        migrationBuilder.AddColumn<decimal>(
+            name: "AvailableBalance",
+            table: "Shops",
+            type: "decimal(18,2)",
+            nullable: false,
+            defaultValue: 0m);
+        migrationBuilder.AddColumn<decimal>(
+            name: "CommissionRate",
+            table: "Shops",
+            type: "decimal(5,2)",
+            nullable: false,
+            defaultValue: 0.10m);
+
+        // WithdrawalRequests table
+        migrationBuilder.CreateTable(
+            name: "WithdrawalRequests",
+            columns: table => new
+            {
+                Id = table.Column<Guid>(nullable: false),
+                SellerId = table.Column<string>(nullable: false),
+                ShopId = table.Column<Guid>(nullable: false),
+                Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                Status = table.Column<int>(nullable: false),
+                RequestedAt = table.Column<DateTime>(nullable: false),
+                PaidAt = table.Column<DateTime>(nullable: true),
+                TransferReference = table.Column<string>(nullable: true),
+                CreatedAt = table.Column<DateTime>(nullable: false),
+                UpdatedAt = table.Column<DateTime>(nullable: true),
+                IsDeleted = table.Column<bool>(nullable: false),
+                DeletedAt = table.Column<DateTime>(nullable: true)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_WithdrawalRequests", x => x.Id);
+                table.ForeignKey(
+                    name: "FK_WithdrawalRequests_AspNetUsers_SellerId",
+                    column: x => x.SellerId,
+                    principalTable: "AspNetUsers",
+                    principalColumn: "Id");
+                table.ForeignKey(
+                    name: "FK_WithdrawalRequests_Shops_ShopId",
+                    column: x => x.ShopId,
+                    principalTable: "Shops",
+                    principalColumn: "Id");
+            });
+
+        migrationBuilder.CreateIndex(
+            name: "IX_WithdrawalRequests_SellerId",
+            table: "WithdrawalRequests",
+            column: "SellerId");
+        migrationBuilder.CreateIndex(
+            name: "IX_WithdrawalRequests_ShopId",
+            table: "WithdrawalRequests",
+            column: "ShopId");
+    }
+
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropTable(name: "WithdrawalRequests");
+        migrationBuilder.DropColumn(name: "PaymentIntentId", table: "Orders");
+        migrationBuilder.DropColumn(name: "CommissionAmount", table: "Orders");
+        migrationBuilder.DropColumn(name: "IsFundsReleased", table: "Orders");
+        migrationBuilder.DropColumn(name: "DeliveredAt", table: "Orders");
+        migrationBuilder.DropColumn(name: "AvailableBalance", table: "Shops");
+        migrationBuilder.DropColumn(name: "CommissionRate", table: "Shops");
+    }
+}
+```
+
+This migration adds the necessary columns and creates the `WithdrawalRequests` table with relationships.
+
+## 10. Implementation Checklist and Effort  
+**1. Set Up Paymob Account:** Obtain API keys (small)  
+**2. Update Data Models:** Add properties and apply migrations (small)  
+**3. Implement PaymentService:** Integrate Paymob APIs (medium)  
+   - HTTP calls for payment intent/key  
+   - Parsing responses and handling errors  
+**4. Webhook Controller:** Endpoint for Paymob callbacks (medium)  
+   - HMAC validation  
+   - Update order/payment status  
+**5. Escrow Logic:** Implement delivery and 14-day release (small)  
+   - Hook into delivery action  
+   - Scheduled job (Hangfire or HostedService) (small)  
+**6. Payout System:**  
+   - WithdrawalRequest model & controllers (small)  
+   - PayoutService to execute transfers (medium)  
+**7. Commission Calculation:** Add logic to compute and store commission (small)  
+**8. Security Measures:** Load keys from config, implement HMAC (small)  
+**9. Testing:** Sandbox end-to-end tests, unit tests (medium)  
+**10. Monitoring/Logging:** Log payment events, errors (small)  
+
+Each task is labeled small (a day or two), medium (several days), or large (requires coordination). Total effort is roughly a few weeks of work, depending on team size.
+

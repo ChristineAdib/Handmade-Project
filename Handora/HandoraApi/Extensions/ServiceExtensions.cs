@@ -1,6 +1,8 @@
-﻿using HandoraApi.Services;
+﻿using HandoraApi.Hubs;
+using HandoraApi.Services;
 using HandoraApplication.Helpers;
 using HandoraApplication.Helpers.AuthHelper;
+using HandoraApplication.Hubs;
 using HandoraApplication.IServices;
 using HandoraApplication.Services;
 using HandoraDomain.Interfaces;
@@ -12,6 +14,13 @@ namespace HandoraApi.Extensions
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
+            services.AddScoped<IChatHubContext, ChatHubContext>();
+            services.AddScoped<IChatRepository, ChatRepository>();
+            services.AddScoped<IChatService, ChatService>();
+            services.AddScoped<INotificationHubContext, NotificationHubContext>();
+            services.AddSignalR();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<INotificationService, NotificationService>();
             services.AddSingleton<JwtHelper>();
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<IAuthService, AuthService>();
@@ -22,6 +31,7 @@ namespace HandoraApi.Extensions
                 var env = provider.GetRequiredService<IWebHostEnvironment>();
                 return new ImageHelper(env.WebRootPath);
             });
+           services.AddScoped<IWishListService, WishListService>();
             return services;
         }
     }
