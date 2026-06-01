@@ -588,6 +588,9 @@ namespace HandoraInfrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("PaymobOrderId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("PlatformCommission")
                         .HasColumnType("decimal(18,2)");
 
