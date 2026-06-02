@@ -1,4 +1,4 @@
-using HandoraApplication.DTOs.Common;
+﻿using HandoraApplication.DTOs.Common;
 using HandoraApplication.DTOs.ProductDTOs;
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
@@ -55,8 +55,21 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (query.MinRating.HasValue)
             productsQuery = productsQuery.Where(p => p.AverageRating >= query.MinRating.Value);
 
-        if (query.Status.HasValue)
-            productsQuery = productsQuery.Where(p => p.Status == query.Status.Value);
+        //if (query.Status.HasValue)
+        //    productsQuery = productsQuery.Where(p => p.Status == query.Status.Value);
+
+        if (query.ShopId.HasValue)
+        {
+            // الـ buyer بيشوف منتجات شوب معين — يظهرله حتى OutOfStock
+            if (query.Status.HasValue)
+                productsQuery = productsQuery.Where(p => p.Status == query.Status.Value);
+        }
+        else
+        {
+            // الصفحة العادية — مش يظهرله OutOfStock
+            productsQuery = productsQuery.Where(p =>
+                p.Status == ProductStatus.Active && p.Quantity > 0);
+        }
 
         if (query.Tags != null && query.Tags.Any())
             productsQuery = productsQuery.Where(p => p.Tags.Any(t => query.Tags.Contains(t.Name)));
