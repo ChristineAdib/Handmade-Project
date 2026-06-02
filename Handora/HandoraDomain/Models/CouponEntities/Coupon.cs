@@ -16,11 +16,11 @@ namespace HandoraDomain.Models.CouponEntities
         public int CurrentUsageCount { get; set; } = 0;
         public bool IsActive { get; set; } = true;
 
-        // FK to AspNetUsers (Seller)
-        public string SellerId { get; set; } = string.Empty;
-        public User Seller { get; set; } = null!;
+        // FK to AspNetUsers (Seller) — nullable to allow coupons without a user
+        public string? SellerId { get; set; }
+        public User? Seller { get; set; }
 
         // One coupon can be used across many orders
-        public ICollection<Order> Orders { get; set; } = [];
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

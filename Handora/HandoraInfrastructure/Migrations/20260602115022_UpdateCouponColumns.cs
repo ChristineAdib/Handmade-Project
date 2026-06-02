@@ -52,12 +52,14 @@ namespace HandoraInfrastructure.Migrations
                 oldClrType: typeof(Guid),
                 oldType: "uniqueidentifier");
 
+            // Make SellerId nullable so existing coupons without a matching user
+            // won't break when the foreign key is created. We will set the
+            // relationship to SET NULL on delete to avoid cascade deletes.
             migrationBuilder.AddColumn<string>(
                 name: "SellerId",
                 table: "Coupons",
                 type: "nvarchar(450)",
-                nullable: false,
-                defaultValue: "");
+                nullable: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Coupons_SellerId_IsActive",
@@ -69,13 +71,21 @@ namespace HandoraInfrastructure.Migrations
                 table: "Coupons",
                 column: "ShopId");
 
+            // Ensure any SellerId values that don't match an existing user are nulled
+            // to avoid FK creation failure on databases with seed data.
+            migrationBuilder.Sql(@"
+                UPDATE Coupons
+                SET SellerId = NULL
+                WHERE SellerId IS NOT NULL
+                  AND SellerId NOT IN (SELECT Id FROM AspNetUsers)");
+
             migrationBuilder.AddForeignKey(
                 name: "FK_Coupons_AspNetUsers_SellerId",
                 table: "Coupons",
                 column: "SellerId",
                 principalTable: "AspNetUsers",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.SetNull);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Coupons_Shops_ShopId",
