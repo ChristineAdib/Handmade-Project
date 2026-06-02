@@ -32,4 +32,12 @@ public class ProductRepository(AppDbContext context)
             .Include(p => p.Tags)
             .Where(p => !p.IsDeleted);
     }
+
+    public async Task<IEnumerable<Product>> GetProductsByIdsAsync(IEnumerable<Guid> ids)
+    {
+        return await _context.Products
+            .Include(p => p.Shop)
+            .Where(p => ids.Contains(p.Id) && !p.IsDeleted)
+            .ToListAsync();
+    }
 }
