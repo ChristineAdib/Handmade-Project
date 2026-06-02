@@ -51,7 +51,8 @@ namespace HandoraInfrastructure.Data.Configuration
             builder.HasOne(c => c.Seller)
                 .WithMany()
                 .HasForeignKey(c => c.SellerId)
-                .OnDelete(DeleteBehavior.Cascade); // if seller is deleted, coupons are deleted too
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull); // if seller is deleted, keep coupon but null SellerId
 
             // Orders that used this coupon — one coupon can be used by many orders.
             builder.HasMany(c => c.Orders)
