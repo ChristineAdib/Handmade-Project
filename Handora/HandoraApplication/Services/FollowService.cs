@@ -1,20 +1,22 @@
 ﻿using HandoraApplication.DTOs.FollowDTOs;
+using HandoraApplication.DTOs.NotificationsDto;
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.AppUser;
 using HandoraDomain.Models.FollowEntities;
+using HandoraDomain.Models.NotificationEntities;
 using HandoraDomain.Models.ShopEntities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandoraApplication.Services
 {
-    public class FollowService(IUnitOfWork unitOfWork, UserManager<User> userManager) : IFollowService
+    public class FollowService(IUnitOfWork unitOfWork, UserManager<User> userManager,INotificationService notificationService) : IFollowService
     {
         private readonly IUnitOfWork _uow = unitOfWork;
         private readonly UserManager<User> _userManager = userManager;
-
+        private readonly INotificationService _notificationService = notificationService;
         public async Task<Result> FollowShop(string userId, Guid shopId)
         {
             var followRepo = _uow.Repository<Follow, Guid>();
@@ -27,8 +29,8 @@ namespace HandoraApplication.Services
 
             var shopRepo = _uow.Repository<Shop, Guid>();
             var shopExists = await (await shopRepo.GetAllAsNoTracking())
-                .AnyAsync(s => s.Id == shopId && !s.IsDeleted);
-            if (!shopExists)
+                .FirstOrDefaultAsync(s => s.Id == shopId && !s.IsDeleted);
+            if (shopExists is null)
                 return Result.Failure("Shop not found");
 
             var follow = new Follow
@@ -41,6 +43,23 @@ namespace HandoraApplication.Services
 
             await followRepo.AddAsync(follow);
             await _uow.SaveChangesAsync();
+
+            var follower = await _userManager.FindByIdAsync(userId);
+
+            await _notificationService.SendAsync(new SendNotificationDto
+            {
+                UserId = shopExists.OwnerId,
+                TitleEn = "New Follower",
+                TitleAr = "متابع جديد",
+                MessageEn = $"{follower.UserName ?? "A user"} started following your shop",
+                MessageAr = $"قام {follower?.UserName ?? "مستخدم"} بمتابعة متجرك",
+
+                Type = NotificationType.Follow,
+                ReferenceId = shopExists.Id,
+                ReferenceType = "Shop"
+
+            });
+
             return Result.Success();
         }
 
@@ -114,7 +133,6 @@ namespace HandoraApplication.Services
                     FollowedAt = f.FollowedAt
                 });
             }
-
             return Result<IEnumerable<ShopFollowerDto>>.Success(result);
         }
     }
