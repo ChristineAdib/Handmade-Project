@@ -9,10 +9,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HandoraApplication.Services
 {
-    public class SellerService(IUnitOfWork unitOfWork, UserManager<User> userManager) : ISellerService
+    public class SellerService(IUnitOfWork unitOfWork, UserManager<User> userManager, IFileService fileService) : ISellerService
     {
         private readonly IUnitOfWork _uow = unitOfWork;
         private readonly UserManager<User> _userManager = userManager;
+        private readonly IFileService _fileService = fileService;
 
         private static SellerProfileDto ToDto(User user, Shop? shop) => new()
         {
@@ -54,7 +55,12 @@ namespace HandoraApplication.Services
 
             if (dto.Name is not null) user.Name = dto.Name;
             if (dto.Bio is not null) user.Bio = dto.Bio;
-            if (dto.ProfileImage is not null) user.ProfileImage = dto.ProfileImage;
+            if (dto.ProfileImage is not null)
+            {
+                if (user.ProfileImage is not null)
+                    await _fileService.DeleteFileAsync(user.ProfileImage);
+                user.ProfileImage = await _fileService.UploadFileAsync(dto.ProfileImage, "profiles");
+            }
             user.UpdatedAt = DateTime.UtcNow;
             user.UpdatedBy = sellerId;
 

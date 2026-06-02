@@ -195,7 +195,7 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             var imagesToRemove = product.Images.Where(i => dto.RemoveImageIds.Contains(i.Id)).ToList();
             foreach (var image in imagesToRemove)
             {
-                _fileService.DeleteFile(image.ImageUrl);
+                await _fileService.DeleteFileAsync(image.ImageUrl);
                 product.Images.Remove(image);
             }
         }
