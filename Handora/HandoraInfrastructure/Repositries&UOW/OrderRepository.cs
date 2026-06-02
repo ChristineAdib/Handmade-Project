@@ -52,6 +52,12 @@ public class OrderRepository(AppDbContext context)
     {
         return await _context.Coupons
             .FirstOrDefaultAsync(c =>
-                c.Code == couponCode && c.IsActive && !c.IsDeleted && c.ExpiresAt > DateTime.UtcNow);
+                c.Code == couponCode && c.IsActive && !c.IsDeleted && c.ExpiryDate > DateTime.UtcNow);
+    }
+
+    public async Task<bool> HasUserUsedCouponAsync(string userId, Guid couponId)
+    {
+        return await _context.Orders
+            .AnyAsync(o => o.UserId == userId && o.CouponId == couponId && o.Status != OrderStatus.Cancelled);
     }
 }
