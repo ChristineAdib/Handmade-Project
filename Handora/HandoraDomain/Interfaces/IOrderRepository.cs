@@ -11,4 +11,5 @@ public interface IOrderRepository : IGenericRepository<Order, Guid>
     Task<Order?> GetOrderWithItemsAsync(Guid orderId);
     Task<Cart?> GetUserCartWithItemsAsync(string userId);
     Task<Coupon?> GetActiveCouponByCodeAsync(string couponCode);
+    Task<bool> HasUserUsedCouponAsync(string userId, Guid couponId);
 }
