@@ -31,7 +31,7 @@ namespace HandoraApi.Controllers
 
         [Authorize(Roles = AppRoles.Seller)]
         [HttpPut("MyProfile")]
-        public async Task<IActionResult> UpdateMyProfile(UpdateSellerDto dto)
+        public async Task<IActionResult> UpdateMyProfile([FromForm] UpdateSellerDto dto)
         {
             var result = await _sellerService.UpdateMyProfile(CurrentUserId, dto);
             return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
