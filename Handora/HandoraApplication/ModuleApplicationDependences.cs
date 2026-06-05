@@ -23,6 +23,7 @@ public static class ModuleApplicationDependences
         services.AddScoped<IFollowService, FollowService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<ICouponService, CouponService>();
+        services.AddScoped<IProfileService, ProfileService>();
         return services;
     }
 }
