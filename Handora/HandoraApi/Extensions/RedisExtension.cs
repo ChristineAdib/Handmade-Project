@@ -4,12 +4,21 @@
     {
         public static IServiceCollection ConfigureRedis(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddStackExchangeRedisCache(options =>
+            var redisConnection = configuration.GetConnectionString("Redis")
+                               ?? configuration["Redis:ConnectionString"];
+
+            if (!string.IsNullOrEmpty(redisConnection))
             {
-                options.Configuration = configuration.GetConnectionString("Redis")
-                                     ?? configuration["Redis:ConnectionString"];
-                options.InstanceName = "Handora_";
-            });
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = redisConnection;
+                    options.InstanceName = "Handora_";
+                });
+            }
+            else
+            {
+                services.AddDistributedMemoryCache();
+            }
 
             return services;
         }

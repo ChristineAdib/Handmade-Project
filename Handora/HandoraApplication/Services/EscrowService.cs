@@ -67,7 +67,7 @@ public class EscrowService : IEscrowService
             var netAmount = _commissionService.CalculateSellerNet(grossAmount, commissionAmount);
 
             // Create balance transaction (held in escrow)
-            var holdPeriodDays = 14;
+            var holdPeriodDays = 0;
             var transaction = new SellerBalanceTransaction
             {
                 SellerId = shop.OwnerId,
