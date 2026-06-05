@@ -11,6 +11,7 @@ public static class ModuleApplicationDependences
     {
         MapsterSettings.Configure();
         services.AddScoped<IProductService, ProductService>();
+
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IPayoutService, PayoutService>();
@@ -21,6 +22,7 @@ public static class ModuleApplicationDependences
         services.AddScoped<ISellerService, SellerService>();
         services.AddScoped<IFollowService, FollowService>();
         services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<ICouponService, CouponService>();
         return services;
     }
 }

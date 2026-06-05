@@ -5,5 +5,6 @@ namespace HandoraApplication.IServices;
 public interface IFileService
 {
     Task<string> UploadFileAsync(IFormFile file, string folder);
-    void DeleteFile(string fileUrl);
+    Task DeleteFileAsync(string fileUrl);
+    Task DeleteFilesAsync(IEnumerable<string> fileUrls);
 }
