@@ -45,6 +45,9 @@ public class PaymentService : IPaymentService
             var iframeId = int.Parse(
                 _configuration["Paymob:IframeId"] ?? "0");
 
+            var callbackUrl = _configuration["Paymob:FrontendCallbackUrl"]
+                              ?? "http://localhost:4200/payment/callback";
+
             // 1) AUTH TOKEN
             var token = await GetAuthTokenAsync(baseUrl, apiKey);
 
@@ -77,7 +80,8 @@ public class PaymentService : IPaymentService
                 city = "Cairo",
                 country = "EG",
                 last_name = "Customer",
-                state = "Cairo"
+                state = "Cairo",
+                callback_url = callbackUrl
             };
 
             // 4) PAYMENT KEY
