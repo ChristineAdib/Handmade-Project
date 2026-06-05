@@ -12,6 +12,7 @@ namespace HandoraDomain.Models.NotificationEntities
         Payment = 2,
         Review = 3,
         System = 4,
-        Coupon = 5
+        Coupon = 5,
+        Follow=6
     }
 }

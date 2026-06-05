@@ -4,10 +4,11 @@ using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.CartEntities;
-using HandoraDomain.Models.CouponEntities;
+using HandoraDomain.Models.ShopEntities;
 using HandoraDomain.Models.OrderEntity;
 using HandoraDomain.Models.ProductEntities;
 using Microsoft.EntityFrameworkCore;
+using HandoraDomain.Models.CouponEntities;
 
 namespace HandoraApplication.Services;
 
@@ -68,25 +69,55 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
         if (!string.IsNullOrWhiteSpace(dto.CouponCode))
         {
-            coupon = await _orderRepository.GetActiveCouponByCodeAsync(dto.CouponCode);
+            var normalizedCode = dto.CouponCode.Trim().ToUpper();
+            coupon = await _orderRepository.GetActiveCouponByCodeAsync(normalizedCode);
 
             if (coupon is null)
-                return Result<OrderResponseDto>.Failure("Invalid or expired coupon");
+                return Result<OrderResponseDto>.Failure("Invalid, inactive, or expired coupon");
 
-            if (coupon.MinOrderAmount.HasValue && subTotal < coupon.MinOrderAmount.Value)
-                return Result<OrderResponseDto>.Failure($"Minimum order amount for this coupon is {coupon.MinOrderAmount.Value}");
-
-            if (coupon.MaxUsageCount.HasValue && coupon.UsageCount >= coupon.MaxUsageCount.Value)
+            if (coupon.MaxUsageCount.HasValue && coupon.CurrentUsageCount >= coupon.MaxUsageCount.Value)
                 return Result<OrderResponseDto>.Failure("Coupon usage limit has been reached");
 
-            discountAmount = coupon.DiscountType == DiscountType.Percentage
-                ? subTotal * (coupon.Value / 100m)
-                : coupon.Value;
+            var alreadyUsed = await _orderRepository.HasUserUsedCouponAsync(userId, coupon.Id);
+            if (alreadyUsed)
+                return Result<OrderResponseDto>.Failure("You have already redeemed this coupon");
 
-            if (discountAmount > subTotal)
-                discountAmount = subTotal;
+            var shopIds = orderItems.Select(i => i.ShopId).Distinct().ToList();
+            var shopRepo = _unitOfWork.Repository<Shop, Guid>();
+            var shopsQuery = await shopRepo.GetAllAsNoTracking();
+            var shops = await shopsQuery
+                .Where(s => shopIds.Contains(s.Id) && !s.IsDeleted)
+                .ToListAsync();
 
-            coupon.UsageCount++;
+            var sellerItems = orderItems.Where(item => {
+                var shop = shops.FirstOrDefault(s => s.Id == item.ShopId);
+                return shop != null && shop.OwnerId == coupon.SellerId;
+            }).ToList();
+
+            if (!sellerItems.Any())
+                return Result<OrderResponseDto>.Failure("This coupon is not valid for any items in your cart");
+
+            decimal shopSubtotal = sellerItems.Sum(i => i.Price * i.Quantity);
+
+            if (coupon.MinOrderValue.HasValue && shopSubtotal < coupon.MinOrderValue.Value)
+                return Result<OrderResponseDto>.Failure($"This coupon requires a minimum subtotal of {coupon.MinOrderValue.Value:C} for products from this store");
+
+            if (coupon.DiscountType == DiscountType.Percentage)
+            {
+                discountAmount = shopSubtotal * (coupon.DiscountValue / 100m);
+            }
+            else if (coupon.DiscountType == DiscountType.FixedAmount)
+            {
+                discountAmount = coupon.DiscountValue;
+                if (discountAmount > shopSubtotal)
+                {
+                    discountAmount = shopSubtotal;
+                }
+            }
+
+            discountAmount = Math.Round(discountAmount, 2);
+
+            coupon.CurrentUsageCount++;
             var couponRepo = _unitOfWork.Repository<Coupon, Guid>();
             await couponRepo.UpdateAsync(coupon);
         }

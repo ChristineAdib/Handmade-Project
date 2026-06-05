@@ -1,12 +1,10 @@
 ﻿using HandoraApplication.DTOs.AuthDTOs;
 using HandoraApplication.IServices;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HandoraApi.Controllers
 {
-
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
@@ -17,17 +15,6 @@ namespace HandoraApi.Controllers
         public AuthController(IAuthService authService)
         {
             _authService = authService;
-        }
-
-        private List<string> ResolveImageUrls(List<string> relativePaths)
-        {
-            var images = relativePaths?.Select(p => $"{Request.Scheme}://{Request.Host}{p}").ToList();
-            return images;
-        }
-        private string ResolveImageUrl(string relativePath)
-        {
-            var img = $"{Request.Scheme}://{Request.Host}{relativePath}";
-            return img;
         }
 
         [HttpPost("register")]
@@ -81,10 +68,6 @@ namespace HandoraApi.Controllers
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
             var users = await _authService.GetAllUsersAsync(ct);
-
-            foreach (var user in users)
-                user.ProfileImage = ResolveImageUrl(user.ProfileImage);
-
             return Ok(ApiResponse<IEnumerable<GetUserDto>>.Ok(users, "Users retrieved successfully."));
         }
 
@@ -96,7 +79,6 @@ namespace HandoraApi.Controllers
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
             var user = await _authService.GetUserByIdAsync(id, ct);
-            user.ProfileImage = ResolveImageUrl(user.ProfileImage);
             return Ok(ApiResponse<GetUserDto>.Ok(user, "User retrieved successfully."));
         }
 
@@ -108,7 +90,6 @@ namespace HandoraApi.Controllers
         public async Task<IActionResult> Update(string id, [FromForm] UpdateUserDto dto, CancellationToken ct)
         {
             var user = await _authService.UpdateUserAsync(id, dto, ct);
-            user.ProfileImage = ResolveImageUrl(user.ProfileImage);
             return Ok(ApiResponse<GetUserDto>.Ok(user, "User updated successfully."));
         }
 
@@ -124,4 +105,3 @@ namespace HandoraApi.Controllers
         }
     }
 }
-
