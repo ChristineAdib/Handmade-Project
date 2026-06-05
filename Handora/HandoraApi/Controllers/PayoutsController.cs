@@ -18,7 +18,7 @@ public class PayoutsController(
     private readonly UserManager<User> _userManager = userManager;
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-    [Authorize(Roles = AppRoles.Seller)]
+    // [Authorize(Roles = AppRoles.Seller)]
     [HttpPost("request")]
     public async Task<IActionResult> RequestWithdrawal([FromBody] CreateWithdrawalDto dto)
     {
@@ -40,7 +40,7 @@ public class PayoutsController(
         }
     }
 
-    [Authorize(Roles = AppRoles.Admin)]
+    // [Authorize(Roles = AppRoles.Admin)]
     [HttpPost("process-pending")]
     public async Task<IActionResult> ProcessPending()
     {
