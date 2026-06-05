@@ -1,40 +1,69 @@
+using System.Text.RegularExpressions;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using HandoraApplication.IServices;
+using HandoraApplication.Settings;
+using Microsoft.Extensions.Options;
 
 namespace HandoraApi.Services;
 
-public class FileService(IWebHostEnvironment environment) : IFileService
+public class FileService : IFileService
 {
-    private readonly IWebHostEnvironment _environment = environment;
+    private readonly Cloudinary _cloudinary;
+
+    public FileService(IOptions<CloudinarySettings> settings)
+    {
+        var account = new Account(
+            settings.Value.CloudName,
+            settings.Value.ApiKey,
+            settings.Value.ApiSecret);
+        _cloudinary = new Cloudinary(account);
+    }
 
     public async Task<string> UploadFileAsync(IFormFile file, string folder)
     {
         if (file == null || file.Length == 0)
             throw new ArgumentException("File is empty");
 
-        var uploadsFolder = Path.Combine(_environment.WebRootPath, "images", folder);
-
-        if (!Directory.Exists(uploadsFolder))
-            Directory.CreateDirectory(uploadsFolder);
-
-        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-        var filePath = Path.Combine(uploadsFolder, fileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
+        await using var stream = file.OpenReadStream();
+        var uploadParams = new ImageUploadParams
         {
-            await file.CopyToAsync(stream);
-        }
+            File = new FileDescription(file.FileName, stream),
+            Folder = folder,
+            Transformation = new Transformation().Quality("auto").FetchFormat("auto")
+        };
 
-        return $"/images/{folder}/{fileName}";
+        var result = await _cloudinary.UploadAsync(uploadParams);
+
+        if (result.Error != null)
+            throw new Exception($"Cloudinary upload failed: {result.Error.Message}");
+
+        return result.SecureUrl.AbsoluteUri;
     }
 
-    public void DeleteFile(string fileUrl)
+    public async Task DeleteFileAsync(string fileUrl)
     {
         if (string.IsNullOrWhiteSpace(fileUrl))
             return;
 
-        var filePath = Path.Combine(_environment.WebRootPath, fileUrl.TrimStart('/'));
+        var publicId = ExtractPublicId(fileUrl);
+        if (publicId == null)
+            return;
 
-        if (File.Exists(filePath))
-            File.Delete(filePath);
+        var deleteParams = new DeletionParams(publicId);
+        await _cloudinary.DestroyAsync(deleteParams);
+    }
+
+    public async Task DeleteFilesAsync(IEnumerable<string> fileUrls)
+    {
+        foreach (var url in fileUrls)
+            await DeleteFileAsync(url);
+    }
+
+    private static string? ExtractPublicId(string url)
+    {
+        // Cloudinary URL format: https://res.cloudinary.com/cloudname/image/upload/v12345/folder/publicid.ext
+        var match = Regex.Match(url, @"/upload/(?:v\d+/)?(.+?)(?:\.[a-z]+)?$", RegexOptions.IgnoreCase);
+        return match.Success ? match.Groups[1].Value : null;
     }
 }
