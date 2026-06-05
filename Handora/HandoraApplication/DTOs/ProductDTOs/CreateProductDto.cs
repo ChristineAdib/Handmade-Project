@@ -14,7 +14,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public string? DescriptionEn { get; set; }
         public string? DescriptionAr { get; set; }
         public decimal Price { get; set; }
-        public int Quantity { get; set; }
+        public int Quantity { get; set; }=1;
         public Guid CategoryId { get; set; }
         public Guid ShopId { get; set; }
         public List<IFormFile> Images { get; set; } // Multiple images
