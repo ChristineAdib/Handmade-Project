@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HandoraInfrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260525152814_init")]
-    partial class init
+    [Migration("20260602115022_UpdateCouponColumns")]
+    partial class UpdateCouponColumns
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -309,6 +309,11 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("CurrentUsageCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
@@ -317,7 +322,11 @@ namespace HandoraInfrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("ExpiresAt")
+                    b.Property<decimal>("DiscountValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
@@ -331,11 +340,15 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<int?>("MaxUsageCount")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("MinOrderAmount")
+                    b.Property<decimal?>("MinOrderValue")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid>("ShopId")
+                    b.Property<string>("SellerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid?>("ShopId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -344,23 +357,16 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UsageCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<decimal>("Value")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.HasIndex("ExpiresAt");
+                    b.HasIndex("ExpiryDate");
 
-                    b.HasIndex("ShopId", "IsActive");
+                    b.HasIndex("ShopId");
+
+                    b.HasIndex("SellerId", "IsActive");
 
                     b.ToTable("Coupons", (string)null);
                 });
@@ -590,6 +596,9 @@ namespace HandoraInfrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PaymobOrderId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("PlatformCommission")
                         .HasColumnType("decimal(18,2)");
@@ -1648,13 +1657,17 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("HandoraDomain.Models.CouponEntities.Coupon", b =>
                 {
-                    b.HasOne("HandoraDomain.Models.ShopEntities.Shop", "Shop")
-                        .WithMany("Coupons")
-                        .HasForeignKey("ShopId")
+                    b.HasOne("HandoraDomain.Models.AppUser.User", "Seller")
+                        .WithMany()
+                        .HasForeignKey("SellerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Shop");
+                    b.HasOne("HandoraDomain.Models.ShopEntities.Shop", null)
+                        .WithMany("Coupons")
+                        .HasForeignKey("ShopId");
+
+                    b.Navigation("Seller");
                 });
 
             modelBuilder.Entity("HandoraDomain.Models.FollowEntities.Follow", b =>

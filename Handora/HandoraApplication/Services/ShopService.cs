@@ -9,9 +9,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HandoraApplication.Services
 {
-    public class ShopService(IUnitOfWork unitOfWork) : IShopService
+    public class ShopService(IUnitOfWork unitOfWork, IFileService fileService) : IShopService
     {
         private readonly IUnitOfWork _uow = unitOfWork;
+        private readonly IFileService _fileService = fileService;
 
         public async Task<Result<ShopDto>> GetShopById(Guid id)
         {
@@ -151,13 +152,17 @@ namespace HandoraApplication.Services
             if (nameTaken)
                 return Result<ShopDto>.Failure("Shop name is already taken");
 
+            var logoUrl = dto.Logo is not null
+                ? await _fileService.UploadFileAsync(dto.Logo, "shops")
+                : null;
+
             var shop = new Shop
             {
                 Id = Guid.NewGuid(),
                 Name = dto.Name,
                 DescriptionEn = dto.DescriptionEn,
                 DescriptionAr = dto.DescriptionAr,
-                Logo = dto.Logo,
+                Logo = logoUrl,
                 OwnerId = ownerId,
                 CreatedBy = ownerId
             };
@@ -190,7 +195,12 @@ namespace HandoraApplication.Services
 
             if (dto.DescriptionEn is not null) shop.DescriptionEn = dto.DescriptionEn;
             if (dto.DescriptionAr is not null) shop.DescriptionAr = dto.DescriptionAr;
-            if (dto.Logo is not null) shop.Logo = dto.Logo;
+            if (dto.Logo is not null)
+            {
+                if (shop.Logo is not null)
+                    await _fileService.DeleteFileAsync(shop.Logo);
+                shop.Logo = await _fileService.UploadFileAsync(dto.Logo, "shops");
+            }
             shop.UpdatedAt = DateTime.UtcNow;
             shop.UpdatedBy = ownerId;
 
