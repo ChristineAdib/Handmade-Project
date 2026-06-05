@@ -61,7 +61,7 @@ namespace HandoraApi.Controllers
             return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
         }
 
-        [Authorize(Roles = AppRoles.Seller)]
+        // [Authorize(Roles = AppRoles.Seller)]
         [HttpPost]
         public async Task<IActionResult> CreateShop(CreateShopDto dto)
         {
