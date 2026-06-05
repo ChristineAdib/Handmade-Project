@@ -63,7 +63,7 @@ namespace HandoraApi.Controllers
 
         [Authorize(Roles = AppRoles.Seller)]
         [HttpPost]
-        public async Task<IActionResult> CreateShop(CreateShopDto dto)
+        public async Task<IActionResult> CreateShop([FromForm] CreateShopDto dto)
         {
             var result = await _shopService.CreateShop(CurrentUserId, dto);
             return result.IsSuccess
@@ -73,7 +73,7 @@ namespace HandoraApi.Controllers
 
         [Authorize(Roles = AppRoles.Seller)]
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> UpdateShop(Guid id, UpdateShopDto dto)
+        public async Task<IActionResult> UpdateShop(Guid id, [FromForm] UpdateShopDto dto)
         {
             var result = await _shopService.UpdateShop(id, CurrentUserId, dto);
             return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);

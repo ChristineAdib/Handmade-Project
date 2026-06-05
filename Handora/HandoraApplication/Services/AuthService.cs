@@ -1,15 +1,9 @@
 ﻿using HandoraApplication.DTOs.AuthDTOs;
-using HandoraApplication.Helpers;
 using HandoraApplication.Helpers.AuthHelper;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.AppUser;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HandoraApplication.Services
 {
@@ -20,9 +14,9 @@ namespace HandoraApplication.Services
         private readonly IEmailService _emailService;
         private readonly JwtHelper _jwtHelper;
         private readonly ILogger<AuthService> _logger;
+        private readonly IFileService _fileService;
         private const int OTP_EXPIRY_MINUTES = 5;
         private const int OTP_LENGTH = 6;
-        private readonly ImageHelper _imageHelper;
 
         public AuthService(
             IAuthRepository authRepo,
@@ -30,14 +24,14 @@ namespace HandoraApplication.Services
             IEmailService emailService,
             JwtHelper jwtHelper,
             ILogger<AuthService> logger,
-            ImageHelper imageHelper)
+            IFileService fileService)
         {
             _authRepo = authRepo;
             _otpRepo = otpRepo;
             _emailService = emailService;
             _jwtHelper = jwtHelper;
             _logger = logger;
-            _imageHelper = imageHelper;
+            _fileService = fileService;
         }
 
         public async Task<AuthResponseDto> RegisterAsync( RegisterDto dto, CancellationToken ct = default)
@@ -48,7 +42,7 @@ namespace HandoraApplication.Services
 
             string? profilePictureUrl = null;
             if (dto.ProfileImage is not null)
-                profilePictureUrl = await _imageHelper.SaveImageAsync(dto.ProfileImage);
+                profilePictureUrl = await _fileService.UploadFileAsync(dto.ProfileImage, "profiles");
 
             var user = new User
             {
@@ -270,9 +264,9 @@ namespace HandoraApplication.Services
             if (dto.ProfileImage is not null)
             {
                 if (user.ProfileImage is not null)
-                    await _imageHelper.DeleteImage(user.ProfileImage);
+                    await _fileService.DeleteFileAsync(user.ProfileImage);
 
-                user.ProfileImage = await _imageHelper.SaveImageAsync(dto.ProfileImage);
+                user.ProfileImage = await _fileService.UploadFileAsync(dto.ProfileImage, "profiles");
             }
 
             user.UpdatedAt = DateTime.UtcNow;

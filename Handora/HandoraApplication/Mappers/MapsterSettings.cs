@@ -1,11 +1,13 @@
+using HandoraApplication.DTOs.CouponDTOs;
 using HandoraApplication.DTOs.ProductDTOs;
 using HandoraApplication.DTOs.ReviewDTOs;
+using HandoraApplication.DTOs.ShopDTOs;
 using HandoraApplication.DTOs.WishlistDTOs;
+using HandoraDomain.Models.CouponEntities;
 using HandoraDomain.Models.ProductEntities;
+using HandoraDomain.Models.ShopEntities;
 using HandoraDomain.Models.WishListEntoties;
 using Mapster;
-using HandoraApplication.DTOs.ShopDTOs;
-using HandoraDomain.Models.ShopEntities;
 
 namespace HandoraApplication.Mappers;
 
@@ -60,5 +62,25 @@ public class MapsterSettings
                 .Where(i => i.IsMain)
                 .Select(i => i.ImageUrl)
                 .FirstOrDefault());
+
+        // Mapping for Coupon to CouponResponseDto
+        TypeAdapterConfig<Coupon, CouponResponseDto>.NewConfig()
+            .Map(dest => dest.DiscountType, src => src.DiscountType.ToString());
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
