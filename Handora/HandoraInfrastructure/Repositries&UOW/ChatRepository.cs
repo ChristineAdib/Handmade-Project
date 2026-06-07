@@ -1,4 +1,4 @@
-﻿using HandoraDomain.Interfaces;
+using HandoraDomain.Interfaces;
 using HandoraDomain.Models.ChatEntities;
 using HandoraInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -40,6 +40,7 @@ namespace HandoraInfrastructure.Repositries_UOW
                 .Include(c => c.Buyer)
                 .Include(c => c.Seller)
                 .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
+                    .ThenInclude(m => m.Sender)
                 .Where(c => (c.BuyerId == userId || c.SellerId == userId) && !c.IsDeleted)
                 .OrderByDescending(c => c.Messages.Max(m => (DateTime?)m.CreatedAt) ?? c.CreatedAt)
                 .AsNoTracking()
