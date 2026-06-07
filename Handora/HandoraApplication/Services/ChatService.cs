@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.ChatDTOs;
+using HandoraApplication.DTOs.ChatDTOs;
 using HandoraApplication.Helpers.AuthHelper;
 using HandoraApplication.Hubs;
 using HandoraApplication.IServices;
@@ -166,7 +166,7 @@ namespace HandoraApplication.Services
             ImageUrl = m.ImageUrl,
             IsRead = m.IsRead,
             SenderId = m.SenderId,
-            SenderName = m.Sender.Name,
+            SenderName = m.Sender?.Name ?? string.Empty,
             ConversationId = m.ConversationId,
             CreatedAt = m.CreatedAt
         };
