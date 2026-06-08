@@ -174,4 +174,31 @@ public class ReviewService(IUnitOfWork unitOfWork) : IReviewService
 
         return Result.Success();
     }
+
+    public async Task<Result<IEnumerable<UserReviewDto>>> GetUserReviews(string userId)
+    {
+        var repo = _unitOfWork.Repository<Review, Guid>();
+        var query = await repo.GetAllAsNoTracking();
+
+        var userReviews = await query
+            .Include(r => r.User)
+            .Include(r => r.Product)
+            .ThenInclude(p => p.Images)
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+        var dtos = userReviews.Select(r => new UserReviewDto
+        {
+            Id = r.Id,
+            Rating = r.Rating,
+            Comment = r.Comment,
+            ProductId = r.ProductId,
+            ProductTitle = r.Product.TitleEn,
+            ProductImage = r.Product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl ?? r.Product.Images.FirstOrDefault()?.ImageUrl,
+            CreatedAt = r.CreatedAt
+        });
+
+        return Result<IEnumerable<UserReviewDto>>.Success(dtos);
+    }
 }
