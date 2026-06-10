@@ -1,5 +1,6 @@
 using HandoraApplication.DTOs.OrderDTOs;
 using HandoraApplication.IServices;
+using HandoraDomain.Models.AppUser;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
@@ -82,6 +83,16 @@ public class OrdersController(IOrderService orderService, IDistributedCache cach
         var result = await _orderService.CancelOrder(id, userId);
         if (result.IsSuccess)
             return Ok(new { message = "Order cancelled successfully" });
+        return BadRequest(result.Errors);
+    }
+
+    [HttpGet("seller/{shopId}")]
+    [Authorize(Roles = AppRoles.Seller)]
+    public async Task<IActionResult> GetSellerOrders(Guid shopId, [FromQuery] OrderQueryDto query)
+    {
+        var result = await _orderService.GetSellerOrders(shopId, query);
+        if (result.IsSuccess)
+            return Ok(result.Data);
         return BadRequest(result.Errors);
     }
 }
