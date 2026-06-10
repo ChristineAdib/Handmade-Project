@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.Common;
+using HandoraApplication.DTOs.Common;
 using HandoraApplication.DTOs.ReviewDTOs;
 using HandoraApplication.IServices;
 using Microsoft.AspNetCore.Authorization;
@@ -61,6 +61,21 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
         var result = await _reviewService.DeleteReview(id, userId);
         if (result.IsSuccess)
             return Ok("Review deleted successfully");
+        return BadRequest(result.Errors);
+    }
+
+    // GET /api/reviews/my-reviews
+    [HttpGet("my-reviews")]
+    [Authorize]
+    public async Task<IActionResult> GetMyReviews()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await _reviewService.GetUserReviews(userId);
+        if (result.IsSuccess)
+            return Ok(result.Data);
         return BadRequest(result.Errors);
     }
 }
