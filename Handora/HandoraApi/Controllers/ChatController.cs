@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.AuthDTOs;
+using HandoraApplication.DTOs.AuthDTOs;
 using HandoraApplication.DTOs.ChatDTOs;
 using HandoraApplication.IServices;
 using HandoraDomain.Models.AppUser;
@@ -16,9 +16,13 @@ namespace HandoraApi.Controllers
     public sealed class ChatController : ControllerBase
     {
         private readonly IChatService _chatService;
+        private readonly IFileService _fileService;
 
-        public ChatController(IChatService chatService)
-            => _chatService = chatService;
+        public ChatController(IChatService chatService, IFileService fileService)
+        {
+            _chatService = chatService;
+            _fileService = fileService;
+        }
 
         [HttpPost("start")]
         [Authorize(Roles = AppRoles.Buyer)] 
@@ -53,6 +57,20 @@ namespace HandoraApi.Controllers
             var senderId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var result = await _chatService.SendMessageAsync(senderId, dto, ct);
             return Ok(ApiResponse<MessageDto>.Ok(result, "Message sent."));
+        }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadImage(IFormFile file, CancellationToken ct)
+        {
+            try
+            {
+                var imageUrl = await _fileService.UploadFileAsync(file, "chat");
+                return Ok(ApiResponse<string>.Ok(imageUrl, "Image uploaded successfully."));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<string>.Fail(ex.Message));
+            }
         }
 
         [HttpPatch("{conversationId:guid}/read")]
