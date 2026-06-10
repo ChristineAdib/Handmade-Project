@@ -312,4 +312,44 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
             }).ToList()
         };
     }
+
+    public async Task<Result<PagedResultDto<OrderSummaryDto>>> GetSellerOrders(Guid shopId, OrderQueryDto query)
+    {
+        var ordersQuery = await _orderRepository.GetOrdersByShopIdQueryAsync(shopId);
+
+        if (query.Status.HasValue)
+            ordersQuery = ordersQuery.Where(o => o.Status == query.Status.Value);
+
+        ordersQuery = query.SortBy?.ToLower() switch
+        {
+            "date" => query.SortDescending
+                ? ordersQuery.OrderByDescending(o => o.OrderDate)
+                : ordersQuery.OrderBy(o => o.OrderDate),
+            _ => ordersQuery.OrderByDescending(o => o.OrderDate)
+        };
+
+        var totalCount = await ordersQuery.CountAsync();
+        var items = await ordersQuery
+            .Skip((query.PageNumber - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync();
+
+        var summaries = items.Select(o => new OrderSummaryDto
+        {
+            Id = o.Id,
+            OrderDate = o.OrderDate,
+            Status = o.Status.ToString(),
+            PaymentStatus = o.PaymentStatus.ToString(),
+            Total = o.SubTotal + o.DeliveryMethod.Cost - (o.DiscountAmount ?? 0),
+            ItemCount = o.Items.Count(i => i.ShopId == shopId)
+        }).ToList();
+
+        return Result<PagedResultDto<OrderSummaryDto>>.Success(new PagedResultDto<OrderSummaryDto>
+        {
+            Items = summaries,
+            TotalCount = totalCount,
+            PageNumber = query.PageNumber,
+            PageSize = query.PageSize
+        });
+    }
 }
