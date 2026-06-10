@@ -2,6 +2,7 @@ using HandoraApplication.DTOs.OrderDTOs;
 using HandoraApplication.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Security.Claims;
 
 namespace HandoraApi.Controllers;
@@ -9,9 +10,10 @@ namespace HandoraApi.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class OrdersController(IOrderService orderService) : ControllerBase
+public class OrdersController(IOrderService orderService, IDistributedCache cache) : ControllerBase
 {
     private readonly IOrderService _orderService = orderService;
+    private readonly IDistributedCache _cache = cache;
 
     [HttpPost]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto dto)
@@ -24,7 +26,13 @@ public class OrdersController(IOrderService orderService) : ControllerBase
 
         var result = await _orderService.CreateOrder(userId, email, dto);
         if (result.IsSuccess)
+        {
+            // Clear memory/Redis cart cache key
+            var cartKey = $"cart:user:{userId}";
+            await _cache.RemoveAsync(cartKey);
+
             return CreatedAtAction(nameof(GetOrder), new { id = result.Data!.Id }, result.Data);
+        }
         return BadRequest(result.Errors);
     }
 

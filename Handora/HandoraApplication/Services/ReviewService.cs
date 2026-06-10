@@ -106,16 +106,19 @@ public class ReviewService(IUnitOfWork unitOfWork) : IReviewService
         };
 
         await reviewRepo.AddAsync(review);
+        await _unitOfWork.SaveChangesAsync();
 
         // 5. اعمل Update ل AverageRating بتاع المنتج
         var allReviews = await reviewRepo.GetAllAsNoTracking();
         var ratingsQuery = allReviews.Where(r => r.ProductId == dto.ProductId);
-        var avgRating = await ratingsQuery.AverageAsync(r => (double)r.Rating);
+        var count = await ratingsQuery.CountAsync();
 
-        product.AverageRating = (decimal)avgRating;
-        product.ReviewCount = await ratingsQuery.CountAsync();
+        product.ReviewCount = count;
+        product.AverageRating = count > 0 
+            ? (decimal)await ratingsQuery.AverageAsync(r => (double)r.Rating)
+            : (decimal)dto.Rating;
+            
         await productRepo.UpdateAsync(product);
-
         await _unitOfWork.SaveChangesAsync();
 
         // 6. جيب الـ review مع بيانات الـ User
