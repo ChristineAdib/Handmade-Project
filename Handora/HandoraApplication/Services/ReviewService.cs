@@ -106,16 +106,19 @@ public class ReviewService(IUnitOfWork unitOfWork) : IReviewService
         };
 
         await reviewRepo.AddAsync(review);
+        await _unitOfWork.SaveChangesAsync();
 
         // 5. اعمل Update ل AverageRating بتاع المنتج
         var allReviews = await reviewRepo.GetAllAsNoTracking();
         var ratingsQuery = allReviews.Where(r => r.ProductId == dto.ProductId);
-        var avgRating = await ratingsQuery.AverageAsync(r => (double)r.Rating);
+        var count = await ratingsQuery.CountAsync();
 
-        product.AverageRating = (decimal)avgRating;
-        product.ReviewCount = await ratingsQuery.CountAsync();
+        product.ReviewCount = count;
+        product.AverageRating = count > 0 
+            ? (decimal)await ratingsQuery.AverageAsync(r => (double)r.Rating)
+            : (decimal)dto.Rating;
+            
         await productRepo.UpdateAsync(product);
-
         await _unitOfWork.SaveChangesAsync();
 
         // 6. جيب الـ review مع بيانات الـ User
@@ -173,5 +176,32 @@ public class ReviewService(IUnitOfWork unitOfWork) : IReviewService
         await _unitOfWork.SaveChangesAsync();
 
         return Result.Success();
+    }
+
+    public async Task<Result<IEnumerable<UserReviewDto>>> GetUserReviews(string userId)
+    {
+        var repo = _unitOfWork.Repository<Review, Guid>();
+        var query = await repo.GetAllAsNoTracking();
+
+        var userReviews = await query
+            .Include(r => r.User)
+            .Include(r => r.Product)
+            .ThenInclude(p => p.Images)
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+        var dtos = userReviews.Select(r => new UserReviewDto
+        {
+            Id = r.Id,
+            Rating = r.Rating,
+            Comment = r.Comment,
+            ProductId = r.ProductId,
+            ProductTitle = r.Product.TitleEn,
+            ProductImage = r.Product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl ?? r.Product.Images.FirstOrDefault()?.ImageUrl,
+            CreatedAt = r.CreatedAt
+        });
+
+        return Result<IEnumerable<UserReviewDto>>.Success(dtos);
     }
 }
