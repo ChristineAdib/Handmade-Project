@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.ChatDTOs;
+using HandoraApplication.DTOs.ChatDTOs;
 using HandoraApplication.Helpers.AuthHelper;
 using HandoraApplication.Hubs;
 using HandoraApplication.IServices;
@@ -150,8 +150,10 @@ namespace HandoraApplication.Services
                 Id = c.Id,
                 BuyerId = c.BuyerId,
                 BuyerName = c.Buyer.Name,
+                BuyerImage = c.Buyer.ProfileImage,
                 SellerId = c.SellerId,
                 SellerName = c.Seller.Name,
+                SellerImage = c.Seller.ProfileImage,
                 LastMessage = lastMessage is null ? null : MapMessage(lastMessage),
                 UnreadCount = unreadCount,
                 CreatedAt = c.CreatedAt
@@ -166,7 +168,7 @@ namespace HandoraApplication.Services
             ImageUrl = m.ImageUrl,
             IsRead = m.IsRead,
             SenderId = m.SenderId,
-            SenderName = m.Sender.Name,
+            SenderName = m.Sender?.Name ?? string.Empty,
             ConversationId = m.ConversationId,
             CreatedAt = m.CreatedAt
         };
