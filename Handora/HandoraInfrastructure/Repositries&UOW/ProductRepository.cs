@@ -37,7 +37,38 @@ public class ProductRepository(AppDbContext context)
     {
         return await _context.Products
             .Include(p => p.Shop)
+            .Include(p => p.Images)
             .Where(p => ids.Contains(p.Id) && !p.IsDeleted)
             .ToListAsync();
+    }
+
+    public void RemoveProductImage(ProductImage image)
+    {
+        _context.Entry(image).State = EntityState.Deleted;
+    }
+
+    public void AddProductImage(ProductImage image)
+    {
+        _context.Set<ProductImage>().Add(image);
+    }
+
+    public void SetImageUnchanged(ProductImage image)
+    {
+        _context.Entry(image).State = EntityState.Unchanged;
+    }
+
+    public void ForceDetectChanges()
+    {
+        _context.ChangeTracker.DetectChanges();
+    }
+
+    public void DisableAutoDetectChanges()
+    {
+        _context.ChangeTracker.AutoDetectChangesEnabled = false;
+    }
+
+    public void EnableAutoDetectChanges()
+    {
+        _context.ChangeTracker.AutoDetectChangesEnabled = true;
     }
 }

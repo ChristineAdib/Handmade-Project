@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -10,10 +10,11 @@ namespace HandoraDomain.Models.OrderEntity
     public enum OrderStatus
     {
         Pending = 1,
-        Processing = 2,
-        Shipped = 3,
-        Delivered = 4,
-        Cancelled = 5,
-        Refunded = 6
+        Confirmed = 2,
+        Processing = 3,
+        Shipped = 4,
+        Delivered = 5,
+        Cancelled = 6,
+        Refunded = 7
     }
 }
