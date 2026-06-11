@@ -44,7 +44,9 @@ public class OrdersController(IOrderService orderService, IDistributedCache cach
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
 
-        var result = await _orderService.GetOrderById(id, userId);
+        var isAdmin = User.IsInRole("Admin");
+
+        var result = await _orderService.GetOrderById(id, userId, isAdmin);
         if (result.IsSuccess)
             return Ok(result.Data);
         return NotFound(result.Errors);
@@ -67,7 +69,13 @@ public class OrdersController(IOrderService orderService, IDistributedCache cach
     [Authorize(Roles = "Admin,Seller")]
     public async Task<IActionResult> UpdateOrderStatus(Guid id, [FromBody] UpdateOrderStatusDto dto)
     {
-        var result = await _orderService.UpdateOrderStatus(id, dto);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var isAdmin = User.IsInRole("Admin");
+
+        var result = await _orderService.UpdateOrderStatus(id, dto, userId, isAdmin);
         if (result.IsSuccess)
             return Ok(result.Data);
         return BadRequest(result.Errors);
@@ -94,5 +102,23 @@ public class OrdersController(IOrderService orderService, IDistributedCache cach
         if (result.IsSuccess)
             return Ok(result.Data);
         return BadRequest(result.Errors);
+    }
+
+    [HttpGet("test-detail/{id:guid}")]
+    public async Task<IActionResult> TestGetOrderDetail(Guid id, [FromQuery] string userId)
+    {
+        try
+        {
+            var result = await _orderService.GetOrderById(id, userId, false);
+            var logPath = @"C:\Users\EG.LAP\.gemini\antigravity\brain\5349933c-d2e2-4030-b790-5118274db606\scratch\api_test.log";
+            System.IO.File.WriteAllText(logPath, $"Success: {result.IsSuccess}. Errors: {string.Join(", ", result.Errors ?? new string[0])}. Data null: {result.Data == null}");
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            var logPath = @"C:\Users\EG.LAP\.gemini\antigravity\brain\5349933c-d2e2-4030-b790-5118274db606\scratch\api_test.log";
+            System.IO.File.WriteAllText(logPath, $"Exception: {ex.Message}\nStack: {ex.StackTrace}");
+            throw;
+        }
     }
 }

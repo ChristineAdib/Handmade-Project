@@ -61,7 +61,7 @@ public class MapsterSettings
             .Map(dest => dest.ImageUrl, src => src.Product.Images
                 .Where(i => i.IsMain)
                 .Select(i => i.ImageUrl)
-                .FirstOrDefault());
+                .FirstOrDefault() ?? src.Product.Images.Select(i => i.ImageUrl).FirstOrDefault());
 
         // Mapping for Coupon to CouponResponseDto
         TypeAdapterConfig<Coupon, CouponResponseDto>.NewConfig()

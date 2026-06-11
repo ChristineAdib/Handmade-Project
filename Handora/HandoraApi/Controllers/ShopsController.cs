@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.ShopDTOs;
+using HandoraApplication.DTOs.ShopDTOs;
 using HandoraApplication.IServices;
 using HandoraDomain.Models.AppUser;
 using Microsoft.AspNetCore.Authorization;
@@ -9,9 +9,10 @@ namespace HandoraApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ShopsController(IShopService shopService) : ControllerBase
+    public class ShopsController(IShopService shopService, IAuthService authService) : ControllerBase
     {
         private readonly IShopService _shopService = shopService;
+        private readonly IAuthService _authService = authService;
         private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
         [HttpGet("{id:guid}")]
@@ -61,14 +62,21 @@ namespace HandoraApi.Controllers
             return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
         }
 
-        // [Authorize(Roles = AppRoles.Seller)]
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateShop([FromForm] CreateShopDto dto)
         {
             var result = await _shopService.CreateShop(CurrentUserId, dto);
-            return result.IsSuccess
-                ? CreatedAtAction(nameof(GetShop), new { id = result.Data!.Id }, result.Data)
-                : BadRequest(result.Errors);
+            if (!result.IsSuccess)
+                return BadRequest(result.Errors);
+
+            var authResponse = await _authService.AssignSellerRoleAndGenerateTokenAsync(CurrentUserId);
+
+            return Ok(new
+            {
+                Shop = result.Data,
+                Auth = authResponse
+            });
         }
 
         [Authorize(Roles = AppRoles.Seller)]

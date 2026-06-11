@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.ChatDTOs;
+using HandoraApplication.DTOs.ChatDTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +10,7 @@ namespace HandoraApplication.IServices
     public interface IChatService
     {
         Task<ConversationDto> StartConversationAsync(string buyerId, string sellerId, CancellationToken ct = default);
+        Task<ConversationDto> StartConversationByShopAsync(string buyerId, Guid shopId, CancellationToken ct = default);
         Task<IReadOnlyList<ConversationDto>> GetUserConversationsAsync(string userId, CancellationToken ct = default);
         Task<IReadOnlyList<MessageDto>> GetMessagesAsync(Guid conversationId, string userId, CancellationToken ct = default);
         Task<MessageDto> SendMessageAsync(string senderId, SendMessageDto dto, CancellationToken ct = default);
