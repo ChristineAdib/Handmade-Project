@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.CartDTOs;
+using HandoraApplication.DTOs.CartDTOs;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.CartEntities;
@@ -53,7 +53,7 @@ namespace HandoraApi.Controllers
                     TitleAr = item.Product.TitleAr,
                     Price = item.Product.Price,
                     DiscountPrice = item.Product.DiscountPrice,
-                    ImageUrl = item.Product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl,
+                    ImageUrl = item.Product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl ?? item.Product.Images.FirstOrDefault()?.ImageUrl,
                     Quantity = item.Quantity
                 });
             }
