@@ -1,0 +1,23 @@
+﻿@model HandoraMVC.ViewModels.CategoryViewModel
+
+@{
+    ViewData["Title"] = "Delete Category";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="form-card">
+    <h2>Delete Category</h2>
+    <p>Are you sure you want to delete <strong>@Model.NameEn</strong>?</p>
+
+    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+    {
+        <img src="@Model.ImageUrl" alt="@Model.NameEn" class="cat-img-lg" />
+    }
+
+    <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+        <div class="form-actions">
+            <button type="submit" class="btn-delete">Yes, Delete</button>
+            <a asp-action="Index" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
