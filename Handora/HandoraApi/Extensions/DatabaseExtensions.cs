@@ -22,7 +22,7 @@ namespace HandoraApi.Extensions
 
                 // ── 1. Apply any pending migrations automatically ──────────────────
                 logger.LogInformation("Applying migrations...");
-                await context.Database.MigrateAsync();
+                //await context.Database.MigrateAsync();
 
                 // ── 2. Seed in order (respect FK dependencies) ────────────────────
                 logger.LogInformation("Seeding roles and users...");

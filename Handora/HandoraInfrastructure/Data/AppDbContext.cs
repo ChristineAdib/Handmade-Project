@@ -16,7 +16,7 @@ using System.Reflection;
 
 namespace HandoraInfrastructure.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext(options)
 {
     public DbSet<Shop> Shops { get; set; }
     public DbSet<Product> Products { get; set; }
@@ -52,7 +52,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
     public DbSet<Follow> Follows { get; set; }
 
     //public DbSet<Address> Addresses { get; set; }
-    // في AppDbContext.cs
     public DbSet<Conversation> Conversations { get; set; }
     public DbSet<Message> Messages { get; set; }
 
