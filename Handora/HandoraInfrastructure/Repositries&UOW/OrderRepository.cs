@@ -69,4 +69,12 @@ public class OrderRepository(AppDbContext context)
             .Include(o => o.Items)
             .Where(o => o.Items.Any(i => i.ShopId == shopId) && !o.IsDeleted);
     }
+    public async Task<IQueryable<Order>> GetAllOrdersQueryAsync()
+    {
+        return _context.Orders
+            .AsNoTracking()
+            .Include(o => o.DeliveryMethod)
+            .Include(o => o.Items)
+            .Where(o => !o.IsDeleted);
+    }
 }
