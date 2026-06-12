@@ -352,4 +352,58 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
             PageSize = query.PageSize
         });
     }
+
+    public async Task<Result<PagedResultDto<OrderSummaryDto>>> GetAllOrders(OrderQueryDto query)
+    {
+        var ordersQuery = await _orderRepository.GetAllOrdersQueryAsync();
+
+        if (query.Status.HasValue)
+            ordersQuery = ordersQuery.Where(o => o.Status == query.Status.Value);
+
+        ordersQuery = query.SortBy?.ToLower() switch
+        {
+            "date" => query.SortDescending
+                ? ordersQuery.OrderByDescending(o => o.OrderDate)
+                : ordersQuery.OrderBy(o => o.OrderDate),
+            "total" => query.SortDescending
+                ? ordersQuery.OrderByDescending(o => o.SubTotal)
+                : ordersQuery.OrderBy(o => o.SubTotal),
+            _ => ordersQuery.OrderByDescending(o => o.OrderDate)
+        };
+
+        var totalCount = await ordersQuery.CountAsync();
+
+        var items = await ordersQuery
+            .Skip((query.PageNumber - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync();
+
+        var summaries = items.Select(o => new OrderSummaryDto
+        {
+            Id = o.Id,
+            OrderDate = o.OrderDate,
+            Status = o.Status.ToString(),
+            PaymentStatus = o.PaymentStatus.ToString(),
+            Total = o.SubTotal + o.DeliveryMethod.Cost - (o.DiscountAmount ?? 0),
+            ItemCount = o.Items.Count
+        }).ToList();
+
+        return Result<PagedResultDto<OrderSummaryDto>>.Success(new PagedResultDto<OrderSummaryDto>
+        {
+            Items = summaries,
+            TotalCount = totalCount,
+            PageNumber = query.PageNumber,
+            PageSize = query.PageSize
+        });
+    }
+    public async Task<Result<OrderResponseDto>> GetOrderByIdForAdmin(Guid orderId)
+    {
+        var order = await _orderRepository.GetOrderByIdWithDetailsAsync(orderId);
+
+        if (order is null)
+            return Result<OrderResponseDto>.Failure("Order not found");
+
+        return Result<OrderResponseDto>.Success(MapToResponse(order));
+    }
+
 }
