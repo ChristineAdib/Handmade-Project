@@ -1,0 +1,68 @@
+﻿@model HandoraMVC.ViewModels.OrderIndexViewModel
+
+@{
+    ViewData["Title"] = "Orders";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <h2>Orders</h2>
+    <span class="total-badge">@Model.TotalCount total</span>
+</div>
+
+{{!-- Filter --}}
+<form method="get" class="filter-bar">
+    <select name="status" onchange="this.form.submit()" class="form-input">
+        <option value="">All Statuses</option>
+        @foreach (var s in Model.StatusOptions)
+        {
+            <option value="@s.Value" selected="@s.Selected">@s.Text</option>
+        }
+    </select>
+</form>
+
+<div class="table-card">
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model.Orders)
+            {
+                <tr>
+                    <td><code>@order.Id.ToString()[..8]...</code></td>
+                    <td>@order.OrderDate.ToString("MMM dd, yyyy")</td>
+                    <td><span class="status-badge @order.Status.ToLower()">@order.Status</span></td>
+                    <td><span class="status-badge @order.PaymentStatus.ToLower()">@order.PaymentStatus</span></td>
+                    <td>@order.ItemCount</td>
+                    <td>@order.Total.ToString("C")</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@order.Id" class="btn-edit">View</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+{{!-- Pagination --}}
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination">
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <a asp-action="Index"
+               asp-route-page="@i"
+               asp-route-status="@Model.SelectedStatus"
+               class="page-btn @(i == Model.PageNumber ? "active" : "")">@i</a>
+        }
+    </div>
+}
