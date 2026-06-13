@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Handora Admin</title>
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@@3.19.0/dist/tabler-icons.min.css" />
+</head>
+<body>
+    <div class="shell">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span>Handora</span>
+                <small>Admin Dashboard</small>
+            </div>
+            <nav class="nav-section">
+                <div class="nav-label">Main</div>
+                <a asp-controller="Home" asp-action="Index"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                    <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview
+                </a>
+                <a asp-controller="Orders" asp-action="Index"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" ? "active" : "")">
+                    <i class="ti ti-shopping-bag" aria-hidden="true"></i> Orders
+                </a>
+                <a asp-controller="Categories" asp-action="Index"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Categories" ? "active" : "")">
+                    <i class="ti ti-category" aria-hidden="true"></i> Categories
+                </a>
+                <a asp-controller="Products" asp-action="Index"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
+                    <i class="ti ti-package" aria-hidden="true"></i> Products
+                </a>
+                <a asp-controller="Users" asp-action="Index"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                    <i class="ti ti-users" aria-hidden="true"></i> Users
+                </a>
+                <a asp-controller="Sellers" asp-action="Index"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Sellers" ? "active" : "")">
+                    <i class="ti ti-store" aria-hidden="true"></i> Sellers
+                </a>
+            </nav>
+            <div class="nav-bottom">
+                <a asp-controller="Account" asp-action="Logout" class="nav-item">
+                    <i class="ti ti-logout" aria-hidden="true"></i> Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="main">
+            <header class="topbar">
+                <span class="topbar-title">@ViewData["Title"]</span>
+                <div class="topbar-right">
+                    <i class="ti ti-bell" aria-hidden="true"></i>
+                    <div class="avatar">A</div>
+                </div>
+            </header>
+            <main class="content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+</body>
+</html>

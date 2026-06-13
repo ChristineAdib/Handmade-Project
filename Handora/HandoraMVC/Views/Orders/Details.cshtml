@@ -1,0 +1,83 @@
+﻿@model HandoraMVC.ViewModels.OrderDetailsViewModel
+
+@{
+    ViewData["Title"] = "Order Details";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <a asp-action="Index" class="btn-secondary">← Back</a>
+    <h2>Order Details</h2>
+    <span class="status-badge @Model.Status.ToLower()">@Model.Status</span>
+</div>
+
+<div class="details-grid">
+    <div class="detail-card">
+        <h3>Customer</h3>
+        <p>@Model.BuyerEmail</p>
+        <p>@Model.FullName</p>
+        <p>@Model.Street, @Model.City, @Model.Country</p>
+    </div>
+
+    <div class="detail-card">
+        <h3>Delivery</h3>
+        <p>@Model.DeliveryMethodName</p>
+        <p>Cost: @Model.DeliveryMethodCost.ToString("C")</p>
+        @if (!string.IsNullOrEmpty(Model.CouponCode))
+        {
+            <p>Coupon: <strong>@Model.CouponCode</strong></p>
+        }
+    </div>
+
+    <div class="detail-card">
+        <h3>Payment</h3>
+        <p>Status: <span class="status-badge @Model.PaymentStatus.ToLower()">@Model.PaymentStatus</span></p>
+        <p>Subtotal: @Model.SubTotal.ToString("C")</p>
+        @if (Model.DiscountAmount.HasValue)
+        {
+            <p>Discount: -@Model.DiscountAmount.Value.ToString("C")</p>
+        }
+        <p><strong>Total: @Model.Total.ToString("C")</strong></p>
+    </div>
+</div>
+
+<div class="table-card">
+    <h3>Items</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Qty</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="product-cell">
+                            @if (!string.IsNullOrEmpty(item.PictureUrl))
+                            {
+                                <img src="@item.PictureUrl" alt="@item.ProductName" class="cat-img" />
+                            }
+                            <span>@item.ProductName</span>
+                        </div>
+                    </td>
+                    <td>@item.Price.ToString("C")</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.Total.ToString("C")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Notes))
+{
+    <div class="detail-card">
+        <h3>Notes</h3>
+        <p>@Model.Notes</p>
+    </div>
+}
