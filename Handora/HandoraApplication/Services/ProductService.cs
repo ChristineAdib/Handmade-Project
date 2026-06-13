@@ -55,10 +55,12 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (query.MinRating.HasValue)
             productsQuery = productsQuery.Where(p => p.AverageRating >= query.MinRating.Value);
 
-        //if (query.Status.HasValue)
-        //    productsQuery = productsQuery.Where(p => p.Status == query.Status.Value);
-
-        if (query.ShopId.HasValue)
+        if (query.IsAdmin == true)
+        {
+            if (query.Status.HasValue)
+                productsQuery = productsQuery.Where(p => p.Status == query.Status.Value);
+        }
+        else if (query.ShopId.HasValue)
         {
             // الـ buyer بيشوف منتجات شوب معين — يظهرله حتى OutOfStock
             if (query.Status.HasValue)
