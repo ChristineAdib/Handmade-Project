@@ -87,4 +87,70 @@ public class CategoryService(IUnitOfWork unitOfWork) : ICategoryService
 
         return Result<IEnumerable<CategorySummaryDto>>.Success(result);
     }
+
+    public async Task<Result<CategoryResponseDto>> CreateCategory(CreateCategoryDto dto)
+    {
+        var repo = _unitOfWork.Repository<Category, Guid>();
+
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            NameEn = dto.NameEn,
+            NameAr = dto.NameAr,
+            ImageUrl = dto.ImageUrl,
+            ParentId = dto.ParentId
+        };
+
+        await repo.AddAsync(category);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<CategoryResponseDto>.Success(new CategoryResponseDto
+        {
+            Id = category.Id,
+            NameEn = category.NameEn,
+            NameAr = category.NameAr,
+            ImageUrl = category.ImageUrl,
+            ParentId = category.ParentId
+        });
+    }
+
+    public async Task<Result<CategoryResponseDto>> UpdateCategory(Guid id, UpdateCategoryDto dto)
+    {
+        var repo = _unitOfWork.Repository<Category, Guid>();
+        var category = await repo.GetByIdAsync(id);
+
+        if (category is null)
+            return Result<CategoryResponseDto>.Failure("Category not found");
+
+        category.NameEn = dto.NameEn;
+        category.NameAr = dto.NameAr;
+        category.ImageUrl = dto.ImageUrl;
+        category.ParentId = dto.ParentId;
+
+        await repo.UpdateAsync(category);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<CategoryResponseDto>.Success(new CategoryResponseDto
+        {
+            Id = category.Id,
+            NameEn = category.NameEn,
+            NameAr = category.NameAr,
+            ImageUrl = category.ImageUrl,
+            ParentId = category.ParentId
+        });
+    }
+
+    public async Task<Result<bool>> DeleteCategory(Guid id)
+    {
+        var repo = _unitOfWork.Repository<Category, Guid>();
+        var category = await repo.GetByIdAsync(id);
+
+        if (category is null)
+            return Result<bool>.Failure("Category not found");
+
+        await repo.SoftDeleteAsync(category);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<bool>.Success(true);
+    }
 }
