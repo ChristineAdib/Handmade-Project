@@ -1,0 +1,39 @@
+@model HandoraMVC.ViewModels.ProductItemViewModel
+
+@{
+    ViewData["Title"] = "Delete Product";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="form-card" style="max-width: 600px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h2>Delete Product</h2>
+    <p style="font-size: 1.1em; margin-bottom: 20px;">Are you sure you want to delete the product <strong>@Model.TitleEn</strong>?</p>
+
+    <div class="details-section" style="margin-bottom: 20px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 15px 0;">
+        <div style="margin-bottom: 8px;"><strong>Title (Arabic):</strong> @Model.TitleAr</div>
+        <div style="margin-bottom: 8px;"><strong>Category:</strong> @Model.CategoryNameEn</div>
+        <div style="margin-bottom: 8px;"><strong>Shop:</strong> @Model.ShopName</div>
+        <div style="margin-bottom: 8px;">
+            <strong>Price:</strong> 
+            @if (Model.DiscountPrice.HasValue)
+            {
+                <span style="text-decoration: line-through; color: #888;">@Model.Price.ToString("F2")</span>
+                <span style="color: #d9534f; font-weight: bold; margin-left: 5px;">@Model.DiscountPrice.Value.ToString("F2")</span>
+            }
+            else
+            {
+                <span>@Model.Price.ToString("F2")</span>
+            }
+        </div>
+        <div style="margin-bottom: 8px;"><strong>Stock Quantity:</strong> @Model.Quantity</div>
+        <div><strong>Status:</strong> @Model.Status</div>
+    </div>
+
+    <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+        @Html.AntiForgeryToken()
+        <div class="form-actions" style="display: flex; gap: 10px;">
+            <button type="submit" class="btn-delete" style="background-color: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">Yes, Delete</button>
+            <a asp-action="Index" class="btn-secondary" style="background-color: #6c757d; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; text-align: center;">Cancel</a>
+        </div>
+    </form>
+</div>

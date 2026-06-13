@@ -12,4 +12,6 @@ public interface IOrderService
     Task<Result<OrderResponseDto>> UpdateOrderStatus(Guid orderId, UpdateOrderStatusDto dto, string userId, bool isAdmin);
     Task<Result> CancelOrder(Guid orderId, string userId);
     Task<Result<PagedResultDto<OrderSummaryDto>>> GetSellerOrders(Guid shopId, OrderQueryDto query);
+    Task<Result<PagedResultDto<OrderSummaryDto>>> GetAllOrders(OrderQueryDto query);
+    Task<Result<OrderResponseDto>> GetOrderByIdForAdmin(Guid orderId);
 }
