@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] — Handora Admin</title>
+    <title>@ViewData["Title"] - Handora Admin</title>
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@@3.19.0/dist/tabler-icons.min.css" />
 </head>
@@ -33,8 +33,8 @@
                    class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
                     <i class="ti ti-package" aria-hidden="true"></i> Products
                 </a>
-                <a asp-controller="Users" asp-action="Index"
-                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                <a asp-controller="AdminUsers" asp-action="Index"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminUsers" ? "active" : "")">
                     <i class="ti ti-users" aria-hidden="true"></i> Users
                 </a>
                 <a asp-controller="Sellers" asp-action="Index"
