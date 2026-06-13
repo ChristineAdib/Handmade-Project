@@ -1,0 +1,154 @@
+@model HandoraMVC.ViewModels.ProductListViewModel
+@using HandoraDomain.Models.ProductEntities
+
+@{
+    ViewData["Title"] = "Product Management";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <h2>Product Management</h2>
+    <span class="total-badge">@Model.TotalCount products total</span>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success" style="color: #155724; background-color: #d4edda; border-color: #c3e6cb; padding: 10px; border-radius: 4px; margin-bottom: 20px;">
+        @TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger" style="color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; padding: 10px; border-radius: 4px; margin-bottom: 20px;">
+        @TempData["Error"]
+    </div>
+}
+
+@* Filter and Search Bar *@
+<form method="get" class="filter-bar" style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
+    <input type="text" name="search" value="@Model.SearchQuery" placeholder="Search by name..." class="form-input" style="padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px; min-width: 200px;" />
+
+    <select name="categoryId" onchange="this.form.submit()" class="form-input" style="padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px;">
+        <option value="">All Categories</option>
+        @foreach (var c in Model.Categories)
+        {
+            <option value="@c.Value" selected="@c.Selected">@c.Text</option>
+        }
+    </select>
+
+    <select name="status" onchange="this.form.submit()" class="form-input" style="padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px;">
+        <option value="">All Statuses</option>
+        @foreach (var s in Model.Statuses)
+        {
+            <option value="@s.Value" selected="@s.Selected">@s.Text</option>
+        }
+    </select>
+
+    <button type="submit" class="btn-primary" style="padding: 6px 16px; border: none; cursor: pointer; border-radius: 4px;">Search</button>
+    <a asp-action="Index" class="btn-secondary" style="padding: 6px 16px; text-decoration: none; background: #6c757d; color: #fff; border-radius: 4px;">Reset</a>
+</form>
+
+<div class="table-card">
+    <table>
+        <thead>
+            <tr>
+                <th>Thumbnail</th>
+                <th>Title (EN)</th>
+                <th>Title (AR)</th>
+                <th>Category</th>
+                <th>Shop</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th style="width: 200px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Products.Count == 0)
+            {
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 20px; color: #777;">No products found matching the criteria.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var product in Model.Products)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(product.MainImageUrl))
+                            {
+                                <img src="@product.MainImageUrl" alt="@product.TitleEn" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" />
+                            }
+                            else
+                            {
+                                <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: #eee; border-radius: 4px; font-size: 20px;">📦</div>
+                            }
+                        </td>
+                        <td>@product.TitleEn</td>
+                        <td>@product.TitleAr</td>
+                        <td>@product.CategoryNameEn</td>
+                        <td>@product.ShopName</td>
+                        <td>
+                            @if (product.DiscountPrice.HasValue)
+                            {
+                                <span style="text-decoration: line-through; color: #888; font-size: 0.9em;">@product.Price.ToString("F2")</span>
+                                <span style="color: #d9534f; font-weight: bold; margin-left: 5px;">@product.DiscountPrice.Value.ToString("F2")</span>
+                            }
+                            else
+                            {
+                                <span>@product.Price.ToString("F2")</span>
+                            }
+                        </td>
+                        <td>@product.Quantity</td>
+                        <td>
+                            @{
+                                var statusClass = product.Status.ToString().ToLower();
+                            }
+                            <span class="status-badge @statusClass" style="padding: 4px 8px; border-radius: 12px; font-size: 0.85em; font-weight: bold;
+                                  @(product.Status == ProductStatus.Active ? "background-color: #d4edda; color: #155724;" :
+                                    product.Status == ProductStatus.Inactive ? "background-color: #f8d7da; color: #721c24;" :
+                                    "background-color: #fff3cd; color: #856404;")">
+                                @product.Status
+                            </span>
+                        </td>
+                        <td class="actions" style="display: flex; gap: 5px; align-items: center;">
+                            @if (product.Status != ProductStatus.Active)
+                            {
+                                <form asp-action="Approve" asp-route-id="@product.Id" method="post" style="margin: 0;">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-edit" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Approve</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="Reject" asp-route-id="@product.Id" method="post" style="margin: 0;">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-edit" style="background: #ffc107; color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Reject</button>
+                                </form>
+                            }
+                            <a asp-action="Delete" asp-route-id="@product.Id" class="btn-delete" style="text-decoration: none; padding: 5px 10px; background: #dc3545; color: white; border-radius: 4px;">Delete</a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@* Pagination *@
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination" style="display: flex; gap: 5px; margin-top: 20px; justify-content: center;">
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <a asp-action="Index"
+               asp-route-page="@i"
+               asp-route-categoryId="@Model.SelectedCategoryId"
+               asp-route-status="@Model.SelectedStatus"
+               asp-route-search="@Model.SearchQuery"
+               class="page-btn @(i == Model.PageNumber ? "active" : "")"
+               style="padding: 6px 12px; border: 1px solid #ccc; text-decoration: none; color: #333; border-radius: 4px; @(i == Model.PageNumber ? "background-color: #007bff; color: white; border-color: #007bff;" : "")">@i</a>
+        }
+    </div>
+}
