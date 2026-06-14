@@ -18,7 +18,7 @@
             <nav class="nav-section">
                 <div class="nav-label">Main</div>
                 <a asp-controller="Home" asp-action="Index"
-                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
                     <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview
                 </a>
                 <a asp-controller="Orders" asp-action="Index"
@@ -42,10 +42,7 @@
                     <i class="ti ti-store" aria-hidden="true"></i> Sellers
                 </a>
 
-                <a asp-controller="Admin" asp-action="Analytics"
-                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
-                    <i class="ti ti-chart-bar" aria-hidden="true"></i> Analytics
-                </a>
+             
             </nav>
             <div class="nav-bottom">
                 <a asp-controller="Account" asp-action="Logout" class="nav-item">
