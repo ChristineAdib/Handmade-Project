@@ -1,8 +1,10 @@
 namespace HandoraApplication;
 
+using HandoraApplication.DTOs.AdminDashboardDTOs;
 using HandoraApplication.IServices;
 using HandoraApplication.Mappers;
 using HandoraApplication.Services;
+using HandoraDomain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 public static class ModuleApplicationDependences
@@ -27,6 +29,8 @@ public static class ModuleApplicationDependences
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<IShopReviewService, ShopReviewService>();
         services.AddScoped<ITagService, TagService>();
+        services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+
         return services;
     }
 }
