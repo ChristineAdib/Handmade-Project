@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.ShopDTOs;
+using HandoraApplication.DTOs.ShopDTOs;
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
@@ -222,6 +222,24 @@ namespace HandoraApplication.Services
 
             await repo.SoftDeleteAsync(shop);
             await _uow.SaveChangesAsync();
+            return Result.Success();
+        }
+
+        public async Task<Result> ToggleShopStatusAsync(Guid id)
+        {
+            var repo = _uow.Repository<Shop, Guid>();
+            var shop = await (await repo.GetAllAsync())
+                .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+
+            if (shop is null)
+                return Result.Failure("Shop not found");
+
+            shop.IsVerified = !shop.IsVerified;
+            shop.UpdatedAt = DateTime.UtcNow;
+
+            await repo.UpdateAsync(shop);
+            await _uow.SaveChangesAsync();
+
             return Result.Success();
         }
     }
