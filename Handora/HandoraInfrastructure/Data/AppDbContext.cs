@@ -31,6 +31,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
     public DbSet<WishList> WishLists { get; set; }
     public DbSet<WishListItem> WishListItems { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<ShopReview> ShopReviews { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Coupon> Coupons { get; set; }
 

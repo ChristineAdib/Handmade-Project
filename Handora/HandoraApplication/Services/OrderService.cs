@@ -165,18 +165,29 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
         await _unitOfWork.SaveChangesAsync();
 
-        return await GetOrderById(order.Id, userId);
+        return await GetOrderById(order.Id, userId, false);
     }
 
-    public async Task<Result<OrderResponseDto>> GetOrderById(Guid orderId, string userId)
+    public async Task<Result<OrderResponseDto>> GetOrderById(Guid orderId, string userId, bool isAdmin)
     {
         var order = await _orderRepository.GetOrderByIdWithDetailsAsync(orderId);
 
         if (order is null)
             return Result<OrderResponseDto>.Failure("Order not found");
 
-        if (order.UserId != userId)
-            return Result<OrderResponseDto>.Failure("You are not authorized to view this order");
+        if (!isAdmin && order.UserId != userId)
+        {
+            var shopRepo = _unitOfWork.Repository<Shop, Guid>();
+            var shopQuery = await shopRepo.GetAllAsNoTracking();
+            var sellerShop = await shopQuery.FirstOrDefaultAsync(s => s.OwnerId == userId && !s.IsDeleted);
+
+            bool isSellerForThisOrder = sellerShop != null && order.Items.Any(i => i.ShopId == sellerShop.Id);
+
+            if (!isSellerForThisOrder)
+            {
+                return Result<OrderResponseDto>.Failure("You are not authorized to view this order");
+            }
+        }
 
         return Result<OrderResponseDto>.Success(MapToResponse(order));
     }
@@ -229,15 +240,57 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
         return Result<PagedResultDto<OrderSummaryDto>>.Success(result);
     }
 
-    public async Task<Result<OrderResponseDto>> UpdateOrderStatus(Guid orderId, UpdateOrderStatusDto dto)
+    public async Task<Result<OrderResponseDto>> UpdateOrderStatus(Guid orderId, UpdateOrderStatusDto dto, string userId, bool isAdmin)
     {
         var order = await _orderRepository.GetOrderByIdWithDetailsAsync(orderId);
 
         if (order is null)
             return Result<OrderResponseDto>.Failure("Order not found");
 
-        order.Status = dto.Status;
+        if (!isAdmin)
+        {
+            var shopRepo = _unitOfWork.Repository<Shop, Guid>();
+            var shopQuery = await shopRepo.GetAllAsNoTracking();
+            var sellerShop = await shopQuery.FirstOrDefaultAsync(s => s.OwnerId == userId && !s.IsDeleted);
+
+            if (sellerShop is null)
+                return Result<OrderResponseDto>.Failure("You do not own a shop");
+
+            var orderContainsSellerProducts = order.Items.Any(i => i.ShopId == sellerShop.Id);
+            if (!orderContainsSellerProducts)
+                return Result<OrderResponseDto>.Failure("You are not authorized to update this order");
+        }
+
+        var currentStatus = order.Status;
+        var nextStatus = dto.Status;
+
+        if (currentStatus == nextStatus)
+        {
+            return Result<OrderResponseDto>.Success(MapToResponse(order));
+        }
+
+        if (nextStatus == OrderStatus.Cancelled)
+        {
+            // Restore product stock
+            var productRepo = _unitOfWork.Repository<Product, Guid>();
+            foreach (var item in order.Items)
+            {
+                var product = await productRepo.GetByIdAsync(item.Product.ProductId);
+                if (product != null)
+                {
+                    product.Quantity += item.Quantity;
+                    await productRepo.UpdateAsync(product);
+                }
+            }
+        }
+        else if (nextStatus == OrderStatus.Delivered)
+        {
+            order.DeliveredAt = DateTime.UtcNow;
+        }
+
+        order.Status = nextStatus;
         order.UpdatedAt = DateTime.UtcNow;
+        order.UpdatedBy = userId;
 
         await _orderRepository.UpdateAsync(order);
         await _unitOfWork.SaveChangesAsync();

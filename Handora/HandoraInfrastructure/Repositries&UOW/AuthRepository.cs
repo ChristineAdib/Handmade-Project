@@ -1,4 +1,4 @@
-﻿using HandoraDomain.Interfaces;
+using HandoraDomain.Interfaces;
 using HandoraDomain.Models.AppUser;
 using Microsoft.AspNetCore.Identity;
 using System;
@@ -26,8 +26,14 @@ namespace HandoraInfrastructure.Repositries_UOW
         public async Task<User?> GetByIdAsync(string id, CancellationToken ct = default)
             => await _userManager.FindByIdAsync(id);
 
+        public Task<User?> GetByUsernameAsync(string username)
+            => _userManager.FindByNameAsync(username);
+
         public async Task<IdentityResult> CreateAsync(User user, string password, CancellationToken ct = default)
             => await _userManager.CreateAsync(user, password);
+
+        public async Task<IdentityResult> CreateAsync(User user, CancellationToken ct = default)
+            => await _userManager.CreateAsync(user);
 
         public Task<bool> CheckPasswordAsync(User user, string password)
             => _userManager.CheckPasswordAsync(user, password);
@@ -47,6 +53,18 @@ namespace HandoraInfrastructure.Repositries_UOW
             user.IsDeleted = true;
             user.DeletedAt = DateTime.UtcNow;
             return await _userManager.UpdateAsync(user);
+        }
+
+        public Task<string> GeneratePasswordResetTokenAsync(User user)
+            => _userManager.GeneratePasswordResetTokenAsync(user);
+
+        public Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword)
+            => _userManager.ResetPasswordAsync(user, token, newPassword);
+
+        public async Task<IEnumerable<User>> GetUsersInRoleAsync(string roleName, CancellationToken ct = default)
+        {
+            var users = await _userManager.GetUsersInRoleAsync(roleName);
+            return users.Where(u => !u.IsDeleted);
         }
     }
 }

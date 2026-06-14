@@ -1,4 +1,4 @@
-﻿using HandoraDomain.Models.AppUser;
+using HandoraDomain.Models.AppUser;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -12,12 +12,17 @@ namespace HandoraDomain.Interfaces
     {
         Task<User?> GetByEmailAsync(string email, CancellationToken ct = default);
         Task<User?> GetByIdAsync(string id, CancellationToken ct = default);
+        Task<User?> GetByUsernameAsync(string username);
         Task<IdentityResult> CreateAsync(User user, string password, CancellationToken ct = default);
+        Task<IdentityResult> CreateAsync(User user, CancellationToken ct = default);
         Task<bool> CheckPasswordAsync(User user, string password);
         Task<IList<string>> GetRolesAsync(User user);
         Task<IdentityResult> UpdateAsync(User user, CancellationToken ct = default);
         Task AddToRoleAsync(User user, string role);
         Task<IEnumerable<User>> GetAllAsync(CancellationToken ct = default);
         Task<IdentityResult> DeleteAsync(User user, CancellationToken ct = default);
+        Task<string> GeneratePasswordResetTokenAsync(User user);
+        Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword);
+        Task<IEnumerable<User>> GetUsersInRoleAsync(string roleName, CancellationToken ct = default);
     }
 }

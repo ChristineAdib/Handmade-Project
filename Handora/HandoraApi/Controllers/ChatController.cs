@@ -34,6 +34,23 @@ namespace HandoraApi.Controllers
             return Ok(ApiResponse<ConversationDto>.Ok(result));
         }
 
+        [HttpPost("start-by-shop/{shopId:guid}")]
+        [Authorize(Roles = AppRoles.Buyer)]
+        public async Task<IActionResult> StartConversationByShop(
+            Guid shopId, CancellationToken ct)
+        {
+            var buyerId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            try
+            {
+                var result = await _chatService.StartConversationByShopAsync(buyerId, shopId, ct);
+                return Ok(ApiResponse<ConversationDto>.Ok(result));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<ConversationDto>.Fail(ex.Message));
+            }
+        }
+
         [HttpGet("conversations")]
         public async Task<IActionResult> GetConversations(CancellationToken ct)
         {
