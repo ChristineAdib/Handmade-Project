@@ -4,6 +4,7 @@ using HandoraApplication.Hubs;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.ChatEntities;
+using HandoraDomain.Models.ShopEntities;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -20,15 +21,28 @@ namespace HandoraApplication.Services
         private readonly IChatRepository _chatRepo;
         private readonly IChatHubContext _hubContext; 
         private readonly ILogger<ChatService> _logger;
+        private readonly IUnitOfWork _unitOfWork;
 
         public ChatService(
             IChatRepository chatRepo,
             IChatHubContext hubContext, 
-            ILogger<ChatService> logger)
+            ILogger<ChatService> logger,
+            IUnitOfWork unitOfWork)
         {
             _chatRepo = chatRepo;
             _hubContext = hubContext;
             _logger = logger;
+            _unitOfWork = unitOfWork;
+        }
+
+        public async Task<ConversationDto> StartConversationByShopAsync(
+            string buyerId, Guid shopId, CancellationToken ct = default)
+        {
+            var shop = await _unitOfWork.Repository<Shop, Guid>().GetByIdAsync(shopId);
+            if (shop is null)
+                throw new KeyNotFoundException("Shop not found");
+
+            return await StartConversationAsync(buyerId, shop.OwnerId, ct);
         }
 
         public async Task<ConversationDto> StartConversationAsync(

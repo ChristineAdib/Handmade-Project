@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.AuthDTOs;
+using HandoraApplication.DTOs.AuthDTOs;
 using HandoraApplication.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -102,6 +102,52 @@ namespace HandoraApi.Controllers
         {
             await _authService.DeleteUserAsync(id, ct);
             return Ok(ApiResponse<object>.Ok(null, "User deleted successfully."));
+        }
+
+        [HttpPost("forgot-password")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> ForgotPassword(
+            [FromBody] ForgotPasswordDto dto,
+            CancellationToken ct)
+        {
+            await _authService.ForgotPasswordAsync(dto, ct);
+            return Ok(ApiResponse<object>.Ok(null!, "If an account with that email exists, we sent a password reset link to it."));
+        }
+
+        [HttpPost("reset-password")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResetPassword(
+            [FromBody] ResetPasswordDto dto,
+            CancellationToken ct)
+        {
+            try
+            {
+                await _authService.ResetPasswordAsync(dto, ct);
+                return Ok(ApiResponse<object>.Ok(null!, "Password has been reset successfully."));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.Fail(ex.Message));
+            }
+        }
+
+        [HttpPost("google")]
+        [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GoogleLogin(
+            [FromBody] GoogleLoginDto dto,
+            CancellationToken ct)
+        {
+            try
+            {
+                var result = await _authService.GoogleLoginAsync(dto, ct);
+                return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Google login successful."));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.Fail(ex.Message));
+            }
         }
     }
 }

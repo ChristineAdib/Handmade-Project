@@ -1,8 +1,9 @@
-﻿using HandoraApplication;
+using HandoraApplication;
 using HandoraApplication.IServices;
 using HandoraApplication.Mappers;
 using HandoraApplication.Services;
 using HandoraApplication.Settings;
+using HandoraApplication.Helpers.AuthHelper;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.AppUser;
 using HandoraInfrastructure;
@@ -56,15 +57,20 @@ builder.Services.AddScoped<ICouponRepository, CouponRepository>();
 builder.Services.AddScoped<IShopRepository, ShopRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IOtpRepository, OtpRepository>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
 // Application
 MapsterSettings.Configure();
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.AddSingleton<JwtHelper>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IShopService, ShopService>();
 builder.Services.AddScoped<ISellerService, SellerService>();
 builder.Services.AddScoped<UserManager<User>>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 //builder.Services.AddScoped<INotificationService, NotificationService>();
 //builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 

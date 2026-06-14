@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.Common;
+using HandoraApplication.DTOs.Common;
 using HandoraApplication.DTOs.ProductDTOs;
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
@@ -55,10 +55,12 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (query.MinRating.HasValue)
             productsQuery = productsQuery.Where(p => p.AverageRating >= query.MinRating.Value);
 
-        //if (query.Status.HasValue)
-        //    productsQuery = productsQuery.Where(p => p.Status == query.Status.Value);
-
-        if (query.ShopId.HasValue)
+        if (query.IsAdmin == true)
+        {
+            if (query.Status.HasValue)
+                productsQuery = productsQuery.Where(p => p.Status == query.Status.Value);
+        }
+        else if (query.ShopId.HasValue)
         {
             // الـ buyer بيشوف منتجات شوب معين — يظهرله حتى OutOfStock
             if (query.Status.HasValue)
@@ -185,52 +187,114 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         // Handle tags
         if (dto.Tags != null)
         {
-            product.Tags.Clear();
-            var tagRepo = _unitOfWork.Repository<Tag, Guid>();
-            var existingTags = await tagRepo.GetAllAsync();
-            var existingTagList = await existingTags.Where(t => dto.Tags.Contains(t.Name)).ToListAsync();
-
-            foreach (var tagName in dto.Tags)
+            // Remove tags that are not in the new list
+            var tagsToRemove = product.Tags.Where(t => !dto.Tags.Contains(t.Name)).ToList();
+            foreach (var tag in tagsToRemove)
             {
-                var tag = existingTagList.FirstOrDefault(t => t.Name == tagName);
-                if (tag == null)
+                product.Tags.Remove(tag);
+            }
+
+            // Add tags that are in the new list but not in the product's tags
+            var currentTagNames = product.Tags.Select(t => t.Name).ToList();
+            var tagsToAdd = dto.Tags.Where(t => !currentTagNames.Contains(t)).ToList();
+
+            if (tagsToAdd.Any())
+            {
+                var tagRepo = _unitOfWork.Repository<Tag, Guid>();
+                var existingTags = await tagRepo.GetAllAsync();
+                var existingTagList = await existingTags.Where(t => tagsToAdd.Contains(t.Name)).ToListAsync();
+
+                foreach (var tagName in tagsToAdd)
                 {
-                    tag = new Tag { Id = Guid.NewGuid(), Name = tagName };
-                    await tagRepo.AddAsync(tag);
+                    var tag = existingTagList.FirstOrDefault(t => t.Name == tagName);
+                    if (tag == null)
+                    {
+                        tag = new Tag { Id = Guid.NewGuid(), Name = tagName };
+                        await tagRepo.AddAsync(tag);
+                    }
+                    product.Tags.Add(tag);
                 }
-                product.Tags.Add(tag);
             }
         }
 
-        // Remove images
+        // ── Image handling ────────────────────────────────────────────
+        // We avoid touching product.Images.Remove() or .Add() because
+        // modifying the navigation collection triggers EF Core's
+        // relationship fixup, which corrupts change-tracker states.
+        // Instead, we operate directly on the DbContext entries.
+
+        // Track IDs of images that existed in the DB before this update
+        var originalImageIds = product.Images.Select(i => i.Id).ToHashSet();
+
+        // Track IDs of newly added images so we DON'T reset them to Unchanged
+        var newImageIds = new HashSet<Guid>();
+
+        // 1. Delete images that should be removed
+        var removedImageIds = new HashSet<Guid>();
         if (dto.RemoveImageIds != null && dto.RemoveImageIds.Any())
         {
-            var imagesToRemove = product.Images.Where(i => dto.RemoveImageIds.Contains(i.Id)).ToList();
+            var imagesToRemove = product.Images
+                .Where(i => dto.RemoveImageIds.Contains(i.Id))
+                .ToList();
+
             foreach (var image in imagesToRemove)
             {
                 await _fileService.DeleteFileAsync(image.ImageUrl);
-                product.Images.Remove(image);
+                _productRepository.RemoveProductImage(image);
+                removedImageIds.Add(image.Id);
             }
         }
 
-        // Add new images
+        // 2. Add new images directly to the context (not the collection)
         if (dto.NewImages != null && dto.NewImages.Any())
         {
+            bool hasRemainingImages = product.Images
+                .Any(i => !removedImageIds.Contains(i.Id));
+
             foreach (var file in dto.NewImages)
             {
                 var imageUrl = await _fileService.UploadFileAsync(file, "products");
-                product.Images.Add(new ProductImage
+                var newId = Guid.NewGuid();
+                var newImage = new ProductImage
                 {
-                    Id = Guid.NewGuid(),
+                    Id = newId,
                     ImageUrl = imageUrl,
-                    IsMain = !product.Images.Any(),
+                    IsMain = !hasRemainingImages,
                     ProductId = product.Id
-                });
+                };
+                _productRepository.AddProductImage(newImage);
+                newImageIds.Add(newId);
+                hasRemainingImages = true;
             }
         }
 
-        await _productRepository.UpdateAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        // 3. Trigger DetectChanges so Product/Tag property changes are
+        //    picked up by the change tracker. NOTE: This also causes
+        //    relationship fixup which adds new images into product.Images.
+        _productRepository.ForceDetectChanges();
+
+        // 4. Force ONLY pre-existing (non-removed) images to Unchanged.
+        //    CRITICAL: Skip new images — they must keep their Added state
+        //    so that SaveChanges generates INSERT statements for them.
+        foreach (var image in product.Images)
+        {
+            if (originalImageIds.Contains(image.Id) && !removedImageIds.Contains(image.Id))
+            {
+                _productRepository.SetImageUnchanged(image);
+            }
+        }
+
+        // 5. Disable auto-detect so SaveChangesAsync won't re-evaluate
+        //    and override our explicit state assignments above.
+        _productRepository.DisableAutoDetectChanges();
+        try
+        {
+            await _unitOfWork.SaveChangesAsync();
+        }
+        finally
+        {
+            _productRepository.EnableAutoDetectChanges();
+        }
 
         return await GetProduct(product.Id);
     }
