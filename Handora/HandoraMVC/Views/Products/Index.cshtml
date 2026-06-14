@@ -113,7 +113,8 @@
                             </span>
                         </td>
                         <td class="actions" style="display: flex; gap: 5px; align-items: center;">
-                            @if (product.Status != ProductStatus.Active)
+                            <a asp-controller="AdminProducts" asp-action="Details" asp-route-id="@product.Id" class="btn-edit" style="text-decoration: none; padding: 5px 10px; background: #17a2b8; color: white; border-radius: 4px; font-size: 0.85em;">Details</a>
+                            @if (!product.IsActive)
                             {
                                 <form asp-action="Approve" asp-route-id="@product.Id" method="post" style="margin: 0;">
                                     @Html.AntiForgeryToken()
@@ -124,7 +125,7 @@
                             {
                                 <form asp-action="Reject" asp-route-id="@product.Id" method="post" style="margin: 0;">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-edit" style="background: #ffc107; color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Reject</button>
+                                    <button type="submit" class="btn-edit" style="background: #ffc107; color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Archive</button>
                                 </form>
                             }
                             <a asp-action="Delete" asp-route-id="@product.Id" class="btn-delete" style="text-decoration: none; padding: 5px 10px; background: #dc3545; color: white; border-radius: 4px;">Delete</a>

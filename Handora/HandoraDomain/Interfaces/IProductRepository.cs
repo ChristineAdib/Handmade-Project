@@ -13,4 +13,9 @@ public interface IProductRepository : IGenericRepository<Product, Guid>
     void ForceDetectChanges();
     void DisableAutoDetectChanges();
     void EnableAutoDetectChanges();
+
+    // Draft operations
+    Task<ProductDraft?> GetPendingDraftByProductIdAsync(Guid productId);
+    Task AddDraftAsync(ProductDraft draft);
+    void RemoveDraft(ProductDraft draft);
 }
