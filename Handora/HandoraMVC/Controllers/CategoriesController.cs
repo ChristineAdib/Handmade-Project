@@ -41,10 +41,11 @@ public class CategoriesController : Controller
     }
 
     // GET: /Categories/Create
-    public async Task<IActionResult> Create()
+    public async Task<IActionResult> Create(Guid? parentId)
     {
         var vm = new CreateCategoryViewModel
         {
+            ParentId = parentId,
             ParentCategories = await GetParentCategoriesSelectList()
         };
         return View(vm);

@@ -12,5 +12,6 @@
         public int ReviewCount { get; set; }
         public bool IsVerified { get; set; }
         public DateTime MemberSince { get; set; }
+        public bool IsSuspended { get; set; }
     }
 }
