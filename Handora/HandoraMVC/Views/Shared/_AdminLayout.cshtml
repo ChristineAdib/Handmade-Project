@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -41,6 +41,11 @@
                    class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Sellers" ? "active" : "")">
                     <i class="ti ti-store" aria-hidden="true"></i> Sellers
                 </a>
+
+                <a asp-controller="Admin" asp-action="Analytics"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
+                    <i class="ti ti-chart-bar" aria-hidden="true"></i> Analytics
+                </a>
             </nav>
             <div class="nav-bottom">
                 <a asp-controller="Account" asp-action="Logout" class="nav-item">
@@ -63,5 +68,9 @@
             </main>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)   @* ← ضيفي السطر ده *@
+
 </body>
 </html>

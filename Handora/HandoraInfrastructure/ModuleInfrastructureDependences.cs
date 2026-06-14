@@ -19,6 +19,7 @@ public static class ModuleInfrastructureDependences
         service.Configure<PaymobSettings>(
         configuration.GetSection("Paymob"));
         service.AddScoped<IOtpRepository, OtpRepository>();
+        service.AddScoped<IUserStatsRepository, UserStatsRepository>();
         return service;
     }
 }
