@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.ShopDTOs;
+using HandoraApplication.DTOs.ShopDTOs;
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
@@ -224,18 +224,23 @@ namespace HandoraApplication.Services
             await _uow.SaveChangesAsync();
             return Result.Success();
         }
-        public async Task<Result<IEnumerable<ShopDto>>> GetAllShops()
+
+        public async Task<Result> ToggleShopStatusAsync(Guid id)
         {
             var repo = _uow.Repository<Shop, Guid>();
-            var query = await repo.GetAllAsNoTracking();
+            var shop = await (await repo.GetAllAsync())
+                .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
 
-            var shops = await query
-                .Include(s => s.Owner)
-                .Where(s => !s.IsDeleted)
-                .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync();
+            if (shop is null)
+                return Result.Failure("Shop not found");
 
-            return Result<IEnumerable<ShopDto>>.Success(shops.Adapt<IEnumerable<ShopDto>>());
+            shop.IsVerified = !shop.IsVerified;
+            shop.UpdatedAt = DateTime.UtcNow;
+
+            await repo.UpdateAsync(shop);
+            await _uow.SaveChangesAsync();
+
+            return Result.Success();
         }
     }
 }

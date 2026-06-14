@@ -1,0 +1,143 @@
+@model HandoraMVC.ViewModels.ShopDetailsViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Shop Details - " + Model.Name;
+}
+
+<div style="margin-bottom: 20px;">
+    <a href="@Url.Action("Index")" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">
+        <i class="ti-arrow-left"></i> Back to Users
+    </a>
+</div>
+
+<div class="page-header" style="align-items: center; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+        @if (!string.IsNullOrEmpty(Model.Logo))
+        {
+            <img src="@Model.Logo" alt="@Model.Name Logo" class="cat-img" style="width: 64px; height: 64px; border-radius: 12px;" />
+        }
+        else
+        {
+            <div class="cat-img-placeholder" style="width: 64px; height: 64px; border-radius: 12px; font-size: 24px;">
+                <span style="font-weight: 600; color: #7a5433;">@Model.Name.Substring(0, Math.Min(2, Model.Name.Length)).ToUpper()</span>
+            </div>
+        }
+        <div>
+            <h2 style="margin: 0; font-size: 22px;">@Model.Name</h2>
+            <div style="margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 12px; color: #888;">Owner: <strong>@Model.OwnerName</strong></span>
+                @if (Model.IsVerified)
+                {
+                    <span class="badge badge-complete">Verified / Active</span>
+                }
+                else
+                {
+                    <span class="badge badge-pending">Unverified / Inactive</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <form asp-action="ToggleShopStatus" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="shopId" value="@Model.ShopId" />
+            @if (Model.IsVerified)
+            {
+                <button type="submit" class="btn-delete" style="padding: 8px 16px; font-size: 13px; font-weight: 500;">
+                    Deactivate Shop
+                </button>
+            }
+            else
+            {
+                <button type="submit" class="btn-primary" style="padding: 8px 16px; font-size: 13px; font-weight: 500;">
+                    Verify & Activate Shop
+                </button>
+            }
+        </form>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" style="background-color: #eaf3de; color: #3b6d11; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 0.5px solid #c8e0a8;">
+        <i class="ti-check-box"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" style="background-color: #fcebeb; color: #a32d2d; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 0.5px solid #f0c4c4;">
+        <i class="ti-alert"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Total Sales</div>
+                <div class="stat-val">$@Model.TotalSales.ToString("N2")</div>
+            </div>
+            <i class="ti-wallet" style="font-size: 24px; color: #7a5433;"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Rating</div>
+                <div class="stat-val">@Model.Rating.ToString("F1") <span style="font-size: 12px; font-weight: normal; color: #888;">/ 5.0</span></div>
+            </div>
+            <i class="ti-star" style="font-size: 24px; color: #e6b800;"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Reviews</div>
+                <div class="stat-val">@Model.ReviewCount</div>
+            </div>
+            <i class="ti-comment-alt" style="font-size: 24px; color: #7a5433;"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Products (Active/Total)</div>
+                <div class="stat-val">@Model.ActiveProductCount / @Model.ProductCount</div>
+            </div>
+            <i class="ti-package" style="font-size: 24px; color: #7a5433;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Details Grid -->
+<div class="details-grid">
+    <div class="detail-card" style="grid-column: span 2;">
+        <h3>Shop Descriptions</h3>
+        <div style="margin-bottom: 16px;">
+            <strong style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">English Description</strong>
+            <p style="font-size: 14px; line-height: 1.6; margin: 0;">@(string.IsNullOrEmpty(Model.DescriptionEn) ? "No English description provided." : Model.DescriptionEn)</p>
+        </div>
+        <div>
+            <strong style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">Arabic Description (الوصف بالعربية)</strong>
+            <p style="font-size: 14px; line-height: 1.6; margin: 0; direction: rtl; text-align: right;">@(string.IsNullOrEmpty(Model.DescriptionAr) ? "لا يوجد وصف باللغة العربية." : Model.DescriptionAr)</p>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <h3>Seller Information</h3>
+        <div style="margin-bottom: 12px;">
+            <strong style="font-size: 11px; color: #888; display: block;">Seller ID</strong>
+            <span style="font-size: 13px;">@Model.OwnerId</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <strong style="font-size: 11px; color: #888; display: block;">Name</strong>
+            <span style="font-size: 13px; font-weight: 600;">@Model.OwnerName</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <strong style="font-size: 11px; color: #888; display: block;">Shop UUID</strong>
+            <span style="font-size: 13px; font-family: monospace;">@Model.ShopId</span>
+        </div>
+    </div>
+</div>

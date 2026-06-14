@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.ProductDTOs;
+using HandoraApplication.DTOs.ProductDTOs;
 
 public class ShopWithProductsDto
 {
@@ -8,6 +8,7 @@ public class ShopWithProductsDto
     public string? DescriptionAr { get; set; }
     public string? Logo { get; set; }
     public decimal Rating { get; set; }
+    public int ReviewCount { get; set; }
     public bool IsVerified { get; set; }
     public string OwnerName { get; set; } = string.Empty;
     public List<ProductSummaryDto> Products { get; set; } = [];

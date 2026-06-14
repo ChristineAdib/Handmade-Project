@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.CartDTOs;
+using HandoraApplication.DTOs.CartDTOs;
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
@@ -48,6 +48,58 @@ namespace HandoraApplication.Services
         public async Task<Result<CartDto>> GetCartAsync(string cartId)
         {
             var cart = await GetOrCreateCartAsync(cartId);
+
+            if (cart.Items.Any())
+            {
+                var productIds = cart.Items.Select(i => i.ProductId).ToList();
+                var dbProducts = (await _productRepository.GetProductsByIdsAsync(productIds))
+                    .ToDictionary(p => p.Id);
+
+                bool isUpdated = false;
+                var itemsToRemove = new List<CartItemDto>();
+
+                foreach (var item in cart.Items)
+                {
+                    if (dbProducts.TryGetValue(item.ProductId, out var product))
+                    {
+                        var latestImageUrl = product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl 
+                                             ?? product.Images.FirstOrDefault()?.ImageUrl;
+
+                        if (item.TitleEn != product.TitleEn ||
+                            item.TitleAr != product.TitleAr ||
+                            item.Price != product.Price ||
+                            item.DiscountPrice != product.DiscountPrice ||
+                            item.ImageUrl != latestImageUrl)
+                        {
+                            item.TitleEn = product.TitleEn;
+                            item.TitleAr = product.TitleAr;
+                            item.Price = product.Price;
+                            item.DiscountPrice = product.DiscountPrice;
+                            item.ImageUrl = latestImageUrl;
+                            isUpdated = true;
+                        }
+                    }
+                    else
+                    {
+                        itemsToRemove.Add(item);
+                        isUpdated = true;
+                    }
+                }
+
+                if (itemsToRemove.Any())
+                {
+                    foreach (var item in itemsToRemove)
+                    {
+                        cart.Items.Remove(item);
+                    }
+                }
+
+                if (isUpdated)
+                {
+                    await SaveCartAsync(cart);
+                }
+            }
+
             return Result<CartDto>.Success(cart);
         }
 
@@ -86,7 +138,7 @@ namespace HandoraApplication.Services
                     TitleAr = product.TitleAr,
                     Price = product.Price,
                     DiscountPrice = product.DiscountPrice,
-                    ImageUrl = product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl,
+                    ImageUrl = product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl ?? product.Images.FirstOrDefault()?.ImageUrl,
                     Quantity = dto.Quantity
                 });
             }
