@@ -1,0 +1,480 @@
+﻿@model HandoraApplication.DTOs.AdminDashboardDTOs.AdminDashboardDto
+@using HandoraApplication.DTOs.AdminDashboardDTOs
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Analytics";
+    var period = (RevenueChartPeriod)ViewData["SelectedPeriod"]!;
+}
+
+<!-- ═══════════════════════════════════════════
+     ROW 1 – Sales KPI Cards
+═══════════════════════════════════════════ -->
+<div class="kpi-row">
+
+    <div class="kpi-card">
+        <div class="kpi-icon icon-purple">
+            <i class="ti ti-calendar-stats"></i>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-label">Today's Sales</span>
+            <span class="kpi-value">EGP @Model.SalesSummary.TodaySales.ToString("N2")</span>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon icon-blue">
+            <i class="ti ti-calendar-week"></i>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-label">This Week</span>
+            <span class="kpi-value">EGP @Model.SalesSummary.WeekSales.ToString("N2")</span>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon icon-green">
+            <i class="ti ti-calendar-month"></i>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-label">This Month</span>
+            <span class="kpi-value">EGP @Model.SalesSummary.MonthSales.ToString("N2")</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ROW 2 – Counts (Orders / Buyers / Sellers)
+═══════════════════════════════════════════ -->
+<div class="counts-row">
+
+    <div class="count-card">
+        <div class="count-header">
+            <i class="ti ti-shopping-bag"></i>
+            <span>New Orders</span>
+        </div>
+        <div class="count-cells">
+            <div class="count-cell">
+                <strong>@Model.Counts.NewOrdersToday</strong>
+                <small>Today</small>
+            </div>
+            <div class="count-cell">
+                <strong>@Model.Counts.NewOrdersThisWeek</strong>
+                <small>Week</small>
+            </div>
+            <div class="count-cell">
+                <strong>@Model.Counts.NewOrdersThisMonth</strong>
+                <small>Month</small>
+            </div>
+            <div class="count-cell muted">
+                <strong>@Model.Counts.TotalOrders</strong>
+                <small>Total</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="count-card">
+        <div class="count-header">
+            <i class="ti ti-users"></i>
+            <span>New Buyers</span>
+        </div>
+        <div class="count-cells">
+            <div class="count-cell">
+                <strong>@Model.Counts.NewUsersToday</strong>
+                <small>Today</small>
+            </div>
+            <div class="count-cell">
+                <strong>@Model.Counts.NewUsersThisWeek</strong>
+                <small>Week</small>
+            </div>
+            <div class="count-cell">
+                <strong>@Model.Counts.NewUsersThisMonth</strong>
+                <small>Month</small>
+            </div>
+            <div class="count-cell muted">
+                <strong>@Model.Counts.TotalUsers</strong>
+                <small>Total</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="count-card">
+        <div class="count-header">
+            <i class="ti ti-store"></i>
+            <span>New Sellers</span>
+        </div>
+        <div class="count-cells">
+            <div class="count-cell">
+                <strong>@Model.Counts.NewSellersToday</strong>
+                <small>Today</small>
+            </div>
+            <div class="count-cell">
+                <strong>@Model.Counts.NewSellersThisWeek</strong>
+                <small>Week</small>
+            </div>
+            <div class="count-cell">
+                <strong>@Model.Counts.NewSellersThisMonth</strong>
+                <small>Month</small>
+            </div>
+            <div class="count-cell muted">
+                <strong>@Model.Counts.TotalSellers</strong>
+                <small>Total</small>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ROW 3 – Revenue Chart
+═══════════════════════════════════════════ -->
+<div class="section-card">
+    <div class="section-header">
+        <span class="section-title">Revenue Chart</span>
+        <div class="period-tabs" id="periodBtns">
+            <button class="period-tab @(period == RevenueChartPeriod.Daily ? "active" : "")" data-period="1">Daily</button>
+            <button class="period-tab @(period == RevenueChartPeriod.Weekly ? "active" : "")" data-period="2">Weekly</button>
+            <button class="period-tab @(period == RevenueChartPeriod.Monthly ? "active" : "")" data-period="3">Monthly</button>
+        </div>
+    </div>
+    <canvas id="revenueChart" height="80"></canvas>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ROW 4 – Top Products + Coupon Stats
+═══════════════════════════════════════════ -->
+<div class="two-col">
+
+    <!-- Top 5 Products -->
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-title">Top 5 Products</span>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Product</th>
+                    <th>Shop</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int prank = 1;
+                }
+                @foreach (var p in Model.TopProducts)
+                {
+                    <tr>
+                        <td><span class="rank">@prank</span></td>
+                        <td>
+                            <div class="product-cell">
+                                @if (!string.IsNullOrEmpty(p.PictureUrl))
+                                {
+                                    <img src="@p.PictureUrl" class="thumb" alt="@p.ProductName" />
+                                }
+                                <span>@p.ProductName</span>
+                            </div>
+                        </td>
+                        <td class="text-muted">@p.ShopName</td>
+                        <td class="text-right">@p.QuantitySold</td>
+                        <td class="text-right text-green">EGP @p.TotalRevenue.ToString("N0")</td>
+                    </tr>
+                    prank++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Coupon Stats -->
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-title">Coupon Overview</span>
+        </div>
+
+        <div class="coupon-stats">
+            <div class="coupon-stat">
+                <strong class="text-purple">@Model.CouponStats.ActiveCouponsCount</strong>
+                <small>Active</small>
+            </div>
+            <div class="coupon-stat">
+                <strong class="text-blue">@Model.CouponStats.TotalCouponsUsedCount</strong>
+                <small>Redeemed</small>
+            </div>
+            <div class="coupon-stat">
+                <strong class="text-red">@Model.CouponStats.TotalDiscountGiven.ToString("N0")</strong>
+                <small>EGP Saved</small>
+            </div>
+        </div>
+
+        <p class="sub-label">Top Coupons by Usage</p>
+        <ul class="coupon-list">
+            @foreach (var c in Model.CouponStats.TopCoupons)
+            {
+                <li class="coupon-item">
+                    <div>
+                        <span class="coupon-code">@c.Code</span>
+                        @if (!c.IsActive || c.ExpiryDate < DateTime.UtcNow)
+                        {
+                            <span class="badge-expired">Expired</span>
+                        }
+                    </div>
+                    <span class="text-muted">@c.UsageCount uses · EGP @c.TotalDiscountGiven.ToString("N0")</span>
+                </li>
+            }
+        </ul>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ROW 5 – Top Sellers + Top Buyers
+═══════════════════════════════════════════ -->
+<div class="two-col">
+
+    <!-- Top Sellers -->
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-title">Most Active Sellers</span>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Shop</th>
+                    <th class="text-right">Orders</th>
+                    <th class="text-right">Rating</th>
+                    <th class="text-right">Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int srank = 1;
+                }
+                @foreach (var s in Model.TopSellers)
+                {
+                    <tr>
+                        <td><span class="rank">@srank</span></td>
+                        <td>
+                            <div class="shop-cell">
+                                @if (!string.IsNullOrEmpty(s.Logo))
+                                {
+                                    <img src="@s.Logo" class="avatar-img" alt="@s.ShopName" />
+                                }
+                                else
+                                {
+                                    <div class="avatar-letter">@s.ShopName.FirstOrDefault()</div>
+                                }
+                                <div>
+                                    <div class="fw-medium">@s.ShopName</div>
+                                    <div class="text-muted text-sm">@s.SellerName</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-right">@s.OrdersCount</td>
+                        <td class="text-right">@s.Rating.ToString("F1") ⭐</td>
+                        <td class="text-right text-green">EGP @s.TotalRevenue.ToString("N0")</td>
+                    </tr>
+                    srank++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Top Buyers -->
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-title">Most Active Buyers</span>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Buyer</th>
+                    <th class="text-right">Orders</th>
+                    <th class="text-right">Coupons</th>
+                    <th class="text-right">Spent</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int brank = 1;
+                }
+                @foreach (var b in Model.TopBuyers)
+                {
+                    <tr>
+                        <td><span class="rank">@brank</span></td>
+                        <td>
+                            <div class="fw-medium">@b.BuyerName</div>
+                            <div class="text-muted text-sm">@b.Email</div>
+                        </td>
+                        <td class="text-right">@b.OrdersCount</td>
+                        <td class="text-right">
+                            @if (b.CouponsUsedCount > 0)
+                            {
+                                <span class="coupon-badge">@b.CouponsUsedCount 🎟</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="text-right">
+                            <div class="text-green fw-medium">EGP @b.TotalSpent.ToString("N0")</div>
+                            @if (b.TotalDiscountReceived > 0)
+                            {
+                                <div class="text-red text-sm">–EGP @b.TotalDiscountReceived.ToString("N0") saved</div>
+                            }
+                        </td>
+                    </tr>
+                    brank++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- ═══════════ Scoped CSS ═══════════ -->
+<style>
+    /* ── Layout helpers ── */
+    .kpi-row    { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1.25rem; }
+    .counts-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1.25rem; }
+    .two-col    { display: grid; grid-template-columns: 1fr 1fr;       gap: 1rem; margin-bottom: 1.25rem; }
+
+    /* ── Section card (reuse .section-card from admin.css if exists, else define) ── */
+    .section-card   { background:#fff; border-radius:10px; padding:1.25rem; margin-bottom:1.25rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+    .section-title  { font-weight:600; font-size:.95rem; color:#1e293b; }
+
+    /* ── KPI cards ── */
+    .kpi-card  { background:#fff; border-radius:10px; padding:1.1rem 1.25rem; display:flex; align-items:center; gap:.9rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .kpi-icon  { width:46px; height:46px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+    .kpi-body  { display:flex; flex-direction:column; }
+    .kpi-label { font-size:.75rem; color:#64748b; text-transform:uppercase; letter-spacing:.04em; }
+    .kpi-value { font-size:1.25rem; font-weight:700; color:#1e293b; }
+    .icon-purple { background:#f3e5f5; color:#7b2d8b; }
+    .icon-blue   { background:#e3f2fd; color:#1565c0; }
+    .icon-green  { background:#e8f5e9; color:#2e7d32; }
+
+    /* ── Count cards ── */
+    .count-card   { background:#fff; border-radius:10px; padding:1rem 1.25rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .count-header { display:flex; align-items:center; gap:.5rem; font-weight:600; font-size:.85rem; color:#475569; margin-bottom:.75rem; }
+    .count-header i { font-size:1.1rem; color:#7b2d8b; }
+    .count-cells  { display:flex; gap:1.5rem; }
+    .count-cell   { display:flex; flex-direction:column; align-items:center; }
+    .count-cell strong { font-size:1.4rem; font-weight:700; color:#1e293b; line-height:1; }
+    .count-cell small  { font-size:.65rem; color:#94a3b8; text-transform:uppercase; }
+    .count-cell.muted strong { color:#94a3b8; }
+
+    /* ── Period tabs ── */
+    .period-tabs { display:flex; gap:.3rem; }
+    .period-tab  { padding:.25rem .75rem; border:1px solid #e2e8f0; border-radius:6px; background:#fff; font-size:.8rem; cursor:pointer; color:#475569; transition:.15s; }
+    .period-tab.active { background:#7b2d8b; color:#fff; border-color:#7b2d8b; }
+    .period-tab:hover:not(.active) { background:#f8fafc; }
+
+    /* ── Data table ── */
+    .data-table { width:100%; border-collapse:collapse; font-size:.85rem; }
+    .data-table thead th { padding:.5rem .6rem; color:#94a3b8; font-weight:600; font-size:.72rem; text-transform:uppercase; border-bottom:1px solid #f1f5f9; }
+    .data-table tbody td { padding:.6rem .6rem; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+    .data-table tbody tr:last-child td { border-bottom:none; }
+    .data-table tbody tr:hover { background:#fafbfc; }
+    .text-right { text-align:right; }
+    .text-muted { color:#94a3b8; }
+    .text-sm    { font-size:.75rem; }
+    .fw-medium  { font-weight:600; }
+    .text-green { color:#16a34a; }
+    .text-red   { color:#dc2626; }
+    .text-purple{ color:#7b2d8b; }
+    .text-blue  { color:#1565c0; }
+
+    /* ── Rank badge ── */
+    .rank { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#f3e5f5; color:#7b2d8b; font-size:.7rem; font-weight:700; }
+
+    /* ── Product / shop cells ── */
+    .product-cell { display:flex; align-items:center; gap:.5rem; }
+    .thumb        { width:34px; height:34px; border-radius:6px; object-fit:cover; flex-shrink:0; }
+    .shop-cell    { display:flex; align-items:center; gap:.6rem; }
+    .avatar-img   { width:30px; height:30px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+    .avatar-letter{ width:30px; height:30px; border-radius:50%; background:#7b2d8b; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.8rem; flex-shrink:0; }
+
+    /* ── Coupon section ── */
+    .coupon-stats  { display:flex; gap:1.5rem; margin-bottom:1rem; }
+    .coupon-stat   { display:flex; flex-direction:column; align-items:center; }
+    .coupon-stat strong { font-size:1.5rem; font-weight:700; line-height:1; }
+    .coupon-stat small  { font-size:.68rem; color:#94a3b8; text-transform:uppercase; }
+    .sub-label     { font-size:.72rem; font-weight:600; color:#94a3b8; text-transform:uppercase; margin:.5rem 0 .4rem; }
+    .coupon-list   { list-style:none; padding:0; margin:0; }
+    .coupon-item   { display:flex; justify-content:space-between; align-items:center; padding:.4rem 0; border-bottom:1px solid #f1f5f9; font-size:.82rem; }
+    .coupon-item:last-child { border-bottom:none; }
+    .coupon-code   { background:#f3e5f5; color:#7b2d8b; padding:.15rem .45rem; border-radius:4px; font-weight:600; font-size:.78rem; margin-right:.3rem; }
+    .badge-expired { background:#fee2e2; color:#dc2626; padding:.1rem .35rem; border-radius:4px; font-size:.7rem; }
+    .coupon-badge  { background:#f3e5f5; color:#7b2d8b; padding:.15rem .45rem; border-radius:4px; font-size:.78rem; }
+</style>
+
+<!-- ═══════════ JS – Chart.js ═══════════ -->
+@section Scripts {
+    <script>
+        const initialData = {
+            labels:   @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueChart.Points.Select(p => p.Label))),
+            revenues: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueChart.Points.Select(p => p.Revenue))),
+            orders:   @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueChart.Points.Select(p => p.OrdersCount)))
+        };
+
+        const ctx   = document.getElementById('revenueChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels:   initialData.labels,
+                datasets: [
+                    {
+                        label:           'Revenue (EGP)',
+                        data:            initialData.revenues,
+                        backgroundColor: 'rgba(123,45,139,.7)',
+                        borderColor:     'rgba(123,45,139,1)',
+                        borderWidth:     1,
+                        borderRadius:    4,
+                        yAxisID:         'y'
+                    },
+                    {
+                        label:           '# Orders',
+                        data:            initialData.orders,
+                        type:            'line',
+                        borderColor:     '#1565c0',
+                        backgroundColor: 'rgba(21,101,192,.1)',
+                        pointRadius:     3,
+                        tension:         .35,
+                        yAxisID:         'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y:  { type:'linear', position:'left',  title:{ display:true, text:'Revenue (EGP)' } },
+                    y1: { type:'linear', position:'right', title:{ display:true, text:'Orders' }, grid:{ drawOnChartArea:false } }
+                }
+            }
+        });
+
+        // Period AJAX switch
+        document.querySelectorAll('.period-tab').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                const res  = await fetch(`/Admin/ChartData?period=${this.dataset.period}`);
+                const data = await res.json();
+
+                chart.data.labels           = data.labels;
+                chart.data.datasets[0].data = data.revenues;
+                chart.data.datasets[1].data = data.orders;
+                chart.update();
+            });
+        });
+    </script>
+}
