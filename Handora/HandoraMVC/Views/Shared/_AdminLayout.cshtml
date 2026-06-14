@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] � Handora Admin</title>
+    <title>@ViewData["Title"] — Handora Admin</title>
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@@3.19.0/dist/tabler-icons.min.css" />
 </head>
@@ -41,6 +41,11 @@
                    class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Sellers" ? "active" : "")">
                     <i class="ti ti-store" aria-hidden="true"></i> Sellers
                 </a>
+
+                <a asp-controller="Admin" asp-action="Analytics"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
+                    <i class="ti ti-chart-bar" aria-hidden="true"></i> Analytics
+                </a>
             </nav>
             <div class="nav-bottom">
                 <a asp-controller="Account" asp-action="Logout" class="nav-item">
@@ -63,5 +68,9 @@
             </main>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)   @* ← ضيفي السطر ده *@
+
 </body>
 </html>

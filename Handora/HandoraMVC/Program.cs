@@ -64,6 +64,9 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IShopService, ShopService>();
 builder.Services.AddScoped<ISellerService, SellerService>();
+
+builder.Services.AddScoped<IUserStatsRepository, UserStatsRepository>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 //builder.Services.AddScoped<INotificationService, NotificationService>();
 //builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
