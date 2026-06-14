@@ -71,6 +71,9 @@ builder.Services.AddScoped<ISellerService, SellerService>();
 builder.Services.AddScoped<UserManager<User>>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+builder.Services.AddScoped<IUserStatsRepository, UserStatsRepository>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 //builder.Services.AddScoped<INotificationService, NotificationService>();
 //builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
