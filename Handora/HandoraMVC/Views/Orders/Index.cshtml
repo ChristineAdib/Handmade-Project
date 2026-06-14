@@ -10,7 +10,7 @@
     <span class="total-badge">@Model.TotalCount total</span>
 </div>
 
-{{!-- Filter --}}
+@* Filter  *@
 <form method="get" class="filter-bar">
     <select name="status" onchange="this.form.submit()" class="form-input">
         <option value="">All Statuses</option>
@@ -53,7 +53,7 @@
     </table>
 </div>
 
-{{!-- Pagination --}}
+@* {{!-- Pagination --}} *@
 @if (Model.TotalPages > 1)
 {
     <div class="pagination">
