@@ -224,5 +224,18 @@ namespace HandoraApplication.Services
             await _uow.SaveChangesAsync();
             return Result.Success();
         }
+        public async Task<Result<IEnumerable<ShopDto>>> GetAllShops()
+        {
+            var repo = _uow.Repository<Shop, Guid>();
+            var query = await repo.GetAllAsNoTracking();
+
+            var shops = await query
+                .Include(s => s.Owner)
+                .Where(s => !s.IsDeleted)
+                .OrderByDescending(s => s.CreatedAt)
+                .ToListAsync();
+
+            return Result<IEnumerable<ShopDto>>.Success(shops.Adapt<IEnumerable<ShopDto>>());
+        }
     }
 }

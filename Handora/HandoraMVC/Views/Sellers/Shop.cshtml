@@ -1,0 +1,78 @@
+﻿@model HandoraMVC.ViewModels.ShopDetailsViewModel
+
+@{
+    ViewData["Title"] = "Shop Details";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <a asp-action="Index" class="btn-secondary">← Back</a>
+    <h2>Shop Details</h2>
+    @if (Model.IsVerified)
+    {
+        <span class="badge badge-complete">Verified</span>
+    }
+    else
+    {
+        <span class="badge badge-pending">Not Verified</span>
+    }
+</div>
+
+<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;margin-bottom:20px">
+    <div class="detail-card" style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px">
+        @if (!string.IsNullOrEmpty(Model.Logo))
+        {
+            <img src="@Model.Logo" alt="@Model.Name"
+                 style="width:80px;height:80px;border-radius:12px;object-fit:cover" />
+        }
+        else
+        {
+            <div style="width:80px;height:80px;border-radius:12px;background:#f5ede4;display:flex;align-items:center;justify-content:center">
+                <i class="ti ti-store" style="font-size:32px;color:#c4956a" aria-hidden="true"></i>
+            </div>
+        }
+        <div>
+            <div style="font-size:18px;font-weight:600;color:#1b1c1c">@Model.Name</div>
+            <div style="font-size:13px;color:#888;margin-top:2px">by @Model.OwnerName</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+            <i class="ti ti-star-filled" style="font-size:14px;color:#c4956a" aria-hidden="true"></i>
+            <span style="font-weight:500">@Model.Rating.ToString("F1")</span>
+            <span style="color:#bbb;font-size:12px">(@Model.ReviewCount reviews)</span>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="stat-card">
+            <div class="stat-row">
+                <div>
+                    <div class="stat-label">Total Sales</div>
+                    <div class="stat-val">@Model.TotalSales.ToString("C")</div>
+                </div>
+                <i class="ti ti-coin stat-icon" aria-hidden="true"></i>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-row">
+                <div>
+                    <div class="stat-label">Products</div>
+                    <div class="stat-val">@Model.ProductCount</div>
+                </div>
+                <i class="ti ti-package stat-icon" aria-hidden="true"></i>
+            </div>
+        </div>
+        <div class="detail-card" style="grid-column:span 2">
+            <h3>Description (EN)</h3>
+            <p style="margin-top:6px;font-size:13px;color:#555;line-height:1.6">
+                @(string.IsNullOrEmpty(Model.DescriptionEn) ? "No description" : Model.DescriptionEn)
+            </p>
+            @if (!string.IsNullOrEmpty(Model.DescriptionAr))
+            {
+                <h3 style="margin-top:12px">Description (AR)</h3>
+                <p style="margin-top:6px;font-size:13px;color:#555;line-height:1.6;direction:rtl">
+                    @Model.DescriptionAr
+                </p>
+            }
+        </div>
+    </div>
+</div>

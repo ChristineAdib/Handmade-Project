@@ -7,13 +7,24 @@
 
 <div class="page-header">
     <h2>Categories</h2>
-    <a asp-action="Create" class="btn-primary">+ Add Category</a>
+    <a asp-action="Create" class="btn-primary">
+        <i class="ti ti-plus" aria-hidden="true"></i> Add Category
+    </a>
 </div>
 
 <div class="table-card">
     <table>
+        <colgroup>
+            <col style="width:40px" />
+            <col style="width:60px" />
+            <col />
+            <col />
+            <col style="width:120px" />
+            <col style="width:160px" />
+        </colgroup>
         <thead>
             <tr>
+                <th></th>
                 <th>Image</th>
                 <th>Name (EN)</th>
                 <th>Name (AR)</th>
@@ -24,7 +35,11 @@
         <tbody>
             @foreach (var cat in Model)
             {
-                <tr>
+                <tr class="parent-row" onclick="toggleSub('@cat.Id')" style="cursor:pointer">
+                    <td>
+                        <i class="ti ti-chevron-right toggle-icon" id="icon-@cat.Id"
+                           style="font-size:14px;color:#c4956a;transition:transform 0.2s"></i>
+                    </td>
                     <td>
                         @if (!string.IsNullOrEmpty(cat.ImageUrl))
                         {
@@ -32,20 +47,113 @@
                         }
                         else
                         {
-                            <div class="cat-img-placeholder">📦</div>
+                            <div class="cat-img-placeholder">
+                                <i class="ti ti-folder" style="font-size:16px;color:#c4956a" aria-hidden="true"></i>
+                            </div>
                         }
                     </td>
-                    <td>@cat.NameEn</td>
+                    <td style="font-weight:500">@cat.NameEn</td>
                     <td>@cat.NameAr</td>
                     <td>
-                        <span class="badge">@cat.SubCategories.Count</span>
+                        @if (cat.SubCategories.Count > 0)
+                        {
+                            <span class="badge badge-pending">@cat.SubCategories.Count subs</span>
+                        }
+                        else
+                        {
+                            <span style="color:#bbb;font-size:12px">No subs</span>
+                        }
                     </td>
-                    <td class="actions">
-                        <a asp-action="Edit" asp-route-id="@cat.Id" class="btn-edit">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@cat.Id" class="btn-delete">Delete</a>
+                    <td onclick="event.stopPropagation()">
+                        <div style="display:flex;gap:6px">
+                            <a asp-action="Edit" asp-route-id="@cat.Id" class="btn-edit">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@cat.Id" class="btn-delete">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr class="sub-row" id="sub-@cat.Id" style="display:none">
+                    <td colspan="6" style="padding:0;background:#faf7f4">
+                        <table style="width:100%;border-collapse:collapse">
+                            <colgroup>
+                                <col style="width:40px" />
+                                <col style="width:60px" />
+                                <col />
+                                <col />
+                                <col style="width:120px" />
+                                <col style="width:160px" />
+                            </colgroup>
+                            <tbody>
+                                @foreach (var sub in cat.SubCategories)
+                                {
+                                    <tr>
+                                        <td style="text-align:center">
+                                            <i class="ti ti-corner-down-right"
+                                               style="font-size:13px;color:#c4956a" aria-hidden="true"></i>
+                                        </td>
+                                        <td>
+                                            <div class="cat-img-placeholder" style="background:#f0e8e0">
+                                                <i class="ti ti-tag" style="font-size:14px;color:#c4956a" aria-hidden="true"></i>
+                                            </div>
+                                        </td>
+                                        <td>@sub.NameEn</td>
+                                        <td>@sub.NameAr</td>
+                                        <td></td>
+                                        <td>
+                                            <div style="display:flex;gap:6px">
+                                                <a asp-action="Edit" asp-route-id="@sub.Id" class="btn-edit">Edit</a>
+                                                <a asp-action="Delete" asp-route-id="@sub.Id" class="btn-delete">Delete</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td colspan="6" style="padding:8px 16px 10px 72px">
+                                        <a asp-action="Create" asp-route-parentId="@cat.Id" class="btn-add-sub">
+                                            <i class="ti ti-plus" aria-hidden="true"></i> Add Subcategory
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
 </div>
+
+<style>
+    .parent-row:hover td {
+        background: #fdf5ee !important;
+    }
+
+    .btn-add-sub {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #7a5433;
+        text-decoration: none;
+        padding: 5px 12px;
+        border: 0.5px dashed #c4956a;
+        border-radius: 6px;
+        background: transparent;
+        transition: background 0.15s;
+    }
+
+        .btn-add-sub:hover {
+            background: #fdf5ee;
+        }
+</style>
+
+<script>
+    function toggleSub(id) {
+        const subRow = document.getElementById('sub-' + id);
+        const icon = document.getElementById('icon-' + id);
+        if (!subRow) return;
+        const isOpen = subRow.style.display !== 'none';
+        subRow.style.display = isOpen ? 'none' : 'table-row';
+        icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+    }
+</script>
