@@ -1,0 +1,648 @@
+﻿@model HandoraApplication.DTOs.AdminDashboardDTOs.AdminDashboardDto
+@using HandoraApplication.DTOs.AdminDashboardDTOs
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Analytics";
+    var period = (RevenueChartPeriod)ViewData["SelectedPeriod"]!;
+}
+
+<style>
+/* ── Design System & Glassmorphism Tokens ────────────────── */
+:root {
+    --br:       #3d2010;   /* Sidebar dark brown */
+    --md:       #7a5433;   /* Medium brown */
+    --lt:       #c4956a;   /* Light gold */
+    --cream:    #f5e6d3;   /* Cream */
+    --bg:       #faf8f5;   /* Soft warm background */
+    --card:     #ffffff;
+    --border:   rgba(232, 224, 216, 0.6);
+    --text:     #232424;
+    --muted:    #7c7e80;
+    --green:    #2b5b08;
+    --green-bg: #f0f7e6;
+    --red:      #912222;
+    --red-bg:   #fdf2f2;
+    --shadow-sm: 0 2px 8px rgba(61, 32, 16, 0.03);
+    --shadow-md: 0 10px 30px rgba(61, 32, 16, 0.06);
+    --radius:   16px;
+}
+
+/* ── Modern Scrollbar ────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--lt); }
+
+/* ── Micro-Animations ────────────────────────────────────── */
+@@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); filter: blur(4px); }
+    to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@@keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(196, 149, 106, 0.4); }
+    100% { box-shadow: 0 0 0 8px rgba(196, 149, 106, 0); }
+}
+
+.fade-up {
+    opacity: 0;
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.fade-up:nth-child(1) { animation-delay: .05s; }
+.fade-up:nth-child(2) { animation-delay: .12s; }
+.fade-up:nth-child(3) { animation-delay: .19s; }
+
+/* ── Grid Layouts ────────────────────────────────────────── */
+.an-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.an-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; margin-bottom: 20px; }
+
+/* ── Premium Section Card ────────────────────────────────── */
+.an-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+.an-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--lt), var(--md));
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.an-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+}
+.an-card:hover::before { opacity: 1; }
+
+/* ── KPI Sales Cards (Glass-morphic feel) ────────────────── */
+.kpi-inner { display: flex; align-items: center; gap: 16px; }
+.kpi-icon-wrap {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+.an-card:hover .kpi-icon-wrap {
+    transform: scale(1.15) rotate(-4deg);
+    animation: pulseGlow 1.5s infinite;
+}
+
+.kpi-icon-wrap.warm  { background: #fdf5ea; color: #b26a12; }
+.kpi-icon-wrap.sage  { background: var(--green-bg); color: var(--green); }
+.kpi-icon-wrap.clay  { background: #fdf2eb; color: var(--lt); }
+
+.kpi-lbl {
+    font-size: 11px; font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase; letter-spacing: .08em;
+    margin-bottom: 4px;
+}
+.kpi-val {
+    font-size: 1.4rem; font-weight: 800;
+    color: var(--br); letter-spacing: -0.02em;
+}
+
+/* ── Modern Count Cards ──────────────────────────────────── */
+.cnt-header {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; font-weight: 700;
+    color: var(--br); text-transform: uppercase; letter-spacing: .05em;
+    margin-bottom: 20px;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 10px;
+}
+.cnt-header-title { display: flex; align-items: center; gap: 8px; }
+.cnt-header i { font-size: 16px; color: var(--lt); }
+.cnt-cells { display: flex; justify-content: space-between; }
+.cnt-cell {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; position: relative; padding: 4px;
+}
+.cnt-cell + .cnt-cell::before {
+    content: ''; position: absolute; left: 0; top: 15%; bottom: 15%;
+    width: 1px; background: linear-gradient(to bottom, transparent, var(--border), transparent);
+}
+.cnt-num { font-size: 1.4rem; font-weight: 800; color: var(--text); line-height: 1.1; }
+.cnt-num.dim { color: #b8af00; background: var(--cream); padding: 2px 8px; border-radius: 20px; font-size: 0.95rem; }
+.cnt-lbl { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-top: 6px; }
+
+/* ── Section Header & Filter Tabs ────────────────────────── */
+.an-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.an-title { font-size: 14px; font-weight: 700; color: var(--br); display: flex; align-items: center; gap: 8px; }
+.an-title i { color: var(--lt); font-size: 18px; }
+
+.ptabs { background: #f0ebe4; padding: 3px; border-radius: 8px; display: flex; gap: 2px; }
+.ptab {
+    padding: 6px 16px; border-radius: 6px; border: none;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    background: transparent; color: var(--md);
+    transition: all 0.2s ease; font-family: inherit;
+}
+.ptab:hover { color: var(--br); }
+.ptab.active { background: var(--card); color: var(--br); box-shadow: 0 2px 6px rgba(61,32,16,0.1); }
+
+/* ── Data Tables Style ───────────────────────────────────── */
+.an-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.an-table thead th {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    padding: 10px 12px; text-align: left;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    background: #faf8f5; border-bottom: 1px solid var(--border);
+}
+.an-table thead th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+.an-table thead th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; text-align: right; }
+.an-table tbody td { padding: 12px; border-bottom: 1px solid rgba(240, 235, 228, 0.5); color: var(--text); vertical-align: middle; }
+.an-table tbody tr:last-child td { border-bottom: none; }
+.an-table tbody tr { transition: all 0.2s; }
+.an-table tbody tr:hover td { background: rgba(245, 230, 211, 0.15); }
+
+/* ── Creative Ranking Badges ────────────────────────────── */
+.rpill {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 8px;
+    background: #fdf5ea; color: #b26a12;
+    font-size: 11px; font-weight: 800;
+}
+.rpill.r1 { background: linear-gradient(135deg, #ffe0b2, var(--lt)); color: #fff; box-shadow: 0 2px 6px rgba(196,149,106,0.3); }
+.rpill.r2 { background: linear-gradient(135deg, #e0e0e0, #9e9e9e); color: #fff; }
+.rpill.r3 { background: linear-gradient(135deg, #ffccbc, #d84315); color: #fff; }
+
+/* ── Avatars & Thumbnails ────────────────────────────────── */
+.an-thumb { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+.an-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--border); }
+.an-letter {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--md), var(--br)); color: var(--cream);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; box-shadow: var(--shadow-sm);
+}
+.cell-duo { display: flex; align-items: center; gap: 12px; }
+.cell-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ── Sleek Progress Bars ─────────────────────────────────── */
+.rev-bar-wrap { display: flex; align-items: center; gap: 8px; width: 120px; margin-left: auto; }
+.rev-bar-bg   { flex: 1; height: 6px; border-radius: 10px; background: #f0ebe4; overflow: hidden; }
+.rev-bar-fill { height: 100%; background: linear-gradient(90deg, var(--lt), var(--md)); border-radius: 10px; transition: width .8s ease-in-out; }
+
+/* ── Coupons Creative Section ────────────────────────────── */
+.coupon-kpis { display: flex; gap: 8px; margin-bottom: 16px; background: #faf8f5; padding: 12px; border-radius: 12px; }
+.ckpi { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6px 4px; }
+.ckpi-num { font-size: 1.3rem; font-weight: 800; color: var(--br); }
+.ckpi-lbl { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+
+.coupon-rows { list-style: none; padding: 0; margin: 0; }
+.coupon-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px dashed rgba(240, 235, 228, 0.8); font-size: 12px;
+}
+.coupon-row:last-child { border-bottom: none; }
+.c-code {
+    background: #fff; color: var(--br); border: 1px dashed var(--lt);
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 700; font-family: monospace;
+    box-shadow: var(--shadow-sm);
+}
+.c-expired { background: var(--red-bg); color: var(--red); padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+.c-badge { background: var(--green-bg); color: var(--green); padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+
+/* ── Utility Classes ─────────────────────────────────────── */
+.t-green { color: var(--green); font-weight: 700; font-size: 13.5px; text-align: right; }
+.t-red   { color: var(--red); font-size: 11px; font-weight: 500; text-align: right; }
+.fw6     { font-weight: 600; color: var(--text); }
+</style>
+
+<div class="an-grid-3">
+    <div class="an-card fade-up">
+        <div class="kpi-inner">
+            <div class="kpi-icon-wrap warm">
+                <i class="ti ti-calendar-stats"></i>
+            </div>
+            <div>
+                <div class="kpi-lbl">Today's Sales</div>
+                <div class="kpi-val">EGP @Model.SalesSummary.TodaySales.ToString("N2")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="an-card fade-up">
+        <div class="kpi-inner">
+            <div class="kpi-icon-wrap sage">
+                <i class="ti ti-calendar-week"></i>
+            </div>
+            <div>
+                <div class="kpi-lbl">This Week</div>
+                <div class="kpi-val">EGP @Model.SalesSummary.WeekSales.ToString("N2")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="an-card fade-up">
+        <div class="kpi-inner">
+            <div class="kpi-icon-wrap clay">
+                <i class="ti ti-calendar-month"></i>
+            </div>
+            <div>
+                <div class="kpi-lbl">This Month</div>
+                <div class="kpi-val">EGP @Model.SalesSummary.MonthSales.ToString("N2")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="an-grid-3">
+    <div class="an-card fade-up">
+        <div class="cnt-header">
+            <div class="cnt-header-title"><i class="ti ti-shopping-bag"></i> New Orders</div>
+        </div>
+        <div class="cnt-cells">
+            <div class="cnt-cell">
+                <span class="cnt-num">@Model.Counts.NewOrdersToday</span>
+                <span class="cnt-lbl">Today</span>
+            </div>
+            <div class="cnt-cell">
+                <span class="cnt-num">@Model.Counts.NewOrdersThisWeek</span>
+                <span class="cnt-lbl">Week</span>
+            </div>
+            <div class="cnt-cell">
+                <span class="cnt-num">@Model.Counts.NewOrdersThisMonth</span>
+                <span class="cnt-lbl">Month</span>
+            </div>
+            <div class="cnt-cell">
+                <span class="cnt-num dim">@Model.Counts.TotalOrders</span>
+                <span class="cnt-lbl">Total</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="an-card fade-up">
+        <div class="cnt-header">
+            <div class="cnt-header-title"><i class="ti ti-users"></i> New Buyers</div>
+        </div>
+        <div class="cnt-cells">
+            <div class="cnt-cell">
+                <span class="cnt-num">@Model.Counts.NewUsersToday</span>
+                <span class="cnt-lbl">Today</span>
+            </div>
+            <div class="cnt-cell">
+                <span class="cnt-num">@Model.Counts.NewUsersThisWeek</span>
+                <span class="cnt-lbl">Week</span>
+            </div>
+            <div class="cnt-cell">
+                <span class="cnt-num">@Model.Counts.NewUsersThisMonth</span>
+                <span class="cnt-lbl">Month</span>
+            </div>
+            <div class="cnt-cell">
+                <span class="cnt-num dim">@Model.Counts.TotalUsers</span>
+                <span class="cnt-lbl">Total</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="an-card fade-up">
+        <div class="cnt-header">
+            <div class="cnt-header-title"><i class="ti ti-store"></i> New Sellers</div>
+        </div>
+        <div class="cnt-cells">
+            <div class="cnt-cell">
+                <span class="cnt-num">@Model.Counts.NewSellersToday</span>
+                <span class="cnt-lbl">Today</span>
+            </div>
+            <div class="cnt-cell">
+                <span class="cnt-num">@Model.Counts.NewSellersThisWeek</span>
+                <span class="cnt-lbl">Week</span>
+            </div>
+            <div class="cnt-cell">
+                <span class="cnt-num">@Model.Counts.NewSellersThisMonth</span>
+                <span class="cnt-lbl">Month</span>
+            </div>
+            <div class="cnt-cell">
+                <span class="cnt-num dim">@Model.Counts.TotalSellers</span>
+                <span class="cnt-lbl">Total</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="an-card fade-up" style="margin-bottom:20px;">
+    <div class="an-header">
+        <span class="an-title">
+            <i class="ti ti-chart-bar"></i> Revenue & Orders Analytics
+        </span>
+        <div class="ptabs" id="periodBtns">
+            <button class="ptab @(period == RevenueChartPeriod.Daily   ? "active" : "")" data-period="1">Daily</button>
+            <button class="ptab @(period == RevenueChartPeriod.Weekly  ? "active" : "")" data-period="2">Weekly</button>
+            <button class="ptab @(period == RevenueChartPeriod.Monthly ? "active" : "")" data-period="3">Monthly</button>
+        </div>
+    </div>
+    <div class="chart-wrap">
+        <canvas id="revenueChart" height="80"></canvas>
+    </div>
+</div>
+
+<div class="an-grid-2">
+    <div class="an-card fade-up">
+        <div class="an-header">
+            <span class="an-title"><i class="ti ti-package"></i> Top Performing Products</span>
+        </div>
+        @{
+            var maxRev = Model.TopProducts.Any() ? Model.TopProducts.Max(p => p.TotalRevenue) : 1m;
+            int prank   = 1;
+        }
+        <table class="an-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">#</th>
+                    <th>Product Details</th>
+                    <th style="text-align: right;">Qty Sold</th>
+                    <th style="text-align: right; width: 150px;">Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.TopProducts)
+                {
+                    var pct = maxRev > 0 ? (int)((p.TotalRevenue / maxRev) * 100) : 0;
+                    <tr>
+                        <td><span class="rpill @(prank==1?"r1":prank==2?"r2":prank==3?"r3":"")">@prank</span></td>
+                        <td>
+                            <div class="cell-duo">
+                                @if (!string.IsNullOrEmpty(p.PictureUrl))
+                                {
+                                    <img src="@p.PictureUrl" class="an-thumb" alt="@p.ProductName" />
+                                }
+                                <div>
+                                    <div class="fw6">@p.ProductName</div>
+                                    <div class="cell-sub"><i class="ti ti-store" style="font-size:11px;"></i> @p.ShopName</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align: right;" class="fw6">@p.QuantitySold</td>
+                        <td>
+                            <div class="t-green">EGP @p.TotalRevenue.ToString("N0")</div>
+                            <div class="rev-bar-wrap" style="margin-top:6px;">
+                                <div class="rev-bar-bg">
+                                    <div class="rev-bar-fill" style="width:@pct%"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    prank++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="an-card fade-up">
+        <div class="an-header">
+            <span class="an-title"><i class="ti ti-ticket"></i> Coupon Performance</span>
+        </div>
+
+        <div class="coupon-kpis">
+            <div class="ckpi">
+                <span class="ckpi-num">@Model.CouponStats.ActiveCouponsCount</span>
+                <span class="ckpi-lbl">Active</span>
+            </div>
+            <div class="ckpi" style="border-left: 1px solid var(--border); border-right: 1px solid var(--border);">
+                <span class="ckpi-num">@Model.CouponStats.TotalCouponsUsedCount</span>
+                <span class="ckpi-lbl">Redeemed</span>
+            </div>
+            <div class="ckpi">
+                <span class="ckpi-num" style="color: var(--green);">@Model.CouponStats.TotalDiscountGiven.ToString("N0")</span>
+                <span class="ckpi-lbl">EGP Saved</span>
+            </div>
+        </div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--br);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px; padding-left: 4px;">
+            Top Coupons by Usage
+        </div>
+        <ul class="coupon-rows">
+            @foreach (var c in Model.CouponStats.TopCoupons)
+            {
+                <li class="coupon-row">
+                    <div>
+                        <span class="c-code">@c.Code</span>
+                        @if (!c.IsActive || c.ExpiryDate < DateTime.UtcNow)
+                        {
+                            <span class="c-expired">Expired</span>
+                        }
+                    </div>
+                    <span class="fw6" style="color: var(--text);">@c.UsageCount <span style="font-size:11px; color:var(--muted); font-weight:normal;">uses</span> &nbsp;·&nbsp; <span style="color:var(--green)">EGP @c.TotalDiscountGiven.ToString("N0")</span></span>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+<div class="an-grid-2">
+    <div class="an-card fade-up">
+        <div class="an-header">
+            <span class="an-title"><i class="ti ti-building-store"></i> Most Active Sellers</span>
+        </div>
+        @{ int srank = 1; var maxSRev = Model.TopSellers.Any() ? Model.TopSellers.Max(s => s.TotalRevenue) : 1m; }
+        <table class="an-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">#</th>
+                    <th>Shop Information</th>
+                    <th style="text-align: right;">Orders</th>
+                    <th style="text-align: right; width: 150px;">Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.TopSellers)
+                {
+                    var spct = maxSRev > 0 ? (int)((s.TotalRevenue / maxSRev) * 100) : 0;
+                    <tr>
+                        <td><span class="rpill @(srank==1?"r1":srank==2?"r2":srank==3?"r3":"")">@srank</span></td>
+                        <td>
+                            <div class="cell-duo">
+                                @if (!string.IsNullOrEmpty(s.Logo))
+                                {
+                                    <img src="@s.Logo" class="an-avatar" alt="@s.ShopName" />
+                                }
+                                else
+                                {
+                                    <div class="an-letter">@s.ShopName.FirstOrDefault()</div>
+                                }
+                                <div>
+                                    <div class="fw6">@s.ShopName</div>
+                                    <div class="cell-sub">@s.SellerName &nbsp;·&nbsp; <span style="color: #b26a12; font-weight:600;">@s.Rating.ToString("F1") ★</span></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align: right;" class="fw6">@s.OrdersCount</td>
+                        <td>
+                            <div class="t-green">EGP @s.TotalRevenue.ToString("N0")</div>
+                            <div class="rev-bar-wrap" style="margin-top:6px;">
+                                <div class="rev-bar-bg">
+                                    <div class="rev-bar-fill" style="width:@spct%"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    srank++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="an-card fade-up">
+        <div class="an-header">
+            <span class="an-title"><i class="ti ti-user-check"></i> Most Active Buyers</span>
+        </div>
+        @{ int brank = 1; }
+        <table class="an-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">#</th>
+                    <th>Buyer Profile</th>
+                    <th style="text-align: right;">Orders</th>
+                    <th style="text-align: right;">Financials</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.TopBuyers)
+                {
+                    <tr>
+                        <td><span class="rpill @(brank==1?"r1":brank==2?"r2":brank==3?"r3":"")">@brank</span></td>
+                        <td>
+                            <div class="fw6">@b.BuyerName</div>
+                            <div class="cell-sub" style="margin-bottom: 4px;">@b.Email</div>
+                            @if (b.CouponsUsedCount > 0)
+                            {
+                                <span class="c-badge">@b.CouponsUsedCount 🎟 coupons</span>
+                            }
+                        </td>
+                        <td style="text-align: right;" class="fw6">@b.OrdersCount</td>
+                        <td>
+                            <div class="t-green">EGP @b.TotalSpent.ToString("N0")</div>
+                            @if (b.TotalDiscountReceived > 0)
+                            {
+                                <div class="t-red"><i class="ti ti-arrow-down-left"></i> EGP @b.TotalDiscountReceived.ToString("N0") saved</div>
+                            }
+                        </td>
+                    </tr>
+                    brank++;
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const BR   = '#3d2010';
+    const LT   = '#c4956a';
+    const BLUE = '#185fa5';
+
+    const initialData = {
+        labels:   @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueChart.Points.Select(p => p.Label))),
+        revenues: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueChart.Points.Select(p => p.Revenue))),
+        orders:   @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueChart.Points.Select(p => p.OrdersCount)))
+    };
+
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+
+    // Smooth gradient for bars
+    const grad = ctx.createLinearGradient(0, 0, 0, 400);
+    grad.addColorStop(0,   'rgba(196, 149, 106, 0.85)');
+    grad.addColorStop(0.5, 'rgba(122, 84, 51, 0.4)');
+    grad.addColorStop(1,   'rgba(61, 32, 16, 0.05)');
+
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: initialData.labels,
+            datasets: [
+                {
+                    label:           'Revenue (EGP)',
+                    data:            initialData.revenues,
+                    backgroundColor: grad,
+                    borderColor:     LT,
+                    borderWidth:     0,
+                    borderRadius:    6,
+                    yAxisID:         'y',
+                    barPercentage:   0.55
+                },
+                {
+                    label:           '# Orders',
+                    data:            initialData.orders,
+                    type:            'line',
+                    borderColor:     BLUE,
+                    backgroundColor: 'rgba(24,95,165,.04)',
+                    pointBackgroundColor: BLUE,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius:     4,
+                    pointHoverRadius:6,
+                    tension:         .35,
+                    fill:            true,
+                    yAxisID:         'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            animation: { duration: 800, easing: 'easeOutQuart' },
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { font: { size:11, weight: '600' }, color: '#3d2010', boxWidth:8, usePointStyle: true, padding:20 }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(61, 32, 16, 0.95)',
+                    titleColor: '#f5e6d3',
+                    bodyColor:  '#fff',
+                    padding: 12,
+                    borderRadius: 10,
+                    boxPadding: 6,
+                    usePointStyle: true
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display:false },
+                    ticks: { font:{size:11, weight:'500'}, color:'#7c7e80' }
+                },
+                y: {
+                    type:'linear', position:'left',
+                    grid: { color:'rgba(232, 224, 216, 0.4)' },
+                    ticks: { font:{size:11}, color:'#7c7e80' },
+                    title: { display:false }
+                },
+                y1: {
+                    type:'linear', position:'right',
+                    grid: { drawOnChartArea:false },
+                    ticks: { font:{size:11}, color:'#7c7e80' },
+                    title: { display:false }
+                }
+            }
+        }
+    });
+
+    // AJAX Period switch
+    document.querySelectorAll('.ptab').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const res  = await fetch(`/Admin/ChartData?period=${this.dataset.period}`);
+            const data = await res.json();
+
+            chart.data.labels           = data.labels;
+            chart.data.datasets[0].data = data.revenues;
+            chart.data.datasets[1].data = data.orders;
+            chart.update();
+        });
+    });
+</script>
+}
