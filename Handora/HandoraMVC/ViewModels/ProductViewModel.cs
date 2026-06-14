@@ -19,6 +19,7 @@ namespace HandoraMVC.ViewModels
         public string CategoryNameEn { get; set; } = string.Empty;
         public string ShopName { get; set; } = string.Empty;
         public ProductStatus Status { get; set; }
+        public bool IsActive { get; set; }
         public int Quantity { get; set; }
     }
 
