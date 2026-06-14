@@ -23,5 +23,6 @@ namespace HandoraDomain.Interfaces
         Task<IdentityResult> DeleteAsync(User user, CancellationToken ct = default);
         Task<string> GeneratePasswordResetTokenAsync(User user);
         Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword);
+        Task<IEnumerable<User>> GetUsersInRoleAsync(string roleName, CancellationToken ct = default);
     }
 }

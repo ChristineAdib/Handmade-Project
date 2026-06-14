@@ -1,0 +1,199 @@
+@model HandoraMVC.ViewModels.UserManagementViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "User Management";
+}
+
+<div class="page-header">
+    <h2>User Management</h2>
+    <span class="total-badge">Total Users: @Model.Users.Count</span>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" style="background-color: #eaf3de; color: #3b6d11; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 0.5px solid #c8e0a8;">
+        <i class="ti-check-box"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" style="background-color: #fcebeb; color: #a32d2d; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 0.5px solid #f0c4c4;">
+        <i class="ti-alert"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="table-card">
+    <div class="table-toolbar">
+        <form method="get" style="display: flex; gap: 12px; align-items: center; width: 100%;">
+            <div>
+                <label style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">Filter by Role</label>
+                <select name="role" class="filter-select" onchange="this.form.submit()">
+                    <option value="">All Roles</option>
+                    @if (Model.SelectedRole == "Admin")
+                    {
+                        <option value="Admin" selected>Admin</option>
+                    }
+                    else
+                    {
+                        <option value="Admin">Admin</option>
+                    }
+                    
+                    @if (Model.SelectedRole == "Seller")
+                    {
+                        <option value="Seller" selected>Seller</option>
+                    }
+                    else
+                    {
+                        <option value="Seller">Seller</option>
+                    }
+
+                    @if (Model.SelectedRole == "Buyer")
+                    {
+                        <option value="Buyer" selected>Buyer</option>
+                    }
+                    else
+                    {
+                        <option value="Buyer">Buyer</option>
+                    }
+                </select>
+            </div>
+
+            <div>
+                <label style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">Filter by Status</label>
+                <select name="status" class="filter-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    @if (Model.SelectedStatus == "active")
+                    {
+                        <option value="active" selected>Active</option>
+                    }
+                    else
+                    {
+                        <option value="active">Active</option>
+                    }
+
+                    @if (Model.SelectedStatus == "inactive")
+                    {
+                        <option value="inactive" selected>Inactive</option>
+                    }
+                    else
+                    {
+                        <option value="inactive">Inactive</option>
+                    }
+
+                    @if (Model.SelectedStatus == "banned")
+                    {
+                        <option value="banned" selected>Banned</option>
+                    }
+                    else
+                    {
+                        <option value="banned">Banned</option>
+                    }
+                </select>
+            </div>
+
+            <div style="margin-left: auto; align-self: flex-end;">
+                <a href="@Url.Action("Index")" class="btn-secondary" style="padding: 7px 14px;">Clear Filters</a>
+            </div>
+        </form>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User Details</th>
+                <th>Email / Phone</th>
+                <th>Roles</th>
+                <th>Status</th>
+                <th>Joined Date</th>
+                <th style="text-align: right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Users.Any())
+            {
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td>
+                            <div class="product-cell">
+                                <div class="cat-img-placeholder">
+                                    <span style="font-weight: 600; color: #7a5433;">@user.Name.Substring(0, Math.Min(2, user.Name.Length)).ToUpper()</span>
+                                </div>
+                                <div>
+                                    <span style="font-weight: 600; display: block;">@user.Name</span>
+                                    <span style="font-size: 11px; color: #888;">ID: @user.Id</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="display: block;">@user.Email</span>
+                            <span style="font-size: 11px; color: #888;">@(string.IsNullOrEmpty(user.PhoneNumber) ? "No Phone" : user.PhoneNumber)</span>
+                        </td>
+                        <td>
+                            @foreach (var r in user.Roles)
+                            {
+                                string roleClass = r switch
+                                {
+                                    "Admin" => "badge-cancelled",
+                                    "Seller" => "badge-complete",
+                                    _ => "badge-pending"
+                                };
+                                <span class="badge @roleClass" style="margin-right: 4px;">@r</span>
+                            }
+                        </td>
+                        <td>
+                            @if (user.IsBanned)
+                            {
+                                <span class="badge badge-cancelled">Banned</span>
+                            }
+                            else if (user.IsActive)
+                            {
+                                <span class="badge badge-complete">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-unpaid">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            @user.CreatedAt.ToString("yyyy-MM-dd")
+                        </td>
+                        <td style="text-align: right;">
+                            <div style="display: inline-flex; gap: 8px; align-items: center;">
+                                @if (user.Roles.Contains("Seller") && user.HasShop && user.ShopId.HasValue)
+                                {
+                                    <a href="@Url.Action("ShopDetails", new { id = user.ShopId })" class="btn-edit">
+                                        <i class="ti-layout-grid2"></i> View Shop
+                                    </a>
+                                }
+                                else if (user.Roles.Contains("Seller") && !user.HasShop)
+                                {
+                                    <span style="font-size: 11px; color: #888; font-style: italic;">No Shop Created</span>
+                                }
+
+                                @if (!user.Roles.Contains("Seller"))
+                                {
+                                    <form asp-action="UpgradeToSeller" method="post" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@user.Id" />
+                                        <button type="submit" class="btn-primary" style="padding: 5px 12px; font-size: 12px; border-radius: 6px;">
+                                            Upgrade to Seller
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #888; padding: 30px;">
+                        No users found matching the selected filters.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
