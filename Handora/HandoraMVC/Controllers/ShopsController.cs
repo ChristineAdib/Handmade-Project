@@ -21,13 +21,18 @@ public class ShopsController : Controller
     private const int PageSize = 8;
 
     // GET: /Shops
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search)
     {
         var result = await _shopService.GetAllShops();
         if (!result.IsSuccess)
             return View("Error");
 
-        var vm = result.Data!.Select(s => new ShopListItemViewModel
+        var shops = result.Data!.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+            shops = shops.Where(s => s.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+        var vm = shops.Select(s => new ShopListItemViewModel
         {
             Id = s.Id,
             Name = s.Name,
@@ -39,6 +44,7 @@ public class ShopsController : Controller
             ProductCount = s.ProductCount
         }).ToList();
 
+        ViewData["Search"] = search;
         return View(vm);
     }
 
