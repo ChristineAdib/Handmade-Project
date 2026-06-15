@@ -1,5 +1,6 @@
-﻿using HandoraApplication.DTOs.WishlistDTOs;
+using HandoraApplication.DTOs.WishlistDTOs;
 using HandoraApplication.IServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -33,12 +34,11 @@ namespace HandoraApi.Controllers
             return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
         }
 
-        // POST api/wishlist
         [HttpPost]
         public async Task<IActionResult> AddItem([FromBody] AddToWishListDto dto)
         {
             var result = await _wishListService.AddItemAsync(GetUserId(), dto);
-            return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
+            return result.IsSuccess ? Ok(result.Data) : BadRequest(new { success = false, message = result.Errors?.FirstOrDefault() });
         }
 
         // DELETE api/wishlist/{productId}
@@ -49,5 +49,12 @@ namespace HandoraApi.Controllers
             return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
         }
 
+        [HttpPost("sync")]
+        [Authorize]
+        public async Task<IActionResult> SyncGuestWishList([FromBody] List<Guid> productIds)
+        {
+            var result = await _wishListService.SyncWishListAsync(GetUserId(), productIds);
+            return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
+        }
     }
 }
