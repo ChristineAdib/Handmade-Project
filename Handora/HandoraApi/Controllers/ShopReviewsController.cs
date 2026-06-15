@@ -62,7 +62,7 @@ namespace HandoraApi.Controllers
             var result = await _shopReviewService.CreateReview(dto, userId);
             if (result.IsSuccess)
                 return Ok(result.Data);
-            return BadRequest(result.Errors);
+            return BadRequest(new { success = false, message = result.Errors?.FirstOrDefault() ?? "Validation failed." });
         }
 
         // PUT /api/shopreviews/{id}
@@ -77,7 +77,7 @@ namespace HandoraApi.Controllers
             var result = await _shopReviewService.UpdateReview(id, dto, userId);
             if (result.IsSuccess)
                 return Ok(result.Data);
-            return BadRequest(result.Errors);
+            return BadRequest(new { success = false, message = result.Errors?.FirstOrDefault() ?? "Update failed." });
         }
 
         // DELETE /api/shopreviews/{id}

@@ -25,6 +25,11 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
         if (cart is null || !cart.Items.Any())
             return Result<OrderResponseDto>.Failure("Cart is empty or not found");
 
+        if (cart.Items.Any(ci => ci.Product.Quantity <= 0 || ci.Product.IsDeleted || ci.Product.Status != ProductStatus.Active))
+        {
+            return Result<OrderResponseDto>.Failure("One or more products in your cart are currently unavailable.");
+        }
+
         // 2. Validate delivery method
         var deliveryRepo = _unitOfWork.Repository<DeliveryMethod, Guid>();
         var deliveryMethod = await deliveryRepo.GetByIdAsync(dto.DeliveryMethodId);
@@ -42,6 +47,9 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
             if (product.IsDeleted || product.Status != ProductStatus.Active)
                 return Result<OrderResponseDto>.Failure($"Product '{product.TitleEn}' is no longer available");
+
+            if (product.Shop.OwnerId == userId)
+                return Result<OrderResponseDto>.Failure("You cannot purchase your own products.");
 
             if (product.Quantity < cartItem.Quantity)
                 return Result<OrderResponseDto>.Failure($"Insufficient stock for '{product.TitleEn}'. Available: {product.Quantity}");

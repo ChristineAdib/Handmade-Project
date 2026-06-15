@@ -1,4 +1,4 @@
-﻿using HandoraDomain.Models.AppUser;
+using HandoraDomain.Models.AppUser;
 
 
 namespace HandoraDomain.Models.ProductEntities
@@ -8,6 +8,7 @@ namespace HandoraDomain.Models.ProductEntities
         public int Rating { get; set; }
         public string? Comment { get; set; }
         public bool IsApproved { get; set; } = true;    // [IMPROVEMENT] allow shops/admins to moderate reviews
+        public bool IsVerifiedPurchase { get; set; } = false;
 
         // FKs
         public string UserId { get; set; }
