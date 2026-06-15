@@ -1,46 +1,31 @@
-using HandoraApplication.DTOs.ReviewDTOs;
+using HandoraApplication.DTOs.ProductDTOs;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace HandoraApplication.DTOs.ProductDTOs
+namespace HandoraMVC.ViewModels
 {
-    public class ProductResponseDto
+    public class ProductDetailsViewModel
     {
         public Guid Id { get; set; }
-
-        public string TitleEn { get; set; }
-        public string TitleAr { get; set; }
+        public string TitleEn { get; set; } = string.Empty;
+        public string TitleAr { get; set; } = string.Empty;
         public string? DescriptionEn { get; set; }
         public string? DescriptionAr { get; set; }
-
         public decimal Price { get; set; }
         public decimal? DiscountPrice { get; set; }
-        public decimal FinalPrice => DiscountPrice ?? Price; // calculated
-
+        public decimal FinalPrice => DiscountPrice ?? Price;
         public int Quantity { get; set; }
-        public string Status { get; set; } // "Active", "Inactive", "OutOfStock"
+        public string Status { get; set; } = string.Empty;
         public bool IsActive { get; set; }
-
         public decimal AverageRating { get; set; }
         public int ReviewCount { get; set; }
-
         public Guid CategoryId { get; set; }
-        public string CategoryNameEn { get; set; }
-        public string CategoryNameAr { get; set; }
-
+        public string CategoryNameEn { get; set; } = string.Empty;
+        public string CategoryNameAr { get; set; } = string.Empty;
         public Guid ShopId { get; set; }
-        public string ShopName { get; set; }
-
-        public List<ProductImageDto> Images { get; set; } = [];
-
-        public List<string> Tags { get; set; } = [];
-
-
-        public List<ReviewSummaryDto> LatestReviews { get; set; }
-
+        public string ShopName { get; set; } = string.Empty;
+        public List<ProductImageDto> Images { get; set; } = new();
+        public List<string> Tags { get; set; } = new();
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
