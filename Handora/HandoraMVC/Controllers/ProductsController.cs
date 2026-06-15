@@ -76,6 +76,7 @@ namespace HandoraMVC.Controllers
                     CategoryNameEn = p.CategoryNameEn,
                     ShopName = p.ShopName,
                     Status = p.Status,
+                    IsActive = p.IsActive,
                     Quantity = p.Quantity
                 }).ToList(),
                 Categories = categoryOptions,
@@ -96,12 +97,7 @@ namespace HandoraMVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Approve(Guid id)
         {
-            var updateDto = new UpdateProductDto
-            {
-                Status = ProductStatus.Active
-            };
-
-            var result = await _productService.UpdateProduct(id, updateDto);
+            var result = await _productService.ApproveProductAsync(id);
             if (!result.IsSuccess)
             {
                 TempData["Error"] = string.Join(", ", result.Errors ?? new[] { "Failed to approve product" });
@@ -119,12 +115,7 @@ namespace HandoraMVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Reject(Guid id)
         {
-            var updateDto = new UpdateProductDto
-            {
-                Status = ProductStatus.Inactive
-            };
-
-            var result = await _productService.UpdateProduct(id, updateDto);
+            var result = await _productService.RejectProductAsync(id);
             if (!result.IsSuccess)
             {
                 TempData["Error"] = string.Join(", ", result.Errors ?? new[] { "Failed to reject product" });
