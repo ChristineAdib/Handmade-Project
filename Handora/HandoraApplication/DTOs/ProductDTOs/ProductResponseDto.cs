@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.ReviewDTOs;
+using HandoraApplication.DTOs.ReviewDTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +27,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public int ReviewCount { get; set; }
 
         public Guid CategoryId { get; set; }
+        public Guid? ParentCategoryId { get; set; }
         public string CategoryNameEn { get; set; }
         public string CategoryNameAr { get; set; }
 
@@ -42,5 +43,9 @@ namespace HandoraApplication.DTOs.ProductDTOs
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        public bool IsAvailable { get; set; }
+        public int StockQuantity { get; set; }
+        public bool IsSoldOut { get; set; }
     }
 }

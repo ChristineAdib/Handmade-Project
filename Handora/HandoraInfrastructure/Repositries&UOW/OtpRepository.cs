@@ -24,7 +24,7 @@ namespace HandoraInfrastructure.Repositries_UOW
         public async Task<OtpVerification?> GetByEmailAsync(string email, CancellationToken ct = default)
         {
             return await _context.OtpVerifications
-                .Where(o => o.Email == email && !o.IsVerified && o.ExpiresAt > DateTime.UtcNow)
+                .Where(o => o.Email == email && !o.IsVerified)
                 .OrderByDescending(o => o.CreatedAt)
                 .FirstOrDefaultAsync(ct);
         }

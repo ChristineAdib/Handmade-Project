@@ -116,6 +116,10 @@ namespace HandoraApplication.Services
             if (shop is null)
                 return Result<ShopReviewResponseDto>.Failure("Shop not found");
 
+            // Check if reviewer is the owner of the shop
+            if (shop.OwnerId == userId)
+                return Result<ShopReviewResponseDto>.Failure("You cannot review your own shop.");
+
             // 3. Purchase validation: only users who completed an order from that shop can review
             var orderRepo = _unitOfWork.Repository<Order, Guid>();
             var ordersQuery = await orderRepo.GetAllAsNoTracking();
@@ -186,6 +190,12 @@ namespace HandoraApplication.Services
 
             if (review.UserId != userId)
                 return Result<ShopReviewResponseDto>.Failure("You are not allowed to update this review");
+
+            // Check if user is the owner of the shop being reviewed
+            var shopRepo = _unitOfWork.Repository<Shop, Guid>();
+            var shop = await shopRepo.GetByIdAsync(review.ShopId);
+            if (shop != null && shop.OwnerId == userId)
+                return Result<ShopReviewResponseDto>.Failure("You cannot review your own shop.");
 
             // Update fields
             review.Rating = dto.Rating;
