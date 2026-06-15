@@ -82,7 +82,8 @@ builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 // Application Services اللي في ServiceExtensions
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INotificationHubContext, NullNotificationHubContext>();
 
 // Redis (نفس pattern الـ API)
 var redisConnection = builder.Configuration.GetConnectionString("Redis");

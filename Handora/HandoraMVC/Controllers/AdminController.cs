@@ -9,7 +9,7 @@ namespace HandoraMVC.Controllers
     {
         private readonly IAdminDashboardService _dashboardService = dashboardService;
 
-        // ── GET /Admin/Analytics?period=1 ────────────────────────────────────────
+        // ── GET /Admin/Analytics?period=1 ────────────────────────────────────────  g
         public async Task<IActionResult> Analytics(RevenueChartPeriod period = RevenueChartPeriod.Daily)
         {
             var result = await _dashboardService.GetDashboardAsync(period);
