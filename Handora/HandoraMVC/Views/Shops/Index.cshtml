@@ -9,7 +9,13 @@
     <h2>Shops</h2>
     <span class="total-badge">@Model.Count total</span>
 </div>
-
+<form method="get" class="filter-bar">
+    <input type="text" name="search" value="@ViewData["Search"]"
+           placeholder="Search by shop name..." class="form-input" style="max-width:280px" />
+    <button type="submit" class="btn-secondary" style="margin-left:8px">
+        <i class="ti ti-search" aria-hidden="true"></i>
+    </button>
+</form>
 <div class="shops-grid">
     @foreach (var shop in Model)
     {
