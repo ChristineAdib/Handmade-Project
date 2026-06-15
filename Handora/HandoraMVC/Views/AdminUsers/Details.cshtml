@@ -426,12 +426,7 @@
                 }
             </form>
 
-            @if (Model.IsSeller && Model.HasShop && Model.ShopId.HasValue)
-            {
-                <a href="@Url.Action("ShopDetails", new { id = Model.ShopId })" class="btn-primary" style="padding: 10px 20px; font-weight: 700; box-shadow: 0 4px 12px rgba(61, 32, 16, 0.15);">
-                    <i class="ti ti-store"></i> Manage Store
-                </a>
-            }
+           
         </div>
     </div>
 
