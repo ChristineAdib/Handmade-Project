@@ -259,17 +259,81 @@
     }
     else if (Model.ActiveTab == "reviews")
     {
-        <div style="padding:40px;text-align:center;color:#bbb">
-            <i class="ti ti-star" style="font-size:32px" aria-hidden="true"></i>
-            <p style="margin-top:8px;font-size:13px">Reviews coming soon</p>
-        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Reviews.Any())
+                {
+                    <tr><td colspan="4" style="text-align:center;color:#bbb;padding:24px">No reviews yet</td></tr>
+                }
+                @foreach (var r in Model.Reviews)
+                {
+                    <tr>
+                        <td>@r.UserName</td>
+                        <td>
+                            <div style="display:flex;gap:2px;color:#c4956a">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= r.Rating)
+                                    {
+                                        <i class="ti ti-star-filled" style="font-size:13px" aria-hidden="true"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="ti ti-star" style="font-size:13px;color:#e0d5c8" aria-hidden="true"></i>
+                                    }
+                                }
+                            </div>
+                        </td>
+                        <td style="max-width:300px">@(string.IsNullOrEmpty(r.Comment) ? "-" : r.Comment)</td>
+                        <td style="font-size:12px;color:#888">@r.CreatedAt.ToString("MMM dd, yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     }
     else if (Model.ActiveTab == "followers")
     {
-        <div style="padding:40px;text-align:center;color:#bbb">
-            <i class="ti ti-users" style="font-size:32px" aria-hidden="true"></i>
-            <p style="margin-top:8px;font-size:13px">Followers coming soon</p>
-        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Followed Since</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Followers.Any())
+                {
+                    <tr><td colspan="2" style="text-align:center;color:#bbb;padding:24px">No followers yet</td></tr>
+                }
+                @foreach (var f in Model.Followers)
+                {
+                    <tr>
+                        <td>
+                            <div class="product-cell">
+                                @if (!string.IsNullOrEmpty(f.ProfileImage))
+                                {
+                                    <img src="@f.ProfileImage" alt="@f.UserName" class="cat-img" style="border-radius:50%" />
+                                }
+                                else
+                                {
+                                    <div class="cat-img-placeholder" style="border-radius:50%"><i class="ti ti-user" aria-hidden="true"></i></div>
+                                }
+                                <span>@f.UserName</span>
+                            </div>
+                        </td>
+                        <td style="font-size:12px;color:#888">@f.FollowedAt.ToString("MMM dd, yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     }
     else if (Model.ActiveTab == "chat")
     {

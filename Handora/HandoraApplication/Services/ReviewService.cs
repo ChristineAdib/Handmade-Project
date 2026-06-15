@@ -204,4 +204,41 @@ public class ReviewService(IUnitOfWork unitOfWork) : IReviewService
 
         return Result<IEnumerable<UserReviewDto>>.Success(dtos);
     }
+    public async Task<Result<PagedResultDto<ReviewResponseDto>>> GetShopReviews(Guid shopId, PaginationQueryDto query)
+    {
+        var repo = _unitOfWork.Repository<Review, Guid>();
+        var allReviews = await repo.GetAllAsNoTracking();
+
+        var shopReviews = allReviews
+            .Include(r => r.User)
+            .Include(r => r.Product)
+            .Where(r => r.Product.ShopId == shopId && r.IsApproved);
+
+        var totalCount = await shopReviews.CountAsync();
+
+        var reviews = await shopReviews
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((query.PageNumber - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync();
+
+        var dtos = reviews.Select(r => new ReviewResponseDto
+        {
+            Id = r.Id,
+            Rating = r.Rating,
+            Comment = r.Comment,
+            UserName = r.User.UserName ?? string.Empty,
+            CreatedAt = r.CreatedAt
+        }).ToList();
+
+        var result = new PagedResultDto<ReviewResponseDto>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            PageNumber = query.PageNumber,
+            PageSize = query.PageSize
+        };
+
+        return Result<PagedResultDto<ReviewResponseDto>>.Success(result);
+    }
 }

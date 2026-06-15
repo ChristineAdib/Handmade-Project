@@ -2,6 +2,8 @@
 using HandoraApplication.DTOs.ProductDTOs;
 using HandoraDomain.Models.OrderEntity;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using HandoraApplication.DTOs.FollowDTOs;
+using HandoraApplication.DTOs.ReviewDTOs;
 
 namespace HandoraMVC.ViewModels;
 
@@ -44,4 +46,11 @@ public class ShopFullViewModel
     public List<SelectListItem> OrderStatusOptions { get; set; } = [];
 
     public string ActiveTab { get; set; } = "products";
+    // Reviews tab
+    public List<ReviewResponseDto> Reviews { get; set; } = [];
+    public int ReviewPage { get; set; }
+    public int ReviewTotalPages { get; set; }
+
+    // Followers tab
+    public List<ShopFollowerDto> Followers { get; set; } = [];
 }

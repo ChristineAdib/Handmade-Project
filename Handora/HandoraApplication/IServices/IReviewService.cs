@@ -11,4 +11,5 @@ public interface IReviewService
     Task<Result<ReviewResponseDto>> CreateReview(CreateReviewDto dto, string userId);
     Task<Result> DeleteReview(Guid id, string userId);
     Task<Result<IEnumerable<UserReviewDto>>> GetUserReviews(string userId);
+    Task<Result<PagedResultDto<ReviewResponseDto>>> GetShopReviews(Guid shopId, PaginationQueryDto query);
 }

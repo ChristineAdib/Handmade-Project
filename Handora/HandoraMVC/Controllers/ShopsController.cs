@@ -1,9 +1,13 @@
-﻿using HandoraApplication.DTOs.OrderDTOs;
+﻿using HandoraApplication.DTOs.Common;
+using HandoraApplication.DTOs.FollowDTOs;
+using HandoraApplication.DTOs.OrderDTOs;
+using HandoraApplication.DTOs.ReviewDTOs;
 using HandoraApplication.IServices;
 using HandoraDomain.Models.OrderEntity;
 using HandoraMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+
 
 namespace HandoraMVC.Controllers;
 
@@ -11,11 +15,19 @@ public class ShopsController : Controller
 {
     private readonly IShopService _shopService;
     private readonly IOrderService _orderService;
+    private readonly IReviewService _reviewService;
+    private readonly IFollowService _followService;
 
-    public ShopsController(IShopService shopService, IOrderService orderService)
+    public ShopsController(
+        IShopService shopService,
+        IOrderService orderService,
+        IReviewService reviewService,
+        IFollowService followService)
     {
         _shopService = shopService;
         _orderService = orderService;
+        _reviewService = reviewService;
+        _followService = followService;
     }
 
     private const int PageSize = 8;
@@ -79,6 +91,22 @@ public class ShopsController : Controller
             SortDescending = true
         };
         var ordersResult = await _orderService.GetSellerOrders(id, orderQuery);
+        // Reviews
+        PagedResultDto<ReviewResponseDto>? reviewsResult = null;
+        if (tab == "reviews")
+        {
+            var reviewQuery = new PaginationQueryDto { PageNumber = 1, PageSize = 10 };
+            var reviewsResponse = await _reviewService.GetShopReviews(id, reviewQuery);
+            reviewsResult = reviewsResponse.Data;
+        }
+
+        // Followers
+        List<ShopFollowerDto> followers = [];
+        if (tab == "followers")
+        {
+            var followersResponse = await _followService.GetShopFollowers(id);
+            followers = followersResponse.Data?.ToList() ?? [];
+        }
 
         var vm = new ShopFullViewModel
         {
@@ -112,7 +140,14 @@ public class ShopsController : Controller
                     Selected = orderStatus.HasValue && orderStatus.Value == s
                 }).ToList(),
 
-            ActiveTab = tab
+            ActiveTab = tab,
+            Reviews = reviewsResult?.Items.ToList() ?? [],
+            ReviewPage = 1,
+            ReviewTotalPages = reviewsResult != null
+    ? (int)Math.Ceiling((double)reviewsResult.TotalCount / reviewsResult.PageSize)
+    : 0,
+
+            Followers = followers,
         };
 
         return View(vm);
