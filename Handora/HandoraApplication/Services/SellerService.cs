@@ -72,5 +72,78 @@ namespace HandoraApplication.Services
 
             return Result<SellerProfileDto>.Success(ToDto(user, shop));
         }
+
+        public async Task<Result<IEnumerable<SellerProfileDto>>> GetAllSellers()
+        {
+            var users = await _userManager.GetUsersInRoleAsync("Seller");
+            var shopRepo = _uow.Repository<Shop, Guid>();
+            var shopsQuery = await shopRepo.GetAllAsNoTracking();
+            var shops = await shopsQuery.Where(s => !s.IsDeleted).ToListAsync();
+            
+            var result = users
+    .Where(u => !u.IsDeleted)
+    .Select(u =>
+    {
+        var shop = shops.FirstOrDefault(s => s.OwnerId == u.Id);
+        var dto = ToDto(u, shop);
+        dto.IsSuspended = u.IsBanned;
+        return dto;
+    });
+            return Result<IEnumerable<SellerProfileDto>>.Success(result);
+        }
+
+        public async Task<Result<SellerProfileDto>> ApproveSeller(string sellerId)
+        {
+            var shopRepo = _uow.Repository<Shop, Guid>();
+            var shop = await (await shopRepo.GetAllAsync())
+                .FirstOrDefaultAsync(s => s.OwnerId == sellerId && !s.IsDeleted);
+
+            if (shop is null)
+                return Result<SellerProfileDto>.Failure("Shop not found");
+
+            shop.IsVerified = true;
+            shop.UpdatedAt = DateTime.UtcNow;
+
+            await shopRepo.UpdateAsync(shop);
+            await _uow.SaveChangesAsync();
+
+            var user = await _userManager.FindByIdAsync(sellerId);
+            return Result<SellerProfileDto>.Success(ToDto(user!, shop));
+        }
+
+        public async Task<Result<SellerProfileDto>> SuspendSeller(string sellerId)
+        {
+            var user = await _userManager.FindByIdAsync(sellerId);
+            if (user is null || user.IsDeleted)
+                return Result<SellerProfileDto>.Failure("Seller not found");
+
+            user.IsBanned = true;
+            user.IsActive = false;
+            await _userManager.UpdateAsync(user);
+
+            var shopRepo = _uow.Repository<Shop, Guid>();
+            var shop = await (await shopRepo.GetAllAsNoTracking())
+                .FirstOrDefaultAsync(s => s.OwnerId == sellerId && !s.IsDeleted);
+
+            return Result<SellerProfileDto>.Success(ToDto(user, shop));
+        }
+
+        public async Task<Result<SellerProfileDto>> UnsuspendSeller(string sellerId)
+        {
+            var user = await _userManager.FindByIdAsync(sellerId);
+            if (user is null || user.IsDeleted)
+                return Result<SellerProfileDto>.Failure("Seller not found");
+
+            user.IsBanned = false;
+            user.IsActive = true;
+            await _userManager.UpdateAsync(user);
+
+            var shopRepo = _uow.Repository<Shop, Guid>();
+            var shop = await (await shopRepo.GetAllAsNoTracking())
+                .FirstOrDefaultAsync(s => s.OwnerId == sellerId && !s.IsDeleted);
+
+            return Result<SellerProfileDto>.Success(ToDto(user, shop));
+        }
     }
+
 }
