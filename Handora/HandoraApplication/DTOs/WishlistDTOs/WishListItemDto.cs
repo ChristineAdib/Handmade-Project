@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,5 +16,9 @@ namespace HandoraApplication.DTOs.WishlistDTOs
         public decimal? DiscountPrice { get; set; }
         public string? ImageUrl { get; set; }
         public int Quantity { get; set; }
+
+        public bool IsAvailable { get; set; }
+        public int StockQuantity { get; set; }
+        public bool IsSoldOut { get; set; }
     }
 }

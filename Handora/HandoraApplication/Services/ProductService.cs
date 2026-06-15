@@ -109,6 +109,32 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
 
     public async Task<Result<ProductResponseDto>> CreateProduct(CreateProductDto dto)
     {
+        var categoryRepo = _unitOfWork.Repository<Category, Guid>();
+        var parentCategory = await categoryRepo.GetByIdAsync(dto.CategoryId);
+
+        if (parentCategory == null || parentCategory.ParentId != null || parentCategory.IsDeleted)
+        {
+            return Result<ProductResponseDto>.Failure("Please select a valid parent category.");
+        }
+
+        var parentHasSubcategories = await (await categoryRepo.GetAllAsync())
+            .AnyAsync(c => c.ParentId == dto.CategoryId && !c.IsDeleted);
+
+        Guid targetCategoryId;
+        if (parentHasSubcategories)
+        {
+            var subCategory = await categoryRepo.GetByIdAsync(dto.SubCategoryId);
+            if (subCategory == null || subCategory.ParentId != dto.CategoryId || subCategory.IsDeleted)
+            {
+                return Result<ProductResponseDto>.Failure("Please select a valid subcategory under the chosen category.");
+            }
+            targetCategoryId = dto.SubCategoryId;
+        }
+        else
+        {
+            targetCategoryId = dto.CategoryId;
+        }
+
         var product = new Product
         {
             Id = Guid.NewGuid(),
@@ -118,7 +144,7 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             DescriptionAr = dto.DescriptionAr,
             Price = dto.Price,
             Quantity = dto.Quantity,
-            CategoryId = dto.CategoryId,
+            CategoryId = targetCategoryId,
             ShopId = dto.ShopId,
             Status = ProductStatus.Active
         };
@@ -171,6 +197,41 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (product is null)
             return Result<ProductResponseDto>.Failure("Product not found");
 
+        if (dto.CategoryId.HasValue || dto.SubCategoryId.HasValue)
+        {
+            var categoryId = dto.CategoryId ?? product.Category?.ParentId ?? product.CategoryId;
+            var subCategoryId = dto.SubCategoryId;
+
+            var categoryRepo = _unitOfWork.Repository<Category, Guid>();
+            var parentCategory = await categoryRepo.GetByIdAsync(categoryId);
+
+            if (parentCategory == null || parentCategory.ParentId != null || parentCategory.IsDeleted)
+            {
+                return Result<ProductResponseDto>.Failure("Please select a valid parent category.");
+            }
+
+            var parentHasSubcategories = await (await categoryRepo.GetAllAsync())
+                .AnyAsync(c => c.ParentId == categoryId && !c.IsDeleted);
+
+            Guid targetCategoryId;
+            if (parentHasSubcategories)
+            {
+                var subId = subCategoryId ?? (product.Category?.ParentId != null ? product.CategoryId : Guid.Empty);
+                var subCategory = await categoryRepo.GetByIdAsync(subId);
+                if (subCategory == null || subCategory.ParentId != categoryId || subCategory.IsDeleted)
+                {
+                    return Result<ProductResponseDto>.Failure("Please select a valid subcategory under the chosen category.");
+                }
+                targetCategoryId = subId;
+            }
+            else
+            {
+                targetCategoryId = categoryId;
+            }
+
+            product.CategoryId = targetCategoryId;
+        }
+
         // Update basic properties
         if (dto.TitleEn != null) product.TitleEn = dto.TitleEn;
         if (dto.TitleAr != null) product.TitleAr = dto.TitleAr;
@@ -180,7 +241,6 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (dto.DiscountPrice.HasValue) product.DiscountPrice = dto.DiscountPrice.Value;
         if (dto.Quantity.HasValue) product.Quantity = dto.Quantity.Value;
         if (dto.Status.HasValue) product.Status = dto.Status.Value;
-        if (dto.CategoryId.HasValue) product.CategoryId = dto.CategoryId.Value;
 
         product.UpdatedAt = DateTime.UtcNow;
 

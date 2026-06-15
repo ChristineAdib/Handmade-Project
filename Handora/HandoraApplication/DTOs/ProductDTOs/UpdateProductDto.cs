@@ -1,4 +1,4 @@
-﻿using HandoraApplication.Services;
+using HandoraApplication.Services;
 using HandoraDomain.Models.ProductEntities;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -22,6 +22,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public ProductStatus? Status { get; set; }
 
         public Guid? CategoryId { get; set; }
+        public Guid? SubCategoryId { get; set; }
 
         public List<string>? Tags { get; set; }
 
