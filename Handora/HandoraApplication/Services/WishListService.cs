@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.WishlistDTOs;
+using HandoraApplication.DTOs.WishlistDTOs;
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
@@ -59,10 +59,17 @@ namespace HandoraApplication.Services
             if (alreadyExists)
                 return Result<WishListDto>.Failure("Product already in wishlist");
 
-            var product = await _unitOfWork.Repository<Product, Guid>().GetByIdAsync(dto.ProductId);
+            var productRepo = _unitOfWork.Repository<Product, Guid>();
+            var productQuery = await productRepo.GetAllAsNoTracking();
+            var product = await productQuery
+                .Include(p => p.Shop)
+                .FirstOrDefaultAsync(p => p.Id == dto.ProductId && !p.IsDeleted);
 
-            if (product is null || product.IsDeleted)
+            if (product is null)
                 return Result<WishListDto>.Failure("Product not found");
+
+            if (product.Shop.OwnerId == userId)
+                return Result<WishListDto>.Failure("You cannot add your own products to wishlist.");
 
             var itemRepo = _unitOfWork.Repository<WishListItem, Guid>();
             await itemRepo.AddAsync(new WishListItem
@@ -94,6 +101,53 @@ namespace HandoraApplication.Services
 
             var updated = await GetOrCreateWishListAsync(userId);
             return Result<WishListDto>.Success(updated.Adapt<WishListDto>());
+        }
+
+        public async Task<Result<WishListDto>> SyncWishListAsync(string userId, List<Guid> productIds)
+        {
+            var wishList = await GetOrCreateWishListAsync(userId);
+            var itemRepo = _unitOfWork.Repository<WishListItem, Guid>();
+            var productRepo = _unitOfWork.Repository<Product, Guid>();
+
+            var existingProductIds = wishList.Items
+                .Where(i => !i.IsDeleted)
+                .Select(i => i.ProductId)
+                .ToHashSet();
+
+            bool changed = false;
+            if (productIds is not null)
+            {
+                var productQuery = await productRepo.GetAllAsNoTracking();
+
+                foreach (var prodId in productIds)
+                {
+                    if (!existingProductIds.Contains(prodId))
+                    {
+                        var product = await productQuery
+                            .Include(p => p.Shop)
+                            .FirstOrDefaultAsync(p => p.Id == prodId && !p.IsDeleted);
+
+                        if (product is not null && product.Shop.OwnerId != userId)
+                        {
+                            await itemRepo.AddAsync(new WishListItem
+                            {
+                                WishListId = wishList.Id,
+                                ProductId = prodId,
+                                Quantity = 1
+                            });
+                            changed = true;
+                        }
+                    }
+                }
+            }
+
+            if (changed)
+            {
+                await _unitOfWork.SaveChangesAsync();
+                wishList = await GetOrCreateWishListAsync(userId);
+            }
+
+            return Result<WishListDto>.Success(wishList.Adapt<WishListDto>());
         }
     }
 }

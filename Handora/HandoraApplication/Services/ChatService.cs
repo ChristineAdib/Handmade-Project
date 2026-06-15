@@ -1,4 +1,5 @@
 using HandoraApplication.DTOs.ChatDTOs;
+using HandoraApplication.Helpers;
 using HandoraApplication.Helpers.AuthHelper;
 using HandoraApplication.Hubs;
 using HandoraApplication.IServices;
@@ -48,6 +49,9 @@ namespace HandoraApplication.Services
         public async Task<ConversationDto> StartConversationAsync(
     string buyerId, string sellerId, CancellationToken ct = default)
         {
+            if (buyerId == sellerId)
+                throw new AuthException("You cannot send messages to yourself.");
+
             var existing = await _chatRepo.GetConversationAsync(buyerId, sellerId, ct);
             if (existing is not null)
                 return await MapConversationAsync(existing, buyerId, ct);
@@ -103,6 +107,15 @@ namespace HandoraApplication.Services
             if (conversation is null ||
                 (conversation.BuyerId != senderId && conversation.SellerId != senderId))
                 throw new AuthException("Unauthorized access to this conversation.");
+
+            if (conversation.BuyerId == conversation.SellerId)
+                throw new AuthException("You cannot send messages to yourself.");
+
+            if (ChatValidationHelper.ContainsPhoneNumber(dto.Content))
+                throw new AuthException("Phone numbers are not allowed in chat.");
+
+            if (ChatValidationHelper.ContainsLinks(dto.Content))
+                throw new AuthException("Links are not allowed in chat.");
 
             var message = new Message
             {

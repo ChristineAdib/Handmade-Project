@@ -34,7 +34,7 @@ public class OrdersController(IOrderService orderService, IDistributedCache cach
 
             return CreatedAtAction(nameof(GetOrder), new { id = result.Data!.Id }, result.Data);
         }
-        return BadRequest(result.Errors);
+        return BadRequest(new { success = false, message = result.Errors?.FirstOrDefault() ?? "Order creation failed." });
     }
 
     [HttpGet("{id}")]
