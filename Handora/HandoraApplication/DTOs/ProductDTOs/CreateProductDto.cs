@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +16,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public decimal Price { get; set; }
         public int Quantity { get; set; }=1;
         public Guid CategoryId { get; set; }
+        public Guid SubCategoryId { get; set; }
         public Guid ShopId { get; set; }
         public List<IFormFile> Images { get; set; } // Multiple images
         public List<string> Tags { get; set; }

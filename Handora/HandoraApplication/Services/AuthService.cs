@@ -17,8 +17,9 @@ namespace HandoraApplication.Services
         private readonly JwtHelper _jwtHelper;
         private readonly ILogger<AuthService> _logger;
         private readonly IFileService _fileService;
+        private readonly IConfiguration _configuration;
         private readonly string _googleClientId;
-        private const int OTP_EXPIRY_MINUTES = 5;
+        private const int OTP_EXPIRY_MINUTES = 10;
         private const int OTP_LENGTH = 6;
 
         public AuthService(
@@ -36,6 +37,7 @@ namespace HandoraApplication.Services
             _jwtHelper = jwtHelper;
             _logger = logger;
             _fileService = fileService;
+            _configuration = configuration;
             _googleClientId = configuration["Google:ClientId"] ?? string.Empty;
         }
 
@@ -74,13 +76,14 @@ namespace HandoraApplication.Services
 
             await _authRepo.AddToRoleAsync(user, dto.Role);
 
+            var expiryMinutes = int.TryParse(_configuration["OtpSettings:ExpiryMinutes"], out var parsedExpiry) ? parsedExpiry : OTP_EXPIRY_MINUTES;
             var otpCode = GenerateOtp();
             var otpVerification = new OtpVerification
             {
                 UserId = user.Id,
                 Email = dto.Email,
                 OtpCode = otpCode,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(OTP_EXPIRY_MINUTES),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes),
                 MaxAttempts = 5
             };
 
@@ -132,8 +135,11 @@ namespace HandoraApplication.Services
             if (otp is null)
                 throw new AuthException("Invalid or expired OTP. Please request a new one.");
 
-            if (otp.ExpiresAt <= DateTime.UtcNow)
-                throw new AuthException("OTP has expired. Please request a new one.");
+            var expiryMinutes = int.TryParse(_configuration["OtpSettings:ExpiryMinutes"], out var parsedExpiry) ? parsedExpiry : OTP_EXPIRY_MINUTES;
+            if (otp.CreatedAt.AddMinutes(expiryMinutes) <= DateTime.UtcNow)
+            {
+                throw new AuthException("The verification code has expired. Please request a new OTP.");
+            }
 
             if (otp.AttemptCount >= otp.MaxAttempts)
                 throw new AuthException("Maximum OTP attempts exceeded. Please request a new one.");
@@ -184,13 +190,14 @@ namespace HandoraApplication.Services
                 await _otpRepo.DeleteAsync(existingOtp.Id, ct);
             }
 
+            var expiryMinutes = int.TryParse(_configuration["OtpSettings:ExpiryMinutes"], out var parsedExpiry2) ? parsedExpiry2 : OTP_EXPIRY_MINUTES;
             var otpCode = GenerateOtp();
             var otpVerification = new OtpVerification
             {
                 UserId = user.Id,
                 Email = dto.Email,
                 OtpCode = otpCode,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(OTP_EXPIRY_MINUTES),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes),
                 MaxAttempts = 5
             };
 

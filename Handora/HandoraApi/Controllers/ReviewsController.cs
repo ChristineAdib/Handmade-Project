@@ -46,7 +46,24 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
         var result = await _reviewService.CreateReview(dto, userId);
         if (result.IsSuccess)
             return Ok(result.Data);
-        return BadRequest(result.Errors);
+
+        return BadRequest(new { success = false, message = result.Errors?.FirstOrDefault() ?? "Validation failed." });
+    }
+
+    // PUT /api/reviews/{id}
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateReview(Guid id, [FromBody] CreateReviewDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await _reviewService.UpdateReview(id, dto, userId);
+        if (result.IsSuccess)
+            return Ok(result.Data);
+
+        return BadRequest(new { success = false, message = result.Errors?.FirstOrDefault() ?? "Update failed." });
     }
 
     // DELETE /api/reviews/{id}
@@ -74,6 +91,21 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
             return Unauthorized();
 
         var result = await _reviewService.GetUserReviews(userId);
+        if (result.IsSuccess)
+            return Ok(result.Data);
+        return BadRequest(result.Errors);
+    }
+
+    // GET /api/reviews/eligible/{productId}
+    [HttpGet("eligible/{productId}")]
+    [Authorize]
+    public async Task<IActionResult> CheckEligibility(Guid productId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await _reviewService.GetReviewEligibility(productId, userId);
         if (result.IsSuccess)
             return Ok(result.Data);
         return BadRequest(result.Errors);
