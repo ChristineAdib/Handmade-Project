@@ -58,6 +58,7 @@ builder.Services.AddScoped<IShopRepository, ShopRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IOtpRepository, OtpRepository>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IFollowService, FollowService>();
 
 // Application
 MapsterSettings.Configure();
@@ -79,8 +80,8 @@ builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 //builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 // Application Services اللي في ServiceExtensions
-//builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
-//builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 
 // Redis (نفس pattern الـ API)
