@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.CartDTOs;
+using HandoraApplication.DTOs.CartDTOs;
 using HandoraApplication.Helpers;
 using System;
 using System.Collections.Generic;
@@ -15,6 +15,6 @@ namespace HandoraApplication.IServices
         Task<Result<CartDto>> UpdateItemQuantityAsync(string cartId, UpdateCartItemDto dto);
         Task<Result<CartDto>> RemoveItemAsync(string cartId, Guid productId);
         Task<Result> ClearCartAsync(string cartId);
-
+        Task<Result<CartDto>> SyncCartAsync(string cartId, List<CartItemDto> guestItems);
     }
 }
