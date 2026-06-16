@@ -45,9 +45,12 @@
              
             </nav>
             <div class="nav-bottom">
-                <a asp-controller="Account" asp-action="Logout" class="nav-item">
-                    <i class="ti ti-logout" aria-hidden="true"></i> Logout
-                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post" style="margin:0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="nav-item" style="width:100%;border:none;background:none;cursor:pointer;">
+                        <i class="ti ti-logout" aria-hidden="true"></i> Logout
+                    </button>
+                </form>
             </div>
         </aside>
 
