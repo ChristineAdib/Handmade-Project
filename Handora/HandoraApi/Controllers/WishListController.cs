@@ -9,6 +9,7 @@ namespace HandoraApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class WishListController(IWishListService wishListService) : ControllerBase
     {
         private readonly IWishListService _wishListService = wishListService;

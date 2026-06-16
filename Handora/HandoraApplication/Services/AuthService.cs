@@ -105,7 +105,8 @@ namespace HandoraApplication.Services
                 Email = user.Email!,
                 Token = string.Empty,
                 TokenExpiry = DateTime.UtcNow,
-                Roles = new List<string> { dto.Role }
+                Roles = new List<string> { dto.Role },
+                ProfileImage = user.ProfileImage
             };
         }
 
@@ -237,7 +238,8 @@ namespace HandoraApplication.Services
                 Email = user.Email!,
                 Token = token,
                 TokenExpiry = expiry,
-                Roles = roles
+                Roles = roles,
+                ProfileImage = user.ProfileImage
             };
         }
 

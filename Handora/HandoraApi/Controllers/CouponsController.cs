@@ -34,7 +34,7 @@ namespace HandoraApi.Controllers
             var result = await _couponService.UpdateCouponAsync(CurrentUserId, id, dto);
             if (!result.IsSuccess)
             {
-                if (result.Errors.Contains("Unauthorized"))
+                if (result.Errors?.Contains("Unauthorized") == true)
                 {
                     return StatusCode(StatusCodes.Status403Forbidden, new { errors = result.Errors });
                 }
@@ -50,7 +50,7 @@ namespace HandoraApi.Controllers
             var result = await _couponService.DeleteCouponAsync(CurrentUserId, id);
             if (!result.IsSuccess)
             {
-                if (result.Errors.Contains("Unauthorized"))
+                if (result.Errors?.Contains("Unauthorized") == true)
                 {
                     return StatusCode(StatusCodes.Status403Forbidden, new { errors = result.Errors });
                 }
