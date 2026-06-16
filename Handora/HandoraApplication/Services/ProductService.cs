@@ -110,6 +110,32 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
 
     public async Task<Result<ProductResponseDto>> CreateProduct(CreateProductDto dto)
     {
+        var categoryRepo = _unitOfWork.Repository<Category, Guid>();
+        var parentCategory = await categoryRepo.GetByIdAsync(dto.CategoryId);
+
+        if (parentCategory == null || parentCategory.ParentId != null || parentCategory.IsDeleted)
+        {
+            return Result<ProductResponseDto>.Failure("Please select a valid parent category.");
+        }
+
+        var parentHasSubcategories = await (await categoryRepo.GetAllAsync())
+            .AnyAsync(c => c.ParentId == dto.CategoryId && !c.IsDeleted);
+
+        Guid targetCategoryId;
+        if (parentHasSubcategories)
+        {
+            var subCategory = await categoryRepo.GetByIdAsync(dto.SubCategoryId);
+            if (subCategory == null || subCategory.ParentId != dto.CategoryId || subCategory.IsDeleted)
+            {
+                return Result<ProductResponseDto>.Failure("Please select a valid subcategory under the chosen category.");
+            }
+            targetCategoryId = dto.SubCategoryId;
+        }
+        else
+        {
+            targetCategoryId = dto.CategoryId;
+        }
+
         var product = new Product
         {
             Id = Guid.NewGuid(),
@@ -119,7 +145,7 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             DescriptionAr = dto.DescriptionAr,
             Price = dto.Price,
             Quantity = dto.Quantity,
-            CategoryId = dto.CategoryId,
+            CategoryId = targetCategoryId,
             ShopId = dto.ShopId,
             Status = ProductStatus.Inactive,
             IsActive = false
@@ -173,6 +199,8 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (product is null)
             return Result<ProductResponseDto>.Failure("Product not found");
 
+    
+
         // ── BRANCHING: Live products get a draft, non-live products get direct edits ──
         if (product.IsActive)
         {
@@ -184,87 +212,58 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
     }
 
     /// <summary>
-    /// Creates or updates a ProductDraft for a live product. The live product remains unchanged.
-    /// </summary>
-    private async Task<Result<ProductResponseDto>> CreateOrUpdateDraft(Product product, UpdateProductDto dto)
-    {
-        // Find existing pending draft or create new one
-        var draft = await _productRepository.GetPendingDraftByProductIdAsync(product.Id);
-        bool isNewDraft = draft == null;
-
-        if (isNewDraft)
-        {
-            draft = new ProductDraft
-            {
-                Id = Guid.NewGuid(),
-                ProductId = product.Id,
-                Status = DraftStatus.PendingReview
-            };
-        }
-
-        // Populate draft fields from DTO
-        if (dto.TitleEn != null) draft!.TitleEn = dto.TitleEn;
-        if (dto.TitleAr != null) draft!.TitleAr = dto.TitleAr;
-        if (dto.DescriptionEn != null) draft!.DescriptionEn = dto.DescriptionEn;
-        if (dto.DescriptionAr != null) draft!.DescriptionAr = dto.DescriptionAr;
-        if (dto.Price.HasValue) draft!.Price = dto.Price.Value;
-        if (dto.DiscountPrice.HasValue) draft!.DiscountPrice = dto.DiscountPrice.Value;
-        if (dto.Quantity.HasValue) draft!.Quantity = dto.Quantity.Value;
-        if (dto.CategoryId.HasValue) draft!.CategoryId = dto.CategoryId.Value;
-
-        // Serialize tags
-        if (dto.Tags != null)
-            draft!.ProposedTagsJson = JsonSerializer.Serialize(dto.Tags);
-
-        // Handle image uploads — upload immediately, store URLs in draft
-        if (dto.NewImages != null && dto.NewImages.Any())
-        {
-            var newUrls = new List<string>();
-            // Preserve any previously uploaded draft images
-            if (!string.IsNullOrEmpty(draft!.NewImageUrlsJson))
-            {
-                var existing = JsonSerializer.Deserialize<List<string>>(draft.NewImageUrlsJson);
-                if (existing != null) newUrls.AddRange(existing);
-            }
-
-            foreach (var file in dto.NewImages)
-            {
-                var imageUrl = await _fileService.UploadFileAsync(file, "products");
-                newUrls.Add(imageUrl);
-            }
-            draft.NewImageUrlsJson = JsonSerializer.Serialize(newUrls);
-        }
-
-        // Serialize image removal IDs
-        if (dto.RemoveImageIds != null && dto.RemoveImageIds.Any())
-        {
-            var removeIds = new List<Guid>();
-            if (!string.IsNullOrEmpty(draft!.RemoveImageIdsJson))
-            {
-                var existing = JsonSerializer.Deserialize<List<Guid>>(draft.RemoveImageIdsJson);
-                if (existing != null) removeIds.AddRange(existing);
-            }
-            removeIds.AddRange(dto.RemoveImageIds);
-            draft.RemoveImageIdsJson = JsonSerializer.Serialize(removeIds.Distinct().ToList());
-        }
-
-        draft!.UpdatedAt = DateTime.UtcNow;
-
-        if (isNewDraft)
-            await _productRepository.AddDraftAsync(draft);
-
-        await _unitOfWork.SaveChangesAsync();
-
-        return await GetProduct(product.Id);
-    }
-
-    /// <summary>
     /// Applies changes directly to a non-live product (existing behavior for first-time edits).
     /// </summary>
     private async Task<Result<ProductResponseDto>> ApplyDirectUpdate(Product product, UpdateProductDto dto)
     {
-        // Map properties from DTO to the existing product entity
-        dto.Adapt(product);
+        // 1. Category Logic from main branch
+        if (dto.CategoryId.HasValue || dto.SubCategoryId.HasValue)
+        {
+            var categoryId = dto.CategoryId ?? product.Category?.ParentId ?? product.CategoryId;
+            var subCategoryId = dto.SubCategoryId;
+
+            var categoryRepo = _unitOfWork.Repository<Category, Guid>();
+            var parentCategory = await categoryRepo.GetByIdAsync(categoryId);
+
+            if (parentCategory == null || parentCategory.ParentId != null || parentCategory.IsDeleted)
+            {
+                return Result<ProductResponseDto>.Failure("Please select a valid parent category.");
+            }
+
+            var parentHasSubcategories = await (await categoryRepo.GetAllAsync())
+                .AnyAsync(c => c.ParentId == categoryId && !c.IsDeleted);
+
+            Guid targetCategoryId;
+            if (parentHasSubcategories)
+            {
+                var subId = subCategoryId ?? (product.Category?.ParentId != null ? product.CategoryId : Guid.Empty);
+                var subCategory = await categoryRepo.GetByIdAsync(subId);
+                if (subCategory == null || subCategory.ParentId != categoryId || subCategory.IsDeleted)
+                {
+                    return Result<ProductResponseDto>.Failure("Please select a valid subcategory under the chosen category.");
+                }
+                targetCategoryId = subId;
+            }
+            else
+            {
+                targetCategoryId = categoryId;
+            }
+
+            product.CategoryId = targetCategoryId;
+        }
+
+        // 2. Map properties manually from main (Instead of dto.Adapt(product) so we don't overwrite CategoryId)
+        if (dto.TitleEn != null) product.TitleEn = dto.TitleEn;
+        if (dto.TitleAr != null) product.TitleAr = dto.TitleAr;
+        if (dto.DescriptionEn != null) product.DescriptionEn = dto.DescriptionEn;
+        if (dto.DescriptionAr != null) product.DescriptionAr = dto.DescriptionAr;
+        if (dto.Price.HasValue) product.Price = dto.Price.Value;
+        if (dto.DiscountPrice.HasValue) product.DiscountPrice = dto.DiscountPrice.Value;
+        if (dto.Quantity.HasValue) product.Quantity = dto.Quantity.Value;
+        if (dto.Status.HasValue) product.Status = dto.Status.Value;
+
+        // 3. Your Logic from Feature
+     
 
         product.UpdatedAt = DateTime.UtcNow;
         product.IsActive = false; // Ensure product is pending review after update
@@ -363,6 +362,84 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
 
         return await GetProduct(product.Id);
     }
+
+
+    /// <summary>
+    /// Creates or updates a ProductDraft for a live product. The live product remains unchanged.
+    /// </summary>
+    private async Task<Result<ProductResponseDto>> CreateOrUpdateDraft(Product product, UpdateProductDto dto)
+    {
+        // Find existing pending draft or create new one
+        var draft = await _productRepository.GetPendingDraftByProductIdAsync(product.Id);
+        bool isNewDraft = draft == null;
+
+        if (isNewDraft)
+        {
+            draft = new ProductDraft
+            {
+                Id = Guid.NewGuid(),
+                ProductId = product.Id,
+                Status = DraftStatus.PendingReview
+            };
+        }
+
+        // Populate draft fields from DTO
+        if (dto.TitleEn != null) draft!.TitleEn = dto.TitleEn;
+        if (dto.TitleAr != null) draft!.TitleAr = dto.TitleAr;
+        if (dto.DescriptionEn != null) draft!.DescriptionEn = dto.DescriptionEn;
+        if (dto.DescriptionAr != null) draft!.DescriptionAr = dto.DescriptionAr;
+        if (dto.Price.HasValue) draft!.Price = dto.Price.Value;
+        if (dto.DiscountPrice.HasValue) draft!.DiscountPrice = dto.DiscountPrice.Value;
+        if (dto.Quantity.HasValue) draft!.Quantity = dto.Quantity.Value;
+        if (dto.CategoryId.HasValue) draft!.CategoryId = dto.CategoryId.Value;
+
+        // Serialize tags
+        if (dto.Tags != null)
+            draft!.ProposedTagsJson = JsonSerializer.Serialize(dto.Tags);
+
+        // Handle image uploads — upload immediately, store URLs in draft
+        if (dto.NewImages != null && dto.NewImages.Any())
+        {
+            var newUrls = new List<string>();
+            // Preserve any previously uploaded draft images
+            if (!string.IsNullOrEmpty(draft!.NewImageUrlsJson))
+            {
+                var existing = JsonSerializer.Deserialize<List<string>>(draft.NewImageUrlsJson);
+                if (existing != null) newUrls.AddRange(existing);
+            }
+
+            foreach (var file in dto.NewImages)
+            {
+                var imageUrl = await _fileService.UploadFileAsync(file, "products");
+                newUrls.Add(imageUrl);
+            }
+            draft.NewImageUrlsJson = JsonSerializer.Serialize(newUrls);
+        }
+
+        // Serialize image removal IDs
+        if (dto.RemoveImageIds != null && dto.RemoveImageIds.Any())
+        {
+            var removeIds = new List<Guid>();
+            if (!string.IsNullOrEmpty(draft!.RemoveImageIdsJson))
+            {
+                var existing = JsonSerializer.Deserialize<List<Guid>>(draft.RemoveImageIdsJson);
+                if (existing != null) removeIds.AddRange(existing);
+            }
+            removeIds.AddRange(dto.RemoveImageIds);
+            draft.RemoveImageIdsJson = JsonSerializer.Serialize(removeIds.Distinct().ToList());
+        }
+
+        draft!.UpdatedAt = DateTime.UtcNow;
+
+        if (isNewDraft)
+            await _productRepository.AddDraftAsync(draft);
+
+        await _unitOfWork.SaveChangesAsync();
+
+        return await GetProduct(product.Id);
+    }
+
+
 
     public async Task<Result> DeleteProduct(Guid id)
     {
