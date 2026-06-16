@@ -1,7 +1,7 @@
-<<<<<<< HEAD
+
 using HandoraDomain.Models.ProductEntities;
-=======
->>>>>>> origin/main
+
+using HandoraDomain.Models.ProductEntities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
