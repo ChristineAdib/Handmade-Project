@@ -495,5 +495,23 @@ namespace HandoraApplication.Services
             await _authRepo.AddToRoleAsync(user, AppRoles.Seller);
             return Result.Success();
         }
+
+        public async Task<Result> ToggleUserBanStatusAsync(string userId)
+        {
+            var user = await _authRepo.GetByIdAsync(userId);
+            if (user is null)
+                return Result.Failure("User not found.");
+
+            user.IsBanned = !user.IsBanned;
+            user.UpdatedAt = DateTime.UtcNow;
+            
+            var result = await _authRepo.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+            }
+
+            return Result.Success();
+        }
     }
 }
