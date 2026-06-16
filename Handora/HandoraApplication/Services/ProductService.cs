@@ -121,12 +121,16 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         Guid targetCategoryId;
         if (parentHasSubcategories)
         {
-            var subCategory = await categoryRepo.GetByIdAsync(dto.SubCategoryId);
+            if (dto.SubCategoryId == null)
+            {
+                return Result<ProductResponseDto>.Failure("Please select a valid subcategory under the chosen category.");
+            }
+            var subCategory = await categoryRepo.GetByIdAsync(dto.SubCategoryId.Value);
             if (subCategory == null || subCategory.ParentId != dto.CategoryId || subCategory.IsDeleted)
             {
                 return Result<ProductResponseDto>.Failure("Please select a valid subcategory under the chosen category.");
             }
-            targetCategoryId = dto.SubCategoryId;
+            targetCategoryId = dto.SubCategoryId.Value;
         }
         else
         {
