@@ -17,7 +17,7 @@
             </div>
             <nav class="nav-section">
                 <div class="nav-label">Main</div>
-                <a asp-controller="Home" asp-action="Index"
+                <a asp-controller="Admin" asp-action="Analytics"
                    class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
                     <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview
                 </a>
