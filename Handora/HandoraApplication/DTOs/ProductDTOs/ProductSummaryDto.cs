@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 using HandoraDomain.Models.ProductEntities;
+=======
+>>>>>>> origin/main
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,5 +26,6 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public ProductStatus Status { get; set; }
         public bool IsActive { get; set; }
         public int Quantity { get; set; }
+
     }
 }

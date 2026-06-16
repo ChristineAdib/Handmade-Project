@@ -195,5 +195,16 @@ namespace HandoraApi.Controllers
                 await SyncRedisCartToDbCartAsync(GetOrCreateCartId());
             return result.IsSuccess ? Ok("Cart cleared successfully.") : BadRequest(result.Errors);
         }
+
+        [HttpPost("sync")]
+        [Authorize]
+        public async Task<IActionResult> SyncGuestCart([FromBody] List<CartItemDto> guestItems)
+        {
+            var cartId = GetOrCreateCartId();
+            var result = await _cartService.SyncCartAsync(cartId, guestItems);
+            if (result.IsSuccess)
+                await SyncRedisCartToDbCartAsync(cartId);
+            return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
+        }
     }
 }

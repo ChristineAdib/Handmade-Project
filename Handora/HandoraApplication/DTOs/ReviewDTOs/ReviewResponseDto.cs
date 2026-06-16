@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +13,7 @@ namespace HandoraApplication.DTOs.ReviewDTOs
         public string? Comment { get; set; }
         public string UserName { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+        public bool IsVerifiedPurchase { get; set; }
 
     }
 }
