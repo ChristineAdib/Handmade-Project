@@ -568,7 +568,7 @@ namespace HandoraApplication.Services
                     ProductName = p.TitleEn,
                     Rating = p.AverageRating,
                     ReviewsCount = p.ReviewCount,
-                    PictureUrl = p.Images.FirstOrDefault() != null ? p.Images.FirstOrDefault().ImageUrl : null
+                    PictureUrl = p.Images.FirstOrDefault() != null ? p.Images.FirstOrDefault()!.ImageUrl : null
                 })
                 .ToListAsync();
 
