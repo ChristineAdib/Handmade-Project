@@ -31,6 +31,7 @@ public static class ModuleApplicationDependences
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 
+        services.AddScoped<ISellerAnalyticsService, SellerAnalyticsService>();
         return services;
     }
 }

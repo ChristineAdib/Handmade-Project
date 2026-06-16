@@ -45,6 +45,9 @@ public class OrderRepository(AppDbContext context)
             .Include(c => c.Items)
                 .ThenInclude(ci => ci.Product)
                     .ThenInclude(p => p.Images)
+            .Include(c => c.Items)
+                .ThenInclude(ci => ci.Product)
+                    .ThenInclude(p => p.Shop)
             .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsDeleted);
     }
 
