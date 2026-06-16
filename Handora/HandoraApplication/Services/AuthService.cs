@@ -168,11 +168,14 @@ namespace HandoraApplication.Services
 
             _logger.LogInformation("Email verified for user {UserId}", user.Id);
 
+            var authResponse = await BuildAuthResponseAsync(user);
+
             return new OtpResponseDto
             {
                 Message = "Email verified successfully. You can now log in.",
                 RemainingAttempts = otp.MaxAttempts - otp.AttemptCount,
-                IsVerified = true
+                IsVerified = true,
+                AuthData = authResponse
             };
         }
 
