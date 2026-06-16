@@ -98,11 +98,11 @@ public class ReviewService(IUnitOfWork unitOfWork) : IReviewService
 
         // 3. Check purchase eligibility (must have a delivered, non-cancelled/refunded order containing this product)
         var eligibilityResult = await GetReviewEligibility(dto.ProductId, userId);
-        if (!eligibilityResult.IsSuccess || !eligibilityResult.Data.IsEligible)
+        if (!eligibilityResult.IsSuccess || eligibilityResult.Data?.IsEligible != true)
             return Result<ReviewResponseDto>.Failure("You can only review products that you have purchased and received.");
 
         // 4. Duplicate review prevention
-        if (eligibilityResult.Data.AlreadyReviewed)
+        if (eligibilityResult.Data?.AlreadyReviewed == true)
             return Result<ReviewResponseDto>.Failure("You have already reviewed this product");
 
         // 5. Create review
