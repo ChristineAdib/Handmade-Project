@@ -15,4 +15,5 @@ public interface IShopService
     Task<Result<ShopDto>> UpdateShop(Guid id, string ownerId, UpdateShopDto dto);
     Task<Result> DeleteShop(Guid id, string ownerId);
     Task<Result> ToggleShopStatusAsync(Guid id);
+    Task<Result<IEnumerable<ShopDto>>> GetAllShops();
 }

@@ -24,5 +24,6 @@ namespace HandoraApplication.IServices
         
         Task<IEnumerable<GetUserDto>> GetUsersFilteredAsync(string? role = null, bool? isActive = null, CancellationToken ct = default);
         Task<Result> UpgradeToSellerAsync(string userId);
+        Task<Result> ToggleUserBanStatusAsync(string userId);
     }
 }

@@ -12,12 +12,12 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <span>Handora</span>
+                <span>Handaura</span>
                 <small>Admin Dashboard</small>
             </div>
             <nav class="nav-section">
                 <div class="nav-label">Main</div>
-                <a asp-controller="Home" asp-action="Index"
+                <a asp-controller="Admin" asp-action="Analytics"
                    class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
                     <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview
                 </a>
@@ -37,17 +37,20 @@
                    class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminUsers" ? "active" : "")">
                     <i class="ti ti-users" aria-hidden="true"></i> Users
                 </a>
-                <a asp-controller="Sellers" asp-action="Index"
-                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Sellers" ? "active" : "")">
-                    <i class="ti ti-store" aria-hidden="true"></i> Sellers
+                <a asp-controller="Shops" asp-action="Index"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Shops" ? "active" : "")">
+                    <i class="ti ti-store" aria-hidden="true"></i> Shops
                 </a>
 
              
             </nav>
             <div class="nav-bottom">
-                <a asp-controller="Account" asp-action="Logout" class="nav-item">
-                    <i class="ti ti-logout" aria-hidden="true"></i> Logout
-                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post" style="margin:0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="nav-item" style="width:100%;border:none;background:none;cursor:pointer;">
+                        <i class="ti ti-logout" aria-hidden="true"></i> Logout
+                    </button>
+                </form>
             </div>
         </aside>
 

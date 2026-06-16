@@ -68,6 +68,8 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IShopService, ShopService>();
 builder.Services.AddScoped<ISellerService, SellerService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<UserManager<User>>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
@@ -112,6 +114,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Admin}/{action=Analytics}/{id?}");
 
 app.Run();
