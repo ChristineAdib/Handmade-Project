@@ -44,8 +44,15 @@ namespace HandoraApplication.DTOs.ProductDTOs
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+<<<<<<< HEAD
         public ProductDraftResponseDto? PendingDraft { get; set; }
         public bool HasPendingDraft => PendingDraft != null;
+=======
+
+        public ProductDraftResponseDto? PendingDraft { get; set; }
+        public bool HasPendingDraft => PendingDraft != null;
+
+>>>>>>> 38842e8dd6215d30875ec3866892a20cb6ddeeb7
         public bool IsAvailable { get; set; }
         public int StockQuantity { get; set; }
         public bool IsSoldOut { get; set; }
