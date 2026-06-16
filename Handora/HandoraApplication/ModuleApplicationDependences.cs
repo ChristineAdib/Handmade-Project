@@ -30,7 +30,7 @@ public static class ModuleApplicationDependences
         services.AddScoped<IShopReviewService, ShopReviewService>();
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
-b
+
         services.AddScoped<ISellerAnalyticsService, SellerAnalyticsService>();
         return services;
     }
