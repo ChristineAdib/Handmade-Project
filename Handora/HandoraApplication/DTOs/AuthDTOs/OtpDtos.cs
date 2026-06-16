@@ -18,6 +18,7 @@ namespace HandoraApplication.DTOs.AuthDTOs
         public string Message { get; init; } = string.Empty;
         public int RemainingAttempts { get; init; }
         public bool IsVerified { get; init; }
+        public AuthResponseDto? AuthData { get; init; }
     }
 
     public sealed record ResendOtpDto
