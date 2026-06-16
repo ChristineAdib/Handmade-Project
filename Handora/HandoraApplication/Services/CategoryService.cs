@@ -17,9 +17,9 @@ public class CategoryService(IUnitOfWork unitOfWork) : ICategoryService
         var query = await repo.GetAllAsNoTracking();
 
         var categories = await query
-            .Include(c => c.SubCategories)
-            .Where(c => c.ParentId == null)
-            .ToListAsync();
+    .Include(c => c.SubCategories)
+    .Where(c => c.ParentId == null && !c.IsDeleted)
+    .ToListAsync();
 
         var result = categories.Select(c => new CategoryResponseDto
         {
@@ -28,12 +28,14 @@ public class CategoryService(IUnitOfWork unitOfWork) : ICategoryService
             NameAr = c.NameAr,
             ImageUrl = c.ImageUrl,
             ParentId = c.ParentId,
-            SubCategories = c.SubCategories.Select(sub => new CategorySummaryDto
-            {
-                Id = sub.Id,
-                NameEn = sub.NameEn,
-                NameAr = sub.NameAr
-            }).ToList()
+            SubCategories = c.SubCategories
+    .Where(sub => !sub.IsDeleted)
+    .Select(sub => new CategorySummaryDto
+    {
+        Id = sub.Id,
+        NameEn = sub.NameEn,
+        NameAr = sub.NameAr
+    }).ToList()
         });
 
         return Result<IEnumerable<CategoryResponseDto>>.Success(result);
