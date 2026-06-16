@@ -28,6 +28,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public int ReviewCount { get; set; }
 
         public Guid CategoryId { get; set; }
+        public Guid? ParentCategoryId { get; set; }
         public string CategoryNameEn { get; set; }
         public string CategoryNameAr { get; set; }
 
@@ -46,5 +47,9 @@ namespace HandoraApplication.DTOs.ProductDTOs
 
         public ProductDraftResponseDto? PendingDraft { get; set; }
         public bool HasPendingDraft => PendingDraft != null;
+
+        public bool IsAvailable { get; set; }
+        public int StockQuantity { get; set; }
+        public bool IsSoldOut { get; set; }
     }
 }
