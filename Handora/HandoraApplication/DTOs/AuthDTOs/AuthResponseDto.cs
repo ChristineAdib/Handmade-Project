@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,5 +14,6 @@ namespace HandoraApplication.DTOs.AuthDTOs
         public string Token { get; init; } = string.Empty;
         public DateTime TokenExpiry { get; init; }
         public IList<string> Roles { get; init; } = [];
+        public string? ProfileImage { get; init; }
     }
 }
