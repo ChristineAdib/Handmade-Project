@@ -3,7 +3,9 @@ using HandoraApi.Services;
 using HandoraApplication.Helpers.AuthHelper;
 using HandoraApplication.Hubs;
 using HandoraApplication.IServices;
+using HandoraApplication.IServices.AI;
 using HandoraApplication.Services;
+using HandoraApplication.Services.AIServices;
 using HandoraApplication.Settings;
 using HandoraDomain.Interfaces;
 using HandoraInfrastructure.Repositries_UOW;
@@ -29,6 +31,9 @@ namespace HandoraApi.Extensions
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<ICartService, CartService>();
            services.AddScoped<IWishListService, WishListService>();
+            services.Configure<RagSettings>(configuration.GetSection("RagSettings")); // ← زيد دي
+            services.AddScoped<IVectorDbService, VectorDbService>();
+            services.AddScoped<IRagService, RagService>();
             return services;
         }
     }
