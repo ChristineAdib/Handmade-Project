@@ -26,6 +26,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public ProductStatus Status { get; set; }
         public bool IsActive { get; set; }
         public int Quantity { get; set; }
+        public bool IsOnePiece { get; set; }
 
     }
 }
