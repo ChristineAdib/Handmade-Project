@@ -20,6 +20,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public bool? IsAdmin { get; set; }
         public string? SortBy { get; set; }          // "price", "rating", "newest"
         public bool SortDescending { get; set; } = false;
+        public bool? OnlyOnePiece { get; set; }
         public List<string>? Tags { get; set; }
     }
 }

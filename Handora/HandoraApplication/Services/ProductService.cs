@@ -47,6 +47,9 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (query.ShopId.HasValue)
             productsQuery = productsQuery.Where(p => p.ShopId == query.ShopId.Value);
 
+        if (query.OnlyOnePiece == true)
+            productsQuery = productsQuery.Where(p => p.IsOnePiece);
+
         if (query.MinPrice.HasValue)
             productsQuery = productsQuery.Where(p => (p.DiscountPrice ?? p.Price) >= query.MinPrice.Value);
 
@@ -149,6 +152,7 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             DescriptionAr = dto.DescriptionAr,
             Price = dto.Price,
             Quantity = dto.Quantity,
+            IsOnePiece = dto.Quantity == 1,
             CategoryId = targetCategoryId,
             ShopId = dto.ShopId,
             Status = ProductStatus.Inactive,
@@ -264,7 +268,11 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (dto.DescriptionAr != null) product.DescriptionAr = dto.DescriptionAr;
         if (dto.Price.HasValue) product.Price = dto.Price.Value;
         if (dto.DiscountPrice.HasValue) product.DiscountPrice = dto.DiscountPrice.Value;
-        if (dto.Quantity.HasValue) product.Quantity = dto.Quantity.Value;
+        if (dto.Quantity.HasValue)
+        {
+            product.Quantity = dto.Quantity.Value;
+            product.IsOnePiece = dto.Quantity.Value == 1;
+        }
         if (dto.Status.HasValue) product.Status = dto.Status.Value;
 
         // 3. Your Logic from Feature
@@ -503,7 +511,11 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (draft.DescriptionAr != null) product.DescriptionAr = draft.DescriptionAr;
         if (draft.Price.HasValue) product.Price = draft.Price.Value;
         if (draft.DiscountPrice.HasValue) product.DiscountPrice = draft.DiscountPrice.Value;
-        if (draft.Quantity.HasValue) product.Quantity = draft.Quantity.Value;
+        if (draft.Quantity.HasValue)
+        {
+            product.Quantity = draft.Quantity.Value;
+            product.IsOnePiece = draft.Quantity.Value == 1;
+        }
         if (draft.CategoryId.HasValue) product.CategoryId = draft.CategoryId.Value;
 
         product.UpdatedAt = DateTime.UtcNow;
