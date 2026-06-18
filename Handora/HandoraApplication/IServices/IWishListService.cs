@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.WishlistDTOs;
+using HandoraApplication.DTOs.WishlistDTOs;
 using HandoraApplication.Helpers;
 using System;
 using System.Collections.Generic;
@@ -13,5 +13,6 @@ namespace HandoraApplication.IServices
         Task<Result<WishListDto>> GetWishListAsync(string userId);
         Task<Result<WishListDto>> AddItemAsync(string userId, AddToWishListDto dto);
         Task<Result<WishListDto>> RemoveItemAsync(string userId, Guid productId);
+        Task<Result<WishListDto>> SyncWishListAsync(string userId, List<Guid> productIds);
     }
 }

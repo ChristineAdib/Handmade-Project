@@ -1,0 +1,362 @@
+@model HandoraMVC.ViewModels.ProductDetailsViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Product Review - " + Model.TitleEn;
+}
+
+<div style="margin-bottom: 20px;">
+    <a href="@Url.Action("Index", "Products")" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">
+        <i class="ti-arrow-left"></i> Back to Products
+    </a>
+</div>
+
+<div class="page-header" style="align-items: center; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <div>
+            <h2 style="margin: 0; font-size: 22px;">@Model.TitleEn</h2>
+            <div style="margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 12px; color: #888;">Shop: <strong>@Model.ShopName</strong></span>
+                @if (Model.IsActive)
+                {
+                    <span class="badge badge-complete">Active</span>
+                }
+                else
+                {
+                    <span class="badge badge-pending">Pending Review</span>
+                }
+                @if (Model.HasPendingDraft)
+                {
+                    <span style="background: #fff3cd; color: #856404; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">⚡ Pending Edit</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+        @if (Model.HasPendingDraft)
+        {
+            <form asp-controller="AdminProducts" asp-action="ApproveDraft" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-primary" style="padding: 8px 16px; font-size: 13px; font-weight: 500;">
+                    ✓ Approve Changes
+                </button>
+            </form>
+            <form asp-controller="AdminProducts" asp-action="RejectDraft" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-delete" style="padding: 8px 16px; font-size: 13px; font-weight: 500;">
+                    ✗ Reject Changes
+                </button>
+            </form>
+        }
+        else if (!Model.IsActive)
+        {
+            <form asp-controller="AdminProducts" asp-action="Approve" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-primary" style="padding: 8px 16px; font-size: 13px; font-weight: 500;">
+                    ✓ Approve Product
+                </button>
+            </form>
+        }
+        else
+        {
+            <form asp-controller="AdminProducts" asp-action="Reject" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-delete" style="padding: 8px 16px; font-size: 13px; font-weight: 500;">
+                    Archive / Reject
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" style="background-color: #eaf3de; color: #3b6d11; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 0.5px solid #c8e0a8;">
+        <i class="ti-check-box"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" style="background-color: #fcebeb; color: #a32d2d; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 0.5px solid #f0c4c4;">
+        <i class="ti-alert"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Price</div>
+                <div class="stat-val">
+                    @if (Model.DiscountPrice.HasValue)
+                    {
+                        <span style="text-decoration: line-through; color: #888; font-size: 0.8em; margin-right: 6px;">$@Model.Price.ToString("N2")</span>
+                        <span style="color: #d9534f;">$@Model.DiscountPrice.Value.ToString("N2")</span>
+                    }
+                    else
+                    {
+                        <span>$@Model.Price.ToString("N2")</span>
+                    }
+                </div>
+            </div>
+            <i class="ti-tag" style="font-size: 24px; color: #7a5433;"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Stock</div>
+                <div class="stat-val">@Model.Quantity</div>
+            </div>
+            <i class="ti-package" style="font-size: 24px; color: #7a5433;"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Rating</div>
+                <div class="stat-val">@Model.AverageRating.ToString("F1") <span style="font-size: 12px; font-weight: normal; color: #888;">/ 5.0 (@Model.ReviewCount reviews)</span></div>
+            </div>
+            <i class="ti-star" style="font-size: 24px; color: #e6b800;"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Status</div>
+                <div class="stat-val" style="font-size: 16px;">
+                    @{
+                        var statusColor = Model.Status == "Active" ? "#155724" : Model.Status == "Inactive" ? "#721c24" : "#856404";
+                        var statusBg = Model.Status == "Active" ? "#d4edda" : Model.Status == "Inactive" ? "#f8d7da" : "#fff3cd";
+                    }
+                    <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; background-color: @statusBg; color: @statusColor;">
+                        @Model.Status
+                    </span>
+                </div>
+            </div>
+            <i class="ti-check-box" style="font-size: 24px; color: #7a5433;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Proposed Changes (Draft Comparison) -->
+@if (Model.HasPendingDraft)
+{
+    var draft = Model.PendingDraft!;
+    <div class="detail-card" style="margin-bottom: 20px; padding: 20px; background: #fffdf5; border-radius: 10px; border: 2px solid #f0d78c;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 16px; color: #7a6225;">
+                ⚡ Proposed Changes <span style="font-size: 12px; font-weight: normal; color: #888;">(submitted @draft.CreatedAt.ToString("yyyy-MM-dd HH:mm"))</span>
+            </h3>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+                <tr style="background: #f5f0e1;">
+                    <th style="padding: 8px 12px; text-align: left; border-bottom: 2px solid #e6d9b8; width: 20%; color: #7a6225;">Field</th>
+                    <th style="padding: 8px 12px; text-align: left; border-bottom: 2px solid #e6d9b8; width: 40%; color: #7a6225;">Current (Live)</th>
+                    <th style="padding: 8px 12px; text-align: left; border-bottom: 2px solid #e6d9b8; width: 40%; color: #7a6225;">Proposed</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (draft.TitleEn != null)
+                {
+                    <tr style="background: #fff8e1;">
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Title (EN)</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888; text-decoration: line-through;">@Model.TitleEn</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; color: #2e7d32;">@draft.TitleEn</td>
+                    </tr>
+                }
+                @if (draft.TitleAr != null)
+                {
+                    <tr style="background: #fff8e1;">
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Title (AR)</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888; text-decoration: line-through; direction: rtl; text-align: right;">@Model.TitleAr</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; color: #2e7d32; direction: rtl; text-align: right;">@draft.TitleAr</td>
+                    </tr>
+                }
+                @if (draft.DescriptionEn != null)
+                {
+                    <tr style="background: #fff8e1;">
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Description (EN)</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888;">@(string.IsNullOrEmpty(Model.DescriptionEn) ? "—" : Model.DescriptionEn)</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #2e7d32;">@draft.DescriptionEn</td>
+                    </tr>
+                }
+                @if (draft.DescriptionAr != null)
+                {
+                    <tr style="background: #fff8e1;">
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Description (AR)</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888; direction: rtl; text-align: right;">@(string.IsNullOrEmpty(Model.DescriptionAr) ? "—" : Model.DescriptionAr)</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #2e7d32; direction: rtl; text-align: right;">@draft.DescriptionAr</td>
+                    </tr>
+                }
+                @if (draft.Price.HasValue)
+                {
+                    <tr style="background: #fff8e1;">
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Price</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888; text-decoration: line-through;">$@Model.Price.ToString("N2")</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; color: #2e7d32;">$@draft.Price.Value.ToString("N2")</td>
+                    </tr>
+                }
+                @if (draft.DiscountPrice.HasValue)
+                {
+                    <tr style="background: #fff8e1;">
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Discount Price</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888; text-decoration: line-through;">@(Model.DiscountPrice.HasValue ? "$" + Model.DiscountPrice.Value.ToString("N2") : "—")</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; color: #2e7d32;">$@draft.DiscountPrice.Value.ToString("N2")</td>
+                    </tr>
+                }
+                @if (draft.Quantity.HasValue)
+                {
+                    <tr style="background: #fff8e1;">
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Quantity</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888; text-decoration: line-through;">@Model.Quantity</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; color: #2e7d32;">@draft.Quantity.Value</td>
+                    </tr>
+                }
+                @if (draft.ProposedTags != null && draft.ProposedTags.Any())
+                {
+                    <tr style="background: #fff8e1;">
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Tags</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888;">
+                            @if (Model.Tags.Any())
+                            {
+                                @string.Join(", ", Model.Tags)
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #2e7d32;">
+                            @string.Join(", ", draft.ProposedTags)
+                        </td>
+                    </tr>
+                }
+                @if (draft.NewImageUrls != null && draft.NewImageUrls.Any())
+                {
+                    <tr style="background: #fff8e1;">
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">New Images</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888;">—</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                @foreach (var url in draft.NewImageUrls)
+                                {
+                                    <div style="border-radius: 6px; overflow: hidden; border: 2px solid #c8e6c9;">
+                                        <img src="@url" alt="New image" style="width: 80px; height: 80px; object-fit: cover; display: block;" />
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (draft.RemoveImageIds != null && draft.RemoveImageIds.Any())
+                {
+                    <tr style="background: #fff8e1;">
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Remove Images</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                @foreach (var imgId in draft.RemoveImageIds)
+                                {
+                                    var img = Model.Images.FirstOrDefault(i => i.Id == imgId);
+                                    if (img != null)
+                                    {
+                                        <div style="border-radius: 6px; overflow: hidden; border: 2px solid #f8d7da; position: relative;">
+                                            <img src="@img.ImageUrl" alt="Image to remove" style="width: 80px; height: 80px; object-fit: cover; display: block; opacity: 0.5;" />
+                                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #d32f2f; font-size: 24px; font-weight: bold;">✕</span>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #d32f2f; font-size: 12px;">
+                            @draft.RemoveImageIds.Count image(s) will be removed
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+@if (Model.Images.Any())
+{
+    <div class="detail-card" style="margin-bottom: 20px; padding: 20px; background: #fff; border-radius: 10px; border: 1px solid #eee;">
+        <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 16px; color: #333;">Product Images</h3>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            @foreach (var image in Model.Images)
+            {
+                <div style="position: relative; border-radius: 8px; overflow: hidden; border: 2px solid @(image.IsMain ? "#7a5433" : "#eee");">
+                    <img src="@image.ImageUrl" alt="@Model.TitleEn" style="width: 160px; height: 160px; object-fit: cover; display: block;" />
+                    @if (image.IsMain)
+                    {
+                        <span style="position: absolute; top: 6px; left: 6px; background: #7a5433; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600;">Main</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- Details Grid -->
+<div class="details-grid">
+    <div class="detail-card" style="grid-column: span 2;">
+        <h3>Product Descriptions</h3>
+        <div style="margin-bottom: 16px;">
+            <strong style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">English Title</strong>
+            <p style="font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">@Model.TitleEn</p>
+            <strong style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">English Description</strong>
+            <p style="font-size: 14px; line-height: 1.6; margin: 0;">@(string.IsNullOrEmpty(Model.DescriptionEn) ? "No English description provided." : Model.DescriptionEn)</p>
+        </div>
+        <div>
+            <strong style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">Arabic Title (العنوان بالعربية)</strong>
+            <p style="font-size: 16px; font-weight: 600; margin: 0 0 12px 0; direction: rtl; text-align: right;">@Model.TitleAr</p>
+            <strong style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">Arabic Description (الوصف بالعربية)</strong>
+            <p style="font-size: 14px; line-height: 1.6; margin: 0; direction: rtl; text-align: right;">@(string.IsNullOrEmpty(Model.DescriptionAr) ? "لا يوجد وصف باللغة العربية." : Model.DescriptionAr)</p>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <h3>Product Information</h3>
+        <div style="margin-bottom: 12px;">
+            <strong style="font-size: 11px; color: #888; display: block;">Category (EN)</strong>
+            <span style="font-size: 13px;">@Model.CategoryNameEn</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <strong style="font-size: 11px; color: #888; display: block;">Category (AR)</strong>
+            <span style="font-size: 13px; direction: rtl;">@Model.CategoryNameAr</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <strong style="font-size: 11px; color: #888; display: block;">Shop</strong>
+            <span style="font-size: 13px; font-weight: 600;">@Model.ShopName</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <strong style="font-size: 11px; color: #888; display: block;">Product ID</strong>
+            <span style="font-size: 13px; font-family: monospace;">@Model.Id</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <strong style="font-size: 11px; color: #888; display: block;">Created At</strong>
+            <span style="font-size: 13px;">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</span>
+        </div>
+        @if (Model.UpdatedAt.HasValue)
+        {
+            <div style="margin-bottom: 12px;">
+                <strong style="font-size: 11px; color: #888; display: block;">Last Updated</strong>
+                <span style="font-size: 13px;">@Model.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")</span>
+            </div>
+        }
+        @if (Model.Tags.Any())
+        {
+            <div>
+                <strong style="font-size: 11px; color: #888; display: block; margin-bottom: 6px;">Tags</strong>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <span style="background: #f0e6d9; color: #7a5433; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;">@tag</span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

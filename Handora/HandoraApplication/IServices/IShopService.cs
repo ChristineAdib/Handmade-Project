@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.ShopDTOs;
+using HandoraApplication.DTOs.ShopDTOs;
 using HandoraApplication.Helpers;
 
 namespace HandoraApplication.IServices;
@@ -14,4 +14,6 @@ public interface IShopService
     Task<Result<ShopDto>> CreateShop(string ownerId, CreateShopDto dto);
     Task<Result<ShopDto>> UpdateShop(Guid id, string ownerId, UpdateShopDto dto);
     Task<Result> DeleteShop(Guid id, string ownerId);
+    Task<Result> ToggleShopStatusAsync(Guid id);
+    Task<Result<IEnumerable<ShopDto>>> GetAllShops();
 }

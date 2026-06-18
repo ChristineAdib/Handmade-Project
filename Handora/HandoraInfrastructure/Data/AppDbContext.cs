@@ -20,6 +20,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
 {
     public DbSet<Shop> Shops { get; set; }
     public DbSet<Product> Products { get; set; }
+    public DbSet<ProductDraft> ProductDrafts { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<Order> Orders { get; set; }

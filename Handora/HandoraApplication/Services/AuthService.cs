@@ -1,5 +1,6 @@
 using HandoraApplication.DTOs.AuthDTOs;
 using HandoraApplication.Helpers.AuthHelper;
+using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.AppUser;
@@ -17,8 +18,9 @@ namespace HandoraApplication.Services
         private readonly JwtHelper _jwtHelper;
         private readonly ILogger<AuthService> _logger;
         private readonly IFileService _fileService;
+        private readonly IConfiguration _configuration;
         private readonly string _googleClientId;
-        private const int OTP_EXPIRY_MINUTES = 5;
+        private const int OTP_EXPIRY_MINUTES = 10;
         private const int OTP_LENGTH = 6;
 
         public AuthService(
@@ -36,6 +38,7 @@ namespace HandoraApplication.Services
             _jwtHelper = jwtHelper;
             _logger = logger;
             _fileService = fileService;
+            _configuration = configuration;
             _googleClientId = configuration["Google:ClientId"] ?? string.Empty;
         }
 
@@ -74,13 +77,14 @@ namespace HandoraApplication.Services
 
             await _authRepo.AddToRoleAsync(user, dto.Role);
 
+            var expiryMinutes = int.TryParse(_configuration["OtpSettings:ExpiryMinutes"], out var parsedExpiry) ? parsedExpiry : OTP_EXPIRY_MINUTES;
             var otpCode = GenerateOtp();
             var otpVerification = new OtpVerification
             {
                 UserId = user.Id,
                 Email = dto.Email,
                 OtpCode = otpCode,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(OTP_EXPIRY_MINUTES),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes),
                 MaxAttempts = 5
             };
 
@@ -102,7 +106,8 @@ namespace HandoraApplication.Services
                 Email = user.Email!,
                 Token = string.Empty,
                 TokenExpiry = DateTime.UtcNow,
-                Roles = new List<string> { dto.Role }
+                Roles = new List<string> { dto.Role },
+                ProfileImage = user.ProfileImage
             };
         }
 
@@ -132,8 +137,11 @@ namespace HandoraApplication.Services
             if (otp is null)
                 throw new AuthException("Invalid or expired OTP. Please request a new one.");
 
-            if (otp.ExpiresAt <= DateTime.UtcNow)
-                throw new AuthException("OTP has expired. Please request a new one.");
+            var expiryMinutes = int.TryParse(_configuration["OtpSettings:ExpiryMinutes"], out var parsedExpiry) ? parsedExpiry : OTP_EXPIRY_MINUTES;
+            if (otp.CreatedAt.AddMinutes(expiryMinutes) <= DateTime.UtcNow)
+            {
+                throw new AuthException("The verification code has expired. Please request a new OTP.");
+            }
 
             if (otp.AttemptCount >= otp.MaxAttempts)
                 throw new AuthException("Maximum OTP attempts exceeded. Please request a new one.");
@@ -161,11 +169,14 @@ namespace HandoraApplication.Services
 
             _logger.LogInformation("Email verified for user {UserId}", user.Id);
 
+            var authResponse = await BuildAuthResponseAsync(user);
+
             return new OtpResponseDto
             {
                 Message = "Email verified successfully. You can now log in.",
                 RemainingAttempts = otp.MaxAttempts - otp.AttemptCount,
-                IsVerified = true
+                IsVerified = true,
+                AuthData = authResponse
             };
         }
 
@@ -184,13 +195,14 @@ namespace HandoraApplication.Services
                 await _otpRepo.DeleteAsync(existingOtp.Id, ct);
             }
 
+            var expiryMinutes = int.TryParse(_configuration["OtpSettings:ExpiryMinutes"], out var parsedExpiry2) ? parsedExpiry2 : OTP_EXPIRY_MINUTES;
             var otpCode = GenerateOtp();
             var otpVerification = new OtpVerification
             {
                 UserId = user.Id,
                 Email = dto.Email,
                 OtpCode = otpCode,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(OTP_EXPIRY_MINUTES),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes),
                 MaxAttempts = 5
             };
 
@@ -230,7 +242,8 @@ namespace HandoraApplication.Services
                 Email = user.Email!,
                 Token = token,
                 TokenExpiry = expiry,
-                Roles = roles
+                Roles = roles,
+                ProfileImage = user.ProfileImage
             };
         }
 
@@ -445,6 +458,65 @@ namespace HandoraApplication.Services
             }
 
             return await BuildAuthResponseAsync(user);
+        }
+
+        public async Task<IEnumerable<GetUserDto>> GetUsersFilteredAsync(string? role = null, bool? isActive = null, CancellationToken ct = default)
+        {
+            IEnumerable<User> users;
+            if (!string.IsNullOrEmpty(role))
+            {
+                users = await _authRepo.GetUsersInRoleAsync(role, ct);
+            }
+            else
+            {
+                users = await _authRepo.GetAllAsync(ct);
+            }
+
+            if (isActive.HasValue)
+            {
+                users = users.Where(u => u.IsActive == isActive.Value);
+            }
+
+            var result = new List<GetUserDto>();
+            foreach (var user in users)
+            {
+                var roles = await _authRepo.GetRolesAsync(user);
+                result.Add(MapToDto(user, roles));
+            }
+
+            return result;
+        }
+
+        public async Task<Result> UpgradeToSellerAsync(string userId)
+        {
+            var user = await _authRepo.GetByIdAsync(userId);
+            if (user is null)
+                return Result.Failure("User not found.");
+
+            var roles = await _authRepo.GetRolesAsync(user);
+            if (roles.Contains(AppRoles.Seller))
+                return Result.Failure("User is already a Seller.");
+
+            await _authRepo.AddToRoleAsync(user, AppRoles.Seller);
+            return Result.Success();
+        }
+
+        public async Task<Result> ToggleUserBanStatusAsync(string userId)
+        {
+            var user = await _authRepo.GetByIdAsync(userId);
+            if (user is null)
+                return Result.Failure("User not found.");
+
+            user.IsBanned = !user.IsBanned;
+            user.UpdatedAt = DateTime.UtcNow;
+            
+            var result = await _authRepo.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+            }
+
+            return Result.Success();
         }
     }
 }

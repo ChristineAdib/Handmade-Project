@@ -12,10 +12,11 @@ using HandoraDomain.Models.CouponEntities;
 
 namespace HandoraApplication.Services;
 
-public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWork) : IOrderService
+public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWork, IEscrowService escrowService) : IOrderService
 {
     private readonly IOrderRepository _orderRepository = orderRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IEscrowService _escrowService = escrowService;
 
     public async Task<Result<OrderResponseDto>> CreateOrder(string userId, string buyerEmail, CreateOrderDto dto)
     {
@@ -24,6 +25,11 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
         if (cart is null || !cart.Items.Any())
             return Result<OrderResponseDto>.Failure("Cart is empty or not found");
+
+        if (cart.Items.Any(ci => ci.Product.Quantity <= 0 || ci.Product.IsDeleted || ci.Product.Status != ProductStatus.Active))
+        {
+            return Result<OrderResponseDto>.Failure("One or more products in your cart are currently unavailable.");
+        }
 
         // 2. Validate delivery method
         var deliveryRepo = _unitOfWork.Repository<DeliveryMethod, Guid>();
@@ -42,6 +48,9 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
             if (product.IsDeleted || product.Status != ProductStatus.Active)
                 return Result<OrderResponseDto>.Failure($"Product '{product.TitleEn}' is no longer available");
+
+            if (product.Shop.OwnerId == userId)
+                return Result<OrderResponseDto>.Failure("You cannot purchase your own products.");
 
             if (product.Quantity < cartItem.Quantity)
                 return Result<OrderResponseDto>.Failure($"Insufficient stock for '{product.TitleEn}'. Available: {product.Quantity}");
@@ -249,16 +258,12 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
         if (!isAdmin)
         {
-            var shopRepo = _unitOfWork.Repository<Shop, Guid>();
-            var shopQuery = await shopRepo.GetAllAsNoTracking();
-            var sellerShop = await shopQuery.FirstOrDefaultAsync(s => s.OwnerId == userId && !s.IsDeleted);
+            return Result<OrderResponseDto>.Failure("Only Admin is authorized to change order status");
+        }
 
-            if (sellerShop is null)
-                return Result<OrderResponseDto>.Failure("You do not own a shop");
-
-            var orderContainsSellerProducts = order.Items.Any(i => i.ShopId == sellerShop.Id);
-            if (!orderContainsSellerProducts)
-                return Result<OrderResponseDto>.Failure("You are not authorized to update this order");
+        if (order.Status == OrderStatus.Delivered)
+        {
+            return Result<OrderResponseDto>.Failure("Order is already delivered and cannot be modified.");
         }
 
         var currentStatus = order.Status;
@@ -282,18 +287,32 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
                     await productRepo.UpdateAsync(product);
                 }
             }
+            order.Status = nextStatus;
+            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedBy = userId;
+            await _orderRepository.UpdateAsync(order);
+            await _unitOfWork.SaveChangesAsync();
         }
         else if (nextStatus == OrderStatus.Delivered)
         {
-            order.DeliveredAt = DateTime.UtcNow;
+            var releaseResult = await _escrowService.RecordDeliveryAsync(orderId);
+            if (!releaseResult.IsSuccess)
+            {
+                return Result<OrderResponseDto>.Failure(releaseResult.Errors.FirstOrDefault() ?? "Failed to release funds on delivery");
+            }
+            // Reload order details to pick up status, DeliveredAt, and other fields set by EscrowService
+            order = await _orderRepository.GetOrderByIdWithDetailsAsync(orderId);
+            if (order is null)
+                return Result<OrderResponseDto>.Failure("Order not found after updating status");
         }
-
-        order.Status = nextStatus;
-        order.UpdatedAt = DateTime.UtcNow;
-        order.UpdatedBy = userId;
-
-        await _orderRepository.UpdateAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        else
+        {
+            order.Status = nextStatus;
+            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedBy = userId;
+            await _orderRepository.UpdateAsync(order);
+            await _unitOfWork.SaveChangesAsync();
+        }
 
         return Result<OrderResponseDto>.Success(MapToResponse(order));
     }
@@ -307,6 +326,9 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
         if (order.UserId != userId)
             return Result.Failure("You are not authorized to cancel this order");
+
+        if (order.Status == OrderStatus.Delivered)
+            return Result.Failure("Order is already delivered and cannot be modified.");
 
         if (order.Status != OrderStatus.Pending)
             return Result.Failure("Only pending orders can be cancelled");
@@ -405,4 +427,58 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
             PageSize = query.PageSize
         });
     }
+
+    public async Task<Result<PagedResultDto<OrderSummaryDto>>> GetAllOrders(OrderQueryDto query)
+    {
+        var ordersQuery = await _orderRepository.GetAllOrdersQueryAsync();
+
+        if (query.Status.HasValue)
+            ordersQuery = ordersQuery.Where(o => o.Status == query.Status.Value);
+
+        ordersQuery = query.SortBy?.ToLower() switch
+        {
+            "date" => query.SortDescending
+                ? ordersQuery.OrderByDescending(o => o.OrderDate)
+                : ordersQuery.OrderBy(o => o.OrderDate),
+            "total" => query.SortDescending
+                ? ordersQuery.OrderByDescending(o => o.SubTotal)
+                : ordersQuery.OrderBy(o => o.SubTotal),
+            _ => ordersQuery.OrderByDescending(o => o.OrderDate)
+        };
+
+        var totalCount = await ordersQuery.CountAsync();
+
+        var items = await ordersQuery
+            .Skip((query.PageNumber - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync();
+
+        var summaries = items.Select(o => new OrderSummaryDto
+        {
+            Id = o.Id,
+            OrderDate = o.OrderDate,
+            Status = o.Status.ToString(),
+            PaymentStatus = o.PaymentStatus.ToString(),
+            Total = o.SubTotal + o.DeliveryMethod.Cost - (o.DiscountAmount ?? 0),
+            ItemCount = o.Items.Count
+        }).ToList();
+
+        return Result<PagedResultDto<OrderSummaryDto>>.Success(new PagedResultDto<OrderSummaryDto>
+        {
+            Items = summaries,
+            TotalCount = totalCount,
+            PageNumber = query.PageNumber,
+            PageSize = query.PageSize
+        });
+    }
+    public async Task<Result<OrderResponseDto>> GetOrderByIdForAdmin(Guid orderId)
+    {
+        var order = await _orderRepository.GetOrderByIdWithDetailsAsync(orderId);
+
+        if (order is null)
+            return Result<OrderResponseDto>.Failure("Order not found");
+
+        return Result<OrderResponseDto>.Success(MapToResponse(order));
+    }
+
 }

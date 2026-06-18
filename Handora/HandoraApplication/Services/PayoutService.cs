@@ -1,22 +1,39 @@
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
+using HandoraApplication.DTOs.Payments;
+using HandoraDomain.Consts;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.AppUser;
+using HandoraDomain.Models.OrderEntity;
 using HandoraDomain.Models.PaymentEntities;
 using HandoraDomain.Models.ShopEntities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace HandoraApplication.Services;
 
 public class PayoutService : IPayoutService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IConfiguration _configuration;
+    private readonly UserManager<User> _userManager;
     private readonly ILogger<PayoutService> _logger;
+    private static readonly HttpClient _httpClient = new();
 
-    public PayoutService(IUnitOfWork unitOfWork, ILogger<PayoutService> logger)
+    public PayoutService(
+        IUnitOfWork unitOfWork, 
+        IConfiguration configuration,
+        UserManager<User> userManager,
+        ILogger<PayoutService> logger)
     {
         _unitOfWork = unitOfWork;
+        _configuration = configuration;
+        _userManager = userManager;
         _logger = logger;
     }
 
@@ -43,7 +60,9 @@ public class PayoutService : IPayoutService
             SellerId = seller.Id,
             Amount = amount,
             Status = WithdrawalStatus.Pending,
-            RequestedAt = DateTime.UtcNow
+            RequestedAt = DateTime.UtcNow,
+            Seller = seller,
+            Shop = shop
         };
 
         var requestRepo = _unitOfWork.Repository<WithdrawalRequest, Guid>();
@@ -54,6 +73,29 @@ public class PayoutService : IPayoutService
             "Withdrawal request created: {RequestId}, Shop: {ShopId}, Amount: {Amount}",
             request.Id, shop.Id, amount);
 
+        // Execute payout immediately
+        try
+        {
+            var success = await ExecutePayoutAsync(request);
+            if (success)
+            {
+                request.Status = WithdrawalStatus.Paid;
+                request.PaidAt = DateTime.UtcNow;
+            }
+            else
+            {
+                request.Status = WithdrawalStatus.Cancelled;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing payout for request {RequestId}", request.Id);
+            request.Status = WithdrawalStatus.Cancelled;
+        }
+
+        await requestRepo.UpdateAsync(request);
+        await _unitOfWork.SaveChangesAsync();
+
         return request;
     }
 
@@ -62,6 +104,7 @@ public class PayoutService : IPayoutService
         var requestRepo = _unitOfWork.Repository<WithdrawalRequest, Guid>();
         var query = await requestRepo.GetAllAsync();
         var pendingRequests = await query
+            .Include(r => r.Seller)
             .Where(r => r.Status == WithdrawalStatus.Pending)
             .ToListAsync();
 
@@ -101,34 +144,133 @@ public class PayoutService : IPayoutService
     {
         try
         {
-            // In production: call external payment API (e.g., bank transfer, Paymob payout)
-            // For now: record the payout as successful
-
             _logger.LogInformation(
-                "Executing payout: Request {RequestId}, Amount {Amount}, Seller {SellerId}",
+                "Executing simulated payout in Test Mode: Request {RequestId}, Amount {Amount}, Seller {SellerId}",
                 request.Id, request.Amount, request.SellerId);
 
-            // Simulate payout processing
-            await Task.Delay(100);
+            // Simulate small delay for processing
+            await Task.Delay(300);
+
+            request.TransferReference = "SIM_PAYOUT_" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+            
+            _logger.LogInformation(
+                "Simulated payout processed successfully for Request {RequestId}. Reference: {Reference}",
+                request.Id, request.TransferReference);
 
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Payout execution failed for request {RequestId}", request.Id);
+            _logger.LogError(ex, "Payout simulation failed for request {RequestId}", request.Id);
+            return false;
+        }
+    }
 
-            // Revert balance deduction
+    public async Task<Result<SellerWalletDto>> GetSellerWalletAsync(string sellerId)
+    {
+        try
+        {
             var shopsRepo = _unitOfWork.Repository<Shop, Guid>();
             var shopsQuery = await shopsRepo.GetAllAsync();
-            var shop = await shopsQuery.FirstOrDefaultAsync(s => s.Id == request.ShopId);
-            if (shop != null)
+            var shop = await shopsQuery.FirstOrDefaultAsync(s => s.OwnerId == sellerId);
+
+            if (shop == null)
+                return Result<SellerWalletDto>.Failure("Seller does not have a shop");
+
+            var availableBalance = shop.AvailableBalance;
+
+            // Calculate Pending Balance
+            // Paid orders that are not yet Delivered, Cancelled or Refunded
+            var ordersRepo = _unitOfWork.Repository<Order, Guid>();
+            var ordersQuery = await ordersRepo.GetAllAsync();
+            var pendingOrders = await ordersQuery
+                .Include(o => o.Items)
+                .Where(o => o.Items.Any(i => i.ShopId == shop.Id) &&
+                            o.PaymentStatus == PaymentStatus.Paid &&
+                            o.Status != OrderStatus.Delivered &&
+                            o.Status != OrderStatus.Cancelled &&
+                            o.Status != OrderStatus.Refunded)
+                .ToListAsync();
+
+            decimal pendingBalance = 0;
+            foreach (var order in pendingOrders)
             {
-                shop.AvailableBalance += request.Amount;
-                await shopsRepo.UpdateAsync(shop);
-                await _unitOfWork.SaveChangesAsync();
+                var grossAmount = order.Items.Where(i => i.ShopId == shop.Id).Sum(i => i.Price * i.Quantity);
+                var commissionAmount = Math.Round(grossAmount * shop.CommissionRate, 2);
+                var netAmount = Math.Round(grossAmount - commissionAmount, 2);
+                pendingBalance += netAmount;
             }
 
-            return false;
+            // Calculate Total Earnings (Released + Pending)
+            var txRepo = _unitOfWork.Repository<SellerBalanceTransaction, Guid>();
+            var txQuery = await txRepo.GetAllAsync();
+            var releasedSales = await txQuery
+                .Where(t => t.ShopId == shop.Id && t.Type == BalanceTransactionType.Sale && t.IsReleased)
+                .SumAsync(t => t.NetAmount);
+
+            var totalEarnings = releasedSales + pendingBalance;
+
+            // Gather transaction history
+            var walletTransactions = new List<WalletTransactionDto>();
+
+            // 1. Add all Sales
+            var balanceTxList = await txQuery
+                .Where(t => t.ShopId == shop.Id)
+                .ToListAsync();
+
+            foreach (var tx in balanceTxList)
+            {
+                walletTransactions.Add(new WalletTransactionDto
+                {
+                    Id = tx.Id,
+                    Type = tx.Type.ToString(),
+                    Amount = tx.NetAmount,
+                    Date = tx.ReleasedAt ?? tx.CreatedAt,
+                    Status = tx.IsReleased ? "Released" : "Pending",
+                    Description = tx.Type == BalanceTransactionType.Sale ? $"Sale for Order #{tx.OrderId}" : tx.Type.ToString(),
+                    Reference = tx.OrderId.ToString()
+                });
+            }
+
+            // 2. Add all Withdrawals
+            var withdrawalRepo = _unitOfWork.Repository<WithdrawalRequest, Guid>();
+            var withdrawalQuery = await withdrawalRepo.GetAllAsync();
+            var withdrawals = await withdrawalQuery
+                .Where(w => w.ShopId == shop.Id)
+                .ToListAsync();
+
+            foreach (var w in withdrawals)
+            {
+                walletTransactions.Add(new WalletTransactionDto
+                {
+                    Id = w.Id,
+                    Type = "Withdrawal",
+                    Amount = -w.Amount,
+                    Date = w.RequestedAt,
+                    Status = w.Status.ToString(),
+                    Description = "Withdrawal Request",
+                    Reference = w.TransferReference
+                });
+            }
+
+            var sortedTransactions = walletTransactions
+                .OrderByDescending(t => t.Date)
+                .ToList();
+
+            var walletDto = new SellerWalletDto
+            {
+                AvailableBalance = availableBalance,
+                PendingBalance = pendingBalance,
+                TotalEarnings = totalEarnings,
+                Transactions = sortedTransactions
+            };
+
+            return Result<SellerWalletDto>.Success(walletDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting seller wallet for seller {SellerId}", sellerId);
+            return Result<SellerWalletDto>.Failure($"Failed to retrieve wallet details: {ex.Message}");
         }
     }
 }
