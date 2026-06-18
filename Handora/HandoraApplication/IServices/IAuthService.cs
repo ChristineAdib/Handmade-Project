@@ -1,5 +1,8 @@
 using HandoraApplication.DTOs.AuthDTOs;
-
+using HandoraApplication.Helpers;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace HandoraApplication.IServices
 {
@@ -18,5 +21,9 @@ namespace HandoraApplication.IServices
         Task<GetUserDto> UpdateUserAsync(string id, UpdateUserDto dto, CancellationToken ct = default);
         Task DeleteUserAsync(string id, CancellationToken ct = default);
         Task<AuthResponseDto> AssignSellerRoleAndGenerateTokenAsync(string userId, CancellationToken ct = default);
+        
+        Task<IEnumerable<GetUserDto>> GetUsersFilteredAsync(string? role = null, bool? isActive = null, CancellationToken ct = default);
+        Task<Result> UpgradeToSellerAsync(string userId);
+        Task<Result> ToggleUserBanStatusAsync(string userId);
     }
 }

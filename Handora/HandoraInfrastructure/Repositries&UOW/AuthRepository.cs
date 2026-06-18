@@ -60,5 +60,11 @@ namespace HandoraInfrastructure.Repositries_UOW
 
         public Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword)
             => _userManager.ResetPasswordAsync(user, token, newPassword);
+
+        public async Task<IEnumerable<User>> GetUsersInRoleAsync(string roleName, CancellationToken ct = default)
+        {
+            var users = await _userManager.GetUsersInRoleAsync(roleName);
+            return users.Where(u => !u.IsDeleted);
+        }
     }
 }

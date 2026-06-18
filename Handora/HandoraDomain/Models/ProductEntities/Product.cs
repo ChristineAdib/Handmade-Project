@@ -1,4 +1,4 @@
-﻿using HandoraDomain.Models.CartEntities;
+using HandoraDomain.Models.CartEntities;
 using HandoraDomain.Models.OrderEntity;
 using HandoraDomain.Models.ShopEntities;
 using HandoraDomain.Models.WishListEntoties;
@@ -17,7 +17,9 @@ namespace HandoraDomain.Models.ProductEntities
         public decimal Price { get; set; }
         public decimal? DiscountPrice { get; set; }     // [IMPROVEMENT] sale price without needing a separate entity
         public int Quantity { get; set; }
+        public bool IsOnePiece { get; set; } = false;
         public ProductStatus Status { get; set; } = ProductStatus.Active;
+        public bool IsActive { get; set; } = false;
         public decimal AverageRating { get; set; } = 0; // [IMPROVEMENT] denormalized for fast sorting/filtering
         public int ReviewCount { get; set; } = 0;       // [IMPROVEMENT] same reason
 
@@ -29,6 +31,7 @@ namespace HandoraDomain.Models.ProductEntities
         public Shop Shop { get; set; } = null!;
 
         // Navigation Properties
+        public ProductDraft? PendingDraft { get; set; }
         public ICollection<ProductImage> Images { get; set; } = [];
         public ICollection<Review> Reviews { get; set; } = [];
         public ICollection<Tag> Tags { get; set; } = [];
