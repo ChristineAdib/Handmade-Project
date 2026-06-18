@@ -46,6 +46,15 @@ public class PayoutService : IPayoutService
         if (shop == null)
             throw new InvalidOperationException("Seller does not have a shop");
 
+        // Validate that payout method is configured
+        if (string.IsNullOrWhiteSpace(shop.BankName) ||
+            string.IsNullOrWhiteSpace(shop.AccountHolderName) ||
+            string.IsNullOrWhiteSpace(shop.AccountNumber))
+        {
+            throw new InvalidOperationException(
+                "Please configure your payout method (bank account or visa) before requesting a withdrawal.");
+        }
+
         if (shop.AvailableBalance < amount)
             throw new InvalidOperationException(
                 $"Insufficient balance. Available: {shop.AvailableBalance}, Requested: {amount}");
@@ -271,6 +280,61 @@ public class PayoutService : IPayoutService
         {
             _logger.LogError(ex, "Error getting seller wallet for seller {SellerId}", sellerId);
             return Result<SellerWalletDto>.Failure($"Failed to retrieve wallet details: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<BankAccountDto>> GetBankAccountAsync(string sellerId)
+    {
+        try
+        {
+            var shopsRepo = _unitOfWork.Repository<Shop, Guid>();
+            var shopsQuery = await shopsRepo.GetAllAsync();
+            var shop = await shopsQuery.FirstOrDefaultAsync(s => s.OwnerId == sellerId);
+
+            if (shop == null)
+                return Result<BankAccountDto>.Failure("Seller does not have a shop");
+
+            var dto = new BankAccountDto
+            {
+                BankName = shop.BankName ?? string.Empty,
+                AccountHolderName = shop.AccountHolderName ?? string.Empty,
+                AccountNumber = shop.AccountNumber ?? string.Empty
+            };
+
+            return Result<BankAccountDto>.Success(dto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting bank account for seller {SellerId}", sellerId);
+            return Result<BankAccountDto>.Failure($"Failed to retrieve bank account: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<bool>> UpdateBankAccountAsync(string sellerId, BankAccountDto dto)
+    {
+        try
+        {
+            var shopsRepo = _unitOfWork.Repository<Shop, Guid>();
+            var shopsQuery = await shopsRepo.GetAllAsync();
+            var shop = await shopsQuery.FirstOrDefaultAsync(s => s.OwnerId == sellerId);
+
+            if (shop == null)
+                return Result<bool>.Failure("Seller does not have a shop");
+
+            shop.BankName = dto.BankName;
+            shop.AccountHolderName = dto.AccountHolderName;
+            shop.AccountNumber = dto.AccountNumber;
+
+            await shopsRepo.UpdateAsync(shop);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Bank account updated for shop {ShopId}", shop.Id);
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating bank account for seller {SellerId}", sellerId);
+            return Result<bool>.Failure($"Failed to update bank account: {ex.Message}");
         }
     }
 }

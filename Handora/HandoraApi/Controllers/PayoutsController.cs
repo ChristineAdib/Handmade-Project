@@ -71,4 +71,41 @@ public class PayoutsController(
         await _payoutService.ProcessPendingWithdrawalsAsync();
         return Ok("Pending withdrawals processed");
     }
+
+    // [Authorize(Roles = AppRoles.Seller)]
+    [HttpGet("bank-account")]
+    public async Task<IActionResult> GetBankAccount()
+    {
+        var currentUser = await _userManager.FindByIdAsync(CurrentUserId);
+        if (currentUser == null)
+            return Unauthorized();
+
+        var result = await _payoutService.GetBankAccountAsync(currentUser.Id);
+        if (!result.IsSuccess)
+            return BadRequest(result.Errors);
+
+        return Ok(result.Data);
+    }
+
+    // [Authorize(Roles = AppRoles.Seller)]
+    [HttpPost("bank-account")]
+    public async Task<IActionResult> UpdateBankAccount([FromBody] BankAccountDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.BankName) ||
+            string.IsNullOrWhiteSpace(dto.AccountHolderName) ||
+            string.IsNullOrWhiteSpace(dto.AccountNumber))
+        {
+            return BadRequest("All bank account fields are required.");
+        }
+
+        var currentUser = await _userManager.FindByIdAsync(CurrentUserId);
+        if (currentUser == null)
+            return Unauthorized();
+
+        var result = await _payoutService.UpdateBankAccountAsync(currentUser.Id, dto);
+        if (!result.IsSuccess)
+            return BadRequest(result.Errors);
+
+        return Ok(new { message = "Bank account updated successfully" });
+    }
 }
