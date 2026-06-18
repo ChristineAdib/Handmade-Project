@@ -11,5 +11,6 @@ namespace HandoraApplication.DTOs.ReviewDTOs
         public string ProductTitle { get; set; } = string.Empty;
         public string? ProductImage { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsVerifiedPurchase { get; set; }
     }
 }

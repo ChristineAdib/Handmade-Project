@@ -6,6 +6,7 @@ using HandoraDomain.Interfaces;
 using HandoraDomain.Models.ProductEntities;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace HandoraApplication.Services;
 
@@ -46,6 +47,9 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (query.ShopId.HasValue)
             productsQuery = productsQuery.Where(p => p.ShopId == query.ShopId.Value);
 
+        if (query.OnlyOnePiece == true)
+            productsQuery = productsQuery.Where(p => p.IsOnePiece);
+
         if (query.MinPrice.HasValue)
             productsQuery = productsQuery.Where(p => (p.DiscountPrice ?? p.Price) >= query.MinPrice.Value);
 
@@ -55,10 +59,12 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (query.MinRating.HasValue)
             productsQuery = productsQuery.Where(p => p.AverageRating >= query.MinRating.Value);
 
-        //if (query.Status.HasValue)
-        //    productsQuery = productsQuery.Where(p => p.Status == query.Status.Value);
-
-        if (query.ShopId.HasValue)
+        if (query.IsAdmin == true)
+        {
+            if (query.Status.HasValue)
+                productsQuery = productsQuery.Where(p => p.Status == query.Status.Value);
+        }
+        else if (query.ShopId.HasValue)
         {
             // الـ buyer بيشوف منتجات شوب معين — يظهرله حتى OutOfStock
             if (query.Status.HasValue)
@@ -107,6 +113,36 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
 
     public async Task<Result<ProductResponseDto>> CreateProduct(CreateProductDto dto)
     {
+        var categoryRepo = _unitOfWork.Repository<Category, Guid>();
+        var parentCategory = await categoryRepo.GetByIdAsync(dto.CategoryId);
+
+        if (parentCategory == null || parentCategory.ParentId != null || parentCategory.IsDeleted)
+        {
+            return Result<ProductResponseDto>.Failure("Please select a valid parent category.");
+        }
+
+        var parentHasSubcategories = await (await categoryRepo.GetAllAsync())
+            .AnyAsync(c => c.ParentId == dto.CategoryId && !c.IsDeleted);
+
+        Guid targetCategoryId;
+        if (parentHasSubcategories)
+        {
+            if (dto.SubCategoryId == null)
+            {
+                return Result<ProductResponseDto>.Failure("Please select a valid subcategory under the chosen category.");
+            }
+            var subCategory = await categoryRepo.GetByIdAsync(dto.SubCategoryId.Value);
+            if (subCategory == null || subCategory.ParentId != dto.CategoryId || subCategory.IsDeleted)
+            {
+                return Result<ProductResponseDto>.Failure("Please select a valid subcategory under the chosen category.");
+            }
+            targetCategoryId = dto.SubCategoryId.Value;
+        }
+        else
+        {
+            targetCategoryId = dto.CategoryId;
+        }
+
         var product = new Product
         {
             Id = Guid.NewGuid(),
@@ -116,9 +152,11 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             DescriptionAr = dto.DescriptionAr,
             Price = dto.Price,
             Quantity = dto.Quantity,
-            CategoryId = dto.CategoryId,
+            IsOnePiece = dto.Quantity == 1,
+            CategoryId = targetCategoryId,
             ShopId = dto.ShopId,
-            Status = ProductStatus.Active
+            Status = ProductStatus.Inactive,
+            IsActive = false
         };
 
         // Handle tags
@@ -169,30 +207,89 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (product is null)
             return Result<ProductResponseDto>.Failure("Product not found");
 
-        // Update basic properties
+        // ── BRANCHING: Live products get a draft, non-live products get direct edits ──
+        if (product.IsActive)
+        {
+            return await CreateOrUpdateDraft(product, dto);
+        }
+
+        // Product is NOT yet live — apply changes directly (existing behavior)
+        return await ApplyDirectUpdate(product, dto);
+    }
+
+    /// <summary>
+    /// Applies changes directly to a non-live product (existing behavior for first-time edits).
+    /// </summary>
+    private async Task<Result<ProductResponseDto>> ApplyDirectUpdate(Product product, UpdateProductDto dto)
+    {
+        // Map properties from DTO to the existing product entity
+        dto.Adapt(product);
+
+        // 1. Category Logic from main branch
+        if (dto.CategoryId.HasValue || dto.SubCategoryId.HasValue)
+        {
+            var categoryId = dto.CategoryId ?? product.Category?.ParentId ?? product.CategoryId;
+            var subCategoryId = dto.SubCategoryId;
+
+            var categoryRepo = _unitOfWork.Repository<Category, Guid>();
+            var parentCategory = await categoryRepo.GetByIdAsync(categoryId);
+
+            if (parentCategory == null || parentCategory.ParentId != null || parentCategory.IsDeleted)
+            {
+                return Result<ProductResponseDto>.Failure("Please select a valid parent category.");
+            }
+
+            var parentHasSubcategories = await (await categoryRepo.GetAllAsync())
+                .AnyAsync(c => c.ParentId == categoryId && !c.IsDeleted);
+
+            Guid targetCategoryId;
+            if (parentHasSubcategories)
+            {
+                var subId = subCategoryId ?? (product.Category?.ParentId != null ? product.CategoryId : Guid.Empty);
+                var subCategory = await categoryRepo.GetByIdAsync(subId);
+                if (subCategory == null || subCategory.ParentId != categoryId || subCategory.IsDeleted)
+                {
+                    return Result<ProductResponseDto>.Failure("Please select a valid subcategory under the chosen category.");
+                }
+                targetCategoryId = subId;
+            }
+            else
+            {
+                targetCategoryId = categoryId;
+            }
+
+            product.CategoryId = targetCategoryId;
+        }
+
+        // 2. Map properties manually from main (Instead of dto.Adapt(product) so we don't overwrite CategoryId)
         if (dto.TitleEn != null) product.TitleEn = dto.TitleEn;
         if (dto.TitleAr != null) product.TitleAr = dto.TitleAr;
         if (dto.DescriptionEn != null) product.DescriptionEn = dto.DescriptionEn;
         if (dto.DescriptionAr != null) product.DescriptionAr = dto.DescriptionAr;
         if (dto.Price.HasValue) product.Price = dto.Price.Value;
         if (dto.DiscountPrice.HasValue) product.DiscountPrice = dto.DiscountPrice.Value;
-        if (dto.Quantity.HasValue) product.Quantity = dto.Quantity.Value;
+        if (dto.Quantity.HasValue)
+        {
+            product.Quantity = dto.Quantity.Value;
+            product.IsOnePiece = dto.Quantity.Value == 1;
+        }
         if (dto.Status.HasValue) product.Status = dto.Status.Value;
-        if (dto.CategoryId.HasValue) product.CategoryId = dto.CategoryId.Value;
+
+        // 3. Your Logic from Feature
+     
 
         product.UpdatedAt = DateTime.UtcNow;
+        product.IsActive = false; // Ensure product is pending review after update
 
         // Handle tags
         if (dto.Tags != null)
         {
-            // Remove tags that are not in the new list
             var tagsToRemove = product.Tags.Where(t => !dto.Tags.Contains(t.Name)).ToList();
             foreach (var tag in tagsToRemove)
             {
                 product.Tags.Remove(tag);
             }
 
-            // Add tags that are in the new list but not in the product's tags
             var currentTagNames = product.Tags.Select(t => t.Name).ToList();
             var tagsToAdd = dto.Tags.Where(t => !currentTagNames.Contains(t)).ToList();
 
@@ -216,18 +313,9 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         }
 
         // ── Image handling ────────────────────────────────────────────
-        // We avoid touching product.Images.Remove() or .Add() because
-        // modifying the navigation collection triggers EF Core's
-        // relationship fixup, which corrupts change-tracker states.
-        // Instead, we operate directly on the DbContext entries.
-
-        // Track IDs of images that existed in the DB before this update
         var originalImageIds = product.Images.Select(i => i.Id).ToHashSet();
-
-        // Track IDs of newly added images so we DON'T reset them to Unchanged
         var newImageIds = new HashSet<Guid>();
 
-        // 1. Delete images that should be removed
         var removedImageIds = new HashSet<Guid>();
         if (dto.RemoveImageIds != null && dto.RemoveImageIds.Any())
         {
@@ -243,7 +331,6 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             }
         }
 
-        // 2. Add new images directly to the context (not the collection)
         if (dto.NewImages != null && dto.NewImages.Any())
         {
             bool hasRemainingImages = product.Images
@@ -266,14 +353,8 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             }
         }
 
-        // 3. Trigger DetectChanges so Product/Tag property changes are
-        //    picked up by the change tracker. NOTE: This also causes
-        //    relationship fixup which adds new images into product.Images.
         _productRepository.ForceDetectChanges();
 
-        // 4. Force ONLY pre-existing (non-removed) images to Unchanged.
-        //    CRITICAL: Skip new images — they must keep their Added state
-        //    so that SaveChanges generates INSERT statements for them.
         foreach (var image in product.Images)
         {
             if (originalImageIds.Contains(image.Id) && !removedImageIds.Contains(image.Id))
@@ -282,8 +363,6 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             }
         }
 
-        // 5. Disable auto-detect so SaveChangesAsync won't re-evaluate
-        //    and override our explicit state assignments above.
         _productRepository.DisableAutoDetectChanges();
         try
         {
@@ -297,6 +376,84 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         return await GetProduct(product.Id);
     }
 
+
+    /// <summary>
+    /// Creates or updates a ProductDraft for a live product. The live product remains unchanged.
+    /// </summary>
+    private async Task<Result<ProductResponseDto>> CreateOrUpdateDraft(Product product, UpdateProductDto dto)
+    {
+        // Find existing pending draft or create new one
+        var draft = await _productRepository.GetPendingDraftByProductIdAsync(product.Id);
+        bool isNewDraft = draft == null;
+
+        if (isNewDraft)
+        {
+            draft = new ProductDraft
+            {
+                Id = Guid.NewGuid(),
+                ProductId = product.Id,
+                Status = DraftStatus.PendingReview
+            };
+        }
+
+        // Populate draft fields from DTO
+        if (dto.TitleEn != null) draft!.TitleEn = dto.TitleEn;
+        if (dto.TitleAr != null) draft!.TitleAr = dto.TitleAr;
+        if (dto.DescriptionEn != null) draft!.DescriptionEn = dto.DescriptionEn;
+        if (dto.DescriptionAr != null) draft!.DescriptionAr = dto.DescriptionAr;
+        if (dto.Price.HasValue) draft!.Price = dto.Price.Value;
+        if (dto.DiscountPrice.HasValue) draft!.DiscountPrice = dto.DiscountPrice.Value;
+        if (dto.Quantity.HasValue) draft!.Quantity = dto.Quantity.Value;
+        if (dto.CategoryId.HasValue) draft!.CategoryId = dto.CategoryId.Value;
+
+        // Serialize tags
+        if (dto.Tags != null)
+            draft!.ProposedTagsJson = JsonSerializer.Serialize(dto.Tags);
+
+        // Handle image uploads — upload immediately, store URLs in draft
+        if (dto.NewImages != null && dto.NewImages.Any())
+        {
+            var newUrls = new List<string>();
+            // Preserve any previously uploaded draft images
+            if (!string.IsNullOrEmpty(draft!.NewImageUrlsJson))
+            {
+                var existing = JsonSerializer.Deserialize<List<string>>(draft.NewImageUrlsJson);
+                if (existing != null) newUrls.AddRange(existing);
+            }
+
+            foreach (var file in dto.NewImages)
+            {
+                var imageUrl = await _fileService.UploadFileAsync(file, "products");
+                newUrls.Add(imageUrl);
+            }
+            draft.NewImageUrlsJson = JsonSerializer.Serialize(newUrls);
+        }
+
+        // Serialize image removal IDs
+        if (dto.RemoveImageIds != null && dto.RemoveImageIds.Any())
+        {
+            var removeIds = new List<Guid>();
+            if (!string.IsNullOrEmpty(draft!.RemoveImageIdsJson))
+            {
+                var existing = JsonSerializer.Deserialize<List<Guid>>(draft.RemoveImageIdsJson);
+                if (existing != null) removeIds.AddRange(existing);
+            }
+            removeIds.AddRange(dto.RemoveImageIds);
+            draft.RemoveImageIdsJson = JsonSerializer.Serialize(removeIds.Distinct().ToList());
+        }
+
+        draft!.UpdatedAt = DateTime.UtcNow;
+
+        if (isNewDraft)
+            await _productRepository.AddDraftAsync(draft);
+
+        await _unitOfWork.SaveChangesAsync();
+
+        return await GetProduct(product.Id);
+    }
+
+
+
     public async Task<Result> DeleteProduct(Guid id)
     {
         var product = await _productRepository.GetByIdAsync(id);
@@ -307,6 +464,153 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         await _productRepository.SoftDeleteAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
+        return Result.Success();
+    }
+
+    public async Task<Result> ApproveProductAsync(Guid productId)
+    {
+        var product = await _productRepository.GetByIdAsync(productId);
+        if (product == null)
+            return Result.Failure("Product not found");
+
+        product.IsActive = true;
+        // Optionally update Status to Active
+        product.Status = ProductStatus.Active;
+
+        await _unitOfWork.SaveChangesAsync();
+        return Result.Success();
+    }
+
+    public async Task<Result> RejectProductAsync(Guid productId)
+    {
+        var product = await _productRepository.GetByIdAsync(productId);
+        if (product == null)
+            return Result.Failure("Product not found");
+
+        product.IsActive = false;
+        product.Status = ProductStatus.Inactive;
+
+        await _unitOfWork.SaveChangesAsync();
+        return Result.Success();
+    }
+
+    public async Task<Result> ApproveDraftAsync(Guid productId)
+    {
+        var product = await _productRepository.GetProductByIDWithDetailsAsync(productId);
+        if (product == null)
+            return Result.Failure("Product not found");
+
+        var draft = await _productRepository.GetPendingDraftByProductIdAsync(productId);
+        if (draft == null)
+            return Result.Failure("No pending draft found for this product");
+
+        // Copy non-null draft fields onto the live product
+        if (draft.TitleEn != null) product.TitleEn = draft.TitleEn;
+        if (draft.TitleAr != null) product.TitleAr = draft.TitleAr;
+        if (draft.DescriptionEn != null) product.DescriptionEn = draft.DescriptionEn;
+        if (draft.DescriptionAr != null) product.DescriptionAr = draft.DescriptionAr;
+        if (draft.Price.HasValue) product.Price = draft.Price.Value;
+        if (draft.DiscountPrice.HasValue) product.DiscountPrice = draft.DiscountPrice.Value;
+        if (draft.Quantity.HasValue)
+        {
+            product.Quantity = draft.Quantity.Value;
+            product.IsOnePiece = draft.Quantity.Value == 1;
+        }
+        if (draft.CategoryId.HasValue) product.CategoryId = draft.CategoryId.Value;
+
+        product.UpdatedAt = DateTime.UtcNow;
+
+        // Apply tag changes
+        if (!string.IsNullOrEmpty(draft.ProposedTagsJson))
+        {
+            var proposedTags = JsonSerializer.Deserialize<List<string>>(draft.ProposedTagsJson) ?? new List<string>();
+
+            // Remove tags not in proposed list
+            var tagsToRemove = product.Tags.Where(t => !proposedTags.Contains(t.Name)).ToList();
+            foreach (var tag in tagsToRemove)
+                product.Tags.Remove(tag);
+
+            // Add new tags
+            var currentTagNames = product.Tags.Select(t => t.Name).ToList();
+            var tagsToAdd = proposedTags.Where(t => !currentTagNames.Contains(t)).ToList();
+            if (tagsToAdd.Any())
+            {
+                var tagRepo = _unitOfWork.Repository<Tag, Guid>();
+                var existingTags = await tagRepo.GetAllAsync();
+                var existingTagList = await existingTags.Where(t => tagsToAdd.Contains(t.Name)).ToListAsync();
+
+                foreach (var tagName in tagsToAdd)
+                {
+                    var tag = existingTagList.FirstOrDefault(t => t.Name == tagName);
+                    if (tag == null)
+                    {
+                        tag = new Tag { Id = Guid.NewGuid(), Name = tagName };
+                        await tagRepo.AddAsync(tag);
+                    }
+                    product.Tags.Add(tag);
+                }
+            }
+        }
+
+        // Apply image removals
+        if (!string.IsNullOrEmpty(draft.RemoveImageIdsJson))
+        {
+            var removeIds = JsonSerializer.Deserialize<List<Guid>>(draft.RemoveImageIdsJson) ?? new List<Guid>();
+            var imagesToRemove = product.Images.Where(i => removeIds.Contains(i.Id)).ToList();
+            foreach (var image in imagesToRemove)
+            {
+                await _fileService.DeleteFileAsync(image.ImageUrl);
+                _productRepository.RemoveProductImage(image);
+            }
+        }
+
+        // Apply new images
+        if (!string.IsNullOrEmpty(draft.NewImageUrlsJson))
+        {
+            var newUrls = JsonSerializer.Deserialize<List<string>>(draft.NewImageUrlsJson) ?? new List<string>();
+            bool hasRemainingImages = product.Images.Any();
+
+            foreach (var url in newUrls)
+            {
+                var newImage = new ProductImage
+                {
+                    Id = Guid.NewGuid(),
+                    ImageUrl = url,
+                    IsMain = !hasRemainingImages,
+                    ProductId = product.Id
+                };
+                _productRepository.AddProductImage(newImage);
+                hasRemainingImages = true;
+            }
+        }
+
+        // Delete the draft
+        _productRepository.RemoveDraft(draft);
+
+        await _unitOfWork.SaveChangesAsync();
+        return Result.Success();
+    }
+
+    public async Task<Result> RejectDraftAsync(Guid productId)
+    {
+        var draft = await _productRepository.GetPendingDraftByProductIdAsync(productId);
+        if (draft == null)
+            return Result.Failure("No pending draft found for this product");
+
+        // Clean up any images that were uploaded for this draft
+        if (!string.IsNullOrEmpty(draft.NewImageUrlsJson))
+        {
+            var newUrls = JsonSerializer.Deserialize<List<string>>(draft.NewImageUrlsJson) ?? new List<string>();
+            foreach (var url in newUrls)
+            {
+                await _fileService.DeleteFileAsync(url);
+            }
+        }
+
+        // Delete the draft
+        _productRepository.RemoveDraft(draft);
+
+        await _unitOfWork.SaveChangesAsync();
         return Result.Success();
     }
 }

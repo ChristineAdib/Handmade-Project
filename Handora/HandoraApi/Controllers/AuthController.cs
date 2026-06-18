@@ -47,7 +47,7 @@ namespace HandoraApi.Controllers
             CancellationToken ct)
         {
             await _authService.ResendOtpAsync(dto, ct);
-            return Ok(ApiResponse<object>.Ok(null, "OTP resent successfully. Check your email."));
+            return Ok(ApiResponse<object>.Ok(null!, "OTP resent successfully. Check your email."));
         }
 
         [HttpPost("login")]
@@ -101,7 +101,7 @@ namespace HandoraApi.Controllers
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
             await _authService.DeleteUserAsync(id, ct);
-            return Ok(ApiResponse<object>.Ok(null, "User deleted successfully."));
+            return Ok(ApiResponse<object>.Ok(null!, "User deleted successfully."));
         }
 
         [HttpPost("forgot-password")]

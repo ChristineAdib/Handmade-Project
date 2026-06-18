@@ -1,0 +1,337 @@
+﻿@model HandoraMVC.ViewModels.ShopFullViewModel
+
+@{
+    ViewData["Title"] = "Shop Details";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <a asp-action="Index" class="btn-secondary">← Back to Shops</a>
+</div>
+
+<!-- Header -->
+<div class="shop-header">
+    @if (!string.IsNullOrEmpty(Model.Logo))
+    {
+        <img src="@Model.Logo" alt="@Model.Name" class="shop-header-logo" />
+    }
+    else
+    {
+        <div class="shop-header-logo-placeholder">
+            <i class="ti ti-store" aria-hidden="true"></i>
+        </div>
+    }
+    <div>
+        <h2 style="margin:0;font-size:20px">@Model.Name</h2>
+        <div style="font-size:13px;color:#888;margin-top:4px">by @Model.OwnerName</div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:4px">
+            <i class="ti ti-star-filled" style="font-size:14px;color:#c4956a" aria-hidden="true"></i>
+            <span style="font-weight:500">@Model.Rating.ToString("F1")</span>
+            <span style="color:#bbb;font-size:12px">(@Model.ReviewCount reviews)</span>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.DescriptionEn))
+{
+    <div class="detail-card" style="margin-bottom:20px">
+        <h3>Description</h3>
+        <p style="font-size:13px;color:#555;margin-top:6px;line-height:1.6">@Model.DescriptionEn</p>
+        @if (!string.IsNullOrEmpty(Model.DescriptionAr))
+        {
+            <p style="font-size:13px;color:#555;margin-top:6px;line-height:1.6;direction:rtl">@Model.DescriptionAr</p>
+        }
+    </div>
+}
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Total Products</div>
+                <div class="stat-val">@Model.ProductCount</div>
+            </div>
+            <i class="ti ti-package stat-icon" aria-hidden="true"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Active Products</div>
+                <div class="stat-val">@Model.ActiveProductCount</div>
+            </div>
+            <i class="ti ti-check stat-icon" aria-hidden="true"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Total Orders</div>
+                <div class="stat-val">@Model.OrderTotalPages.ToString()</div>
+            </div>
+            <i class="ti ti-shopping-bag stat-icon" aria-hidden="true"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-row">
+            <div>
+                <div class="stat-label">Total Sales</div>
+                <div class="stat-val">@Model.TotalSales.ToString("C")</div>
+            </div>
+            <i class="ti ti-coin stat-icon" aria-hidden="true"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="shop-tabs">
+    <a asp-action="Details" asp-route-id="@Model.Id" asp-route-tab="products"
+       class="shop-tab @(Model.ActiveTab == "products" ? "active" : "")">
+        <i class="ti ti-package" aria-hidden="true"></i> Products
+    </a>
+    <a asp-action="Details" asp-route-id="@Model.Id" asp-route-tab="orders"
+       class="shop-tab @(Model.ActiveTab == "orders" ? "active" : "")">
+        <i class="ti ti-shopping-bag" aria-hidden="true"></i> Orders
+    </a>
+    <a asp-action="Details" asp-route-id="@Model.Id" asp-route-tab="earnings"
+       class="shop-tab @(Model.ActiveTab == "earnings" ? "active" : "")">
+        <i class="ti ti-coin" aria-hidden="true"></i> Earnings
+    </a>
+    <a asp-action="Details" asp-route-id="@Model.Id" asp-route-tab="reviews"
+       class="shop-tab @(Model.ActiveTab == "reviews" ? "active" : "")">
+        <i class="ti ti-star" aria-hidden="true"></i> Reviews
+    </a>
+    <a asp-action="Details" asp-route-id="@Model.Id" asp-route-tab="followers"
+       class="shop-tab @(Model.ActiveTab == "followers" ? "active" : "")">
+        <i class="ti ti-users" aria-hidden="true"></i> Followers
+    </a>
+    <a asp-action="Details" asp-route-id="@Model.Id" asp-route-tab="chat"
+       class="shop-tab @(Model.ActiveTab == "chat" ? "active" : "")">
+        <i class="ti ti-message" aria-hidden="true"></i> Chat
+    </a>
+</div>
+
+<!-- Tab Content -->
+<div class="table-card">
+    @if (Model.ActiveTab == "products")
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Qty</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Products.Any())
+                {
+                    <tr><td colspan="5" style="text-align:center;color:#bbb;padding:24px">No products yet</td></tr>
+                }
+                @foreach (var p in Model.Products)
+                {
+                    <tr>
+                        <td>
+                            <div class="product-cell">
+                                @if (!string.IsNullOrEmpty(p.MainImageUrl))
+                                {
+                                    <img src="@p.MainImageUrl" alt="@p.TitleEn" class="cat-img" />
+                                }
+                                else
+                                {
+                                    <div class="cat-img-placeholder"><i class="ti ti-package" aria-hidden="true"></i></div>
+                                }
+                                <span>@p.TitleEn</span>
+                            </div>
+                        </td>
+                        <td>@p.CategoryNameEn</td>
+                        <td>
+                            @if (p.DiscountPrice.HasValue)
+                            {
+                                <span style="color:#a32d2d;margin-right:4px">@p.DiscountPrice.Value.ToString("C")</span>
+                                <span style="text-decoration:line-through;color:#bbb;font-size:11px">@p.Price.ToString("C")</span>
+                            }
+                            else
+                            {
+                                @p.Price.ToString("C")
+                            }
+                        </td>
+                        <td>@p.Quantity</td>
+                        <td>
+                            @{
+                                var pBadge = p.Status.ToString() switch
+                                {
+                                    "Active" => "badge-complete",
+                                    "PendingApproval" => "badge-pending",
+                                    "Rejected" => "badge-cancelled",
+                                    _ => "badge-processing"
+                                };
+                            }
+                            <span class="badge @pBadge">@p.Status</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.ProductTotalPages > 1)
+        {
+            <div class="pagination">
+                @for (int i = 1; i <= Model.ProductTotalPages; i++)
+                {
+                    <a asp-action="Details" asp-route-id="@Model.Id" asp-route-tab="products"
+                       asp-route-productPage="@i"
+                       class="page-btn @(i == Model.ProductPage ? "active" : "")">@i</a>
+                }
+            </div>
+        }
+    }
+    else if (Model.ActiveTab == "orders")
+    {
+        <div class="filter-bar" style="padding:14px 16px 0">
+            <form method="get">
+                <input type="hidden" name="tab" value="orders" />
+                <select name="orderStatus" onchange="this.form.submit()" class="filter-select">
+                    <option value="">All Statuses</option>
+                    @foreach (var s in Model.OrderStatusOptions)
+                    {
+                        <option value="@s.Value" selected="@s.Selected">@s.Text</option>
+                    }
+                </select>
+            </form>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Orders.Any())
+                {
+                    <tr><td colspan="7" style="text-align:center;color:#bbb;padding:24px">No orders yet</td></tr>
+                }
+                @foreach (var o in Model.Orders)
+                {
+                    <tr>
+                        <td><code style="font-size:11px;color:#888">@o.Id.ToString()[..8]...</code></td>
+                        <td>@o.OrderDate.ToString("MMM dd, yyyy")</td>
+                        <td><span class="badge @("badge-" + o.Status.ToLower())">@o.Status</span></td>
+                        <td><span class="badge @("badge-" + o.PaymentStatus.ToLower())">@o.PaymentStatus</span></td>
+                        <td>@o.ItemCount</td>
+                        <td>@o.Total.ToString("C")</td>
+                        <td>
+                            <a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id" class="btn-edit">View</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.OrderTotalPages > 1)
+        {
+            <div class="pagination">
+                @for (int i = 1; i <= Model.OrderTotalPages; i++)
+                {
+                    <a asp-action="Details" asp-route-id="@Model.Id" asp-route-tab="orders"
+                       asp-route-orderPage="@i" asp-route-orderStatus="@Model.SelectedOrderStatus"
+                       class="page-btn @(i == Model.OrderPage ? "active" : "")">@i</a>
+                }
+            </div>
+        }
+    }
+    else if (Model.ActiveTab == "earnings")
+    {
+        <div style="padding:40px;text-align:center;color:#bbb">
+            <i class="ti ti-coin" style="font-size:32px" aria-hidden="true"></i>
+            <p style="margin-top:8px;font-size:13px">Earnings & payouts coming soon</p>
+        </div>
+    }
+    else if (Model.ActiveTab == "reviews")
+    {
+        <div style="padding:40px;text-align:center;color:#bbb">
+            <i class="ti ti-star" style="font-size:32px" aria-hidden="true"></i>
+            <p style="margin-top:8px;font-size:13px">Reviews coming soon</p>
+        </div>
+    }
+    else if (Model.ActiveTab == "followers")
+    {
+        <div style="padding:40px;text-align:center;color:#bbb">
+            <i class="ti ti-users" style="font-size:32px" aria-hidden="true"></i>
+            <p style="margin-top:8px;font-size:13px">Followers coming soon</p>
+        </div>
+    }
+    else if (Model.ActiveTab == "chat")
+    {
+        <div style="padding:40px;text-align:center;color:#bbb">
+            <i class="ti ti-message" style="font-size:32px" aria-hidden="true"></i>
+            <p style="margin-top:8px;font-size:13px">Chat feature coming soon</p>
+        </div>
+    }
+</div>
+
+<style>
+    .shop-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .shop-header-logo {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        object-fit: cover;
+    }
+
+    .shop-header-logo-placeholder {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        background: #f5ede4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        color: #c4956a;
+    }
+
+    .shop-tabs {
+        display: flex;
+        gap: 4px;
+        border-bottom: 0.5px solid #e8e0d8;
+        margin-bottom: 16px;
+    }
+
+    .shop-tab {
+        padding: 10px 16px;
+        font-size: 13px;
+        color: #888;
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .shop-tab:hover {
+            color: #7a5433;
+        }
+
+        .shop-tab.active {
+            color: #7a5433;
+            border-bottom-color: #c4956a;
+            font-weight: 500;
+        }
+</style>
