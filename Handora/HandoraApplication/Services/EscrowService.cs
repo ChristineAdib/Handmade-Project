@@ -66,8 +66,7 @@ public class EscrowService : IEscrowService
             var commissionAmount = _commissionService.CalculateCommission(grossAmount, shop.CommissionRate);
             var netAmount = _commissionService.CalculateSellerNet(grossAmount, commissionAmount);
 
-            // Create balance transaction (held in escrow)
-            var holdPeriodDays = 0;
+            // Create balance transaction (released immediately)
             var transaction = new SellerBalanceTransaction
             {
                 SellerId = shop.OwnerId,
@@ -77,8 +76,9 @@ public class EscrowService : IEscrowService
                 CommissionAmount = commissionAmount,
                 NetAmount = netAmount,
                 Type = BalanceTransactionType.Sale,
-                IsReleased = false,
-                HoldUntil = DateTime.UtcNow.AddDays(holdPeriodDays)
+                IsReleased = true,
+                ReleasedAt = DateTime.UtcNow,
+                HoldUntil = DateTime.UtcNow
             };
 
             var transactionRepo = _unitOfWork.Repository<SellerBalanceTransaction, Guid>();
@@ -90,18 +90,19 @@ public class EscrowService : IEscrowService
             order.SellerAmount = netAmount;
             order.PlatformCommission = commissionAmount;
             order.TotalAmount = grossAmount;
+            order.IsFundsReleased = true;
 
             await ordersRepo.UpdateAsync(order);
 
-            // Update shop pending balance
-            shop.PendingBalance += netAmount;
+            // Update shop Available balance directly
+            shop.AvailableBalance += netAmount;
             await shopsRepo.UpdateAsync(shop);
 
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation(
-                "Delivery recorded for order {OrderId}. Net amount {NetAmount} held until {HoldUntil}",
-                order.Id, netAmount, transaction.HoldUntil);
+                "Delivery recorded for order {OrderId}. Net amount {NetAmount} released immediately to shop {ShopId}",
+                order.Id, netAmount, shop.Id);
 
             return Result.Success();
         }

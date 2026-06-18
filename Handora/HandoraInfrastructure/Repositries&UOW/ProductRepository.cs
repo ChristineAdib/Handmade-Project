@@ -17,6 +17,7 @@ public class ProductRepository(AppDbContext context)
             .Include(p => p.Shop)
             .Include(p => p.Images)
             .Include(p => p.Tags)
+            .Include(p => p.PendingDraft)
             .Include(p => p.Reviews.OrderByDescending(r => r.CreatedAt).Take(5))
                 .ThenInclude(r => r.User)
             .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
@@ -70,5 +71,24 @@ public class ProductRepository(AppDbContext context)
     public void EnableAutoDetectChanges()
     {
         _context.ChangeTracker.AutoDetectChangesEnabled = true;
+    }
+
+    // Draft operations
+    public async Task<ProductDraft?> GetPendingDraftByProductIdAsync(Guid productId)
+    {
+        return await _context.ProductDrafts
+            .FirstOrDefaultAsync(d => d.ProductId == productId
+                && d.Status == DraftStatus.PendingReview
+                && !d.IsDeleted);
+    }
+
+    public async Task AddDraftAsync(ProductDraft draft)
+    {
+        await _context.ProductDrafts.AddAsync(draft);
+    }
+
+    public void RemoveDraft(ProductDraft draft)
+    {
+        _context.ProductDrafts.Remove(draft);
     }
 }
