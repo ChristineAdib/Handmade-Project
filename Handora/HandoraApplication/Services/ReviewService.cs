@@ -6,12 +6,14 @@ using HandoraDomain.Interfaces;
 using HandoraDomain.Models.ProductEntities;
 using HandoraDomain.Models.OrderEntity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HandoraApplication.Services;
 
-public class ReviewService(IUnitOfWork unitOfWork) : IReviewService
+public class ReviewService(IUnitOfWork unitOfWork, IServiceScopeFactory scopeFactory) : IReviewService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
 
     public async Task<Result<ReviewResponseDto>> GetReviewById(Guid id)
     {
@@ -134,7 +136,27 @@ public class ReviewService(IUnitOfWork unitOfWork) : IReviewService
         await productRepo.UpdateAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
-        // 7. Get review with user details
+        // 7. Check if AI Summarization should be triggered (threshold: exactly 5 new verified reviews)
+        var summaryRepo = _unitOfWork.Repository<ProductReviewSummary, Guid>();
+        var summaryQuery = await summaryRepo.GetAllAsNoTracking();
+        var summary = await summaryQuery.FirstOrDefaultAsync(s => s.ProductId == dto.ProductId);
+
+        DateTime lastUpdated = summary?.LastUpdated ?? DateTime.MinValue;
+
+        var verifiedReviewsQuery = await reviewRepo.GetAllAsNoTracking();
+        var newVerifiedReviewsCount = await verifiedReviewsQuery
+            .CountAsync(r => r.ProductId == dto.ProductId 
+                          && r.IsVerifiedPurchase 
+                          && r.IsApproved 
+                          && r.CreatedAt > lastUpdated);
+
+        if (newVerifiedReviewsCount == 5)
+        {
+            // Fire-and-forget background execution to avoid blocking the HTTP thread
+            _ = Task.Run(async () => await SummarizeProductReviewsAsync(dto.ProductId, _scopeFactory));
+        }
+
+        // 8. Get review with user details
         var savedQuery = await reviewRepo.GetAllAsNoTracking();
         var savedReview = await savedQuery
             .Include(r => r.User)
@@ -335,5 +357,89 @@ public class ReviewService(IUnitOfWork unitOfWork) : IReviewService
             IsEligible = true,
             AlreadyReviewed = false
         });
+    }
+
+    private static async Task SummarizeProductReviewsAsync(Guid productId, IServiceScopeFactory scopeFactory)
+    {
+        try
+        {
+            using var scope = scopeFactory.CreateScope();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var aiReviewService = scope.ServiceProvider.GetRequiredService<IAiReviewService>();
+            
+            // 1. Fetch the existing ProductReviewSummary first
+            var summaryRepo = unitOfWork.Repository<ProductReviewSummary, Guid>();
+            var summaryQuery = await summaryRepo.GetAllAsync();
+            var summary = await summaryQuery.FirstOrDefaultAsync(s => s.ProductId == productId);
+
+            DateTime lastUpdated = summary?.LastUpdated ?? DateTime.MinValue;
+
+            // 2. Fetch exactly 5 new verified and approved reviews (CreatedAt > LastUpdated)
+            var reviewRepo = unitOfWork.Repository<Review, Guid>();
+            var reviewsQuery = await reviewRepo.GetAllAsNoTracking();
+            var newReviews = await reviewsQuery
+                .Where(r => r.ProductId == productId 
+                         && r.IsVerifiedPurchase 
+                         && r.IsApproved 
+                         && r.CreatedAt > lastUpdated)
+                .OrderBy(r => r.CreatedAt)
+                .Take(5)
+                .ToListAsync();
+
+            if (newReviews.Count < 5)
+            {
+                // Safety check: if there aren't at least 5 new reviews to summarize, skip
+                return;
+            }
+
+            // Extract review comments formatted for prompt input
+            var newReviewsText = newReviews
+                .Select(r => $"[Rating: {r.Rating}/5] {r.Comment ?? "(No comment left)"}")
+                .ToList();
+
+            // 3. Call the AI Review Service with the existing summary context and the 5 new reviews
+            var aiResult = await aiReviewService.GenerateSummaryAsync(
+                summary?.OverallSummary,
+                summary?.Pros,
+                summary?.Cons,
+                newReviewsText
+            );
+
+            // Serialize lists back to JSON strings for database storage
+            var prosJson = System.Text.Json.JsonSerializer.Serialize(aiResult.Pros);
+            var consJson = System.Text.Json.JsonSerializer.Serialize(aiResult.Cons);
+
+            // Determine the latest CreatedAt among the processed reviews to set as the new LastUpdated threshold
+            var latestReviewDate = newReviews.Max(r => r.CreatedAt);
+
+            // 4. Map the returned result to update the ProductReviewSummary entity
+            if (summary == null)
+            {
+                summary = new ProductReviewSummary
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = productId,
+                    OverallSummary = aiResult.OverallSummary,
+                    Pros = prosJson,
+                    Cons = consJson,
+                    LastUpdated = latestReviewDate
+                };
+                await summaryRepo.AddAsync(summary);
+            }
+            else
+            {
+                summary.OverallSummary = aiResult.OverallSummary;
+                summary.Pros = prosJson;
+                summary.Cons = consJson;
+                summary.LastUpdated = latestReviewDate;
+                await summaryRepo.UpdateAsync(summary);
+            }
+
+            await unitOfWork.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ReviewService] Error during AI review summarization background task: {ex.Message}");
+        }
     }
 }
