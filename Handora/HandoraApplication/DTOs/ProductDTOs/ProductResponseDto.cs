@@ -42,6 +42,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
 
 
         public List<ReviewSummaryDto> LatestReviews { get; set; }
+        public AiReviewSummaryDto? AiSummary { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
@@ -52,5 +53,12 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public bool IsAvailable { get; set; }
         public int StockQuantity { get; set; }
         public bool IsSoldOut { get; set; }
+    }
+
+    public record AiReviewSummaryDto
+    {
+        public string OverallSummary { get; set; } = string.Empty;
+        public List<string> Pros { get; set; } = new();
+        public List<string> Cons { get; set; } = new();
     }
 }
