@@ -21,7 +21,9 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public decimal FinalPrice => DiscountPrice ?? Price; // calculated
 
         public int Quantity { get; set; }
+        public bool IsOnePiece { get; set; }
         public string Status { get; set; } // "Active", "Inactive", "OutOfStock"
+        public bool IsActive { get; set; }
 
         public decimal AverageRating { get; set; }
         public int ReviewCount { get; set; }
@@ -43,6 +45,9 @@ namespace HandoraApplication.DTOs.ProductDTOs
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public ProductDraftResponseDto? PendingDraft { get; set; }
+        public bool HasPendingDraft => PendingDraft != null;
+
 
         public bool IsAvailable { get; set; }
         public int StockQuantity { get; set; }

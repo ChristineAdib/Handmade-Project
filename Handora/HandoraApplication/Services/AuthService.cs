@@ -1,5 +1,6 @@
 using HandoraApplication.DTOs.AuthDTOs;
 using HandoraApplication.Helpers.AuthHelper;
+using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.AppUser;
@@ -457,6 +458,65 @@ namespace HandoraApplication.Services
             }
 
             return await BuildAuthResponseAsync(user);
+        }
+
+        public async Task<IEnumerable<GetUserDto>> GetUsersFilteredAsync(string? role = null, bool? isActive = null, CancellationToken ct = default)
+        {
+            IEnumerable<User> users;
+            if (!string.IsNullOrEmpty(role))
+            {
+                users = await _authRepo.GetUsersInRoleAsync(role, ct);
+            }
+            else
+            {
+                users = await _authRepo.GetAllAsync(ct);
+            }
+
+            if (isActive.HasValue)
+            {
+                users = users.Where(u => u.IsActive == isActive.Value);
+            }
+
+            var result = new List<GetUserDto>();
+            foreach (var user in users)
+            {
+                var roles = await _authRepo.GetRolesAsync(user);
+                result.Add(MapToDto(user, roles));
+            }
+
+            return result;
+        }
+
+        public async Task<Result> UpgradeToSellerAsync(string userId)
+        {
+            var user = await _authRepo.GetByIdAsync(userId);
+            if (user is null)
+                return Result.Failure("User not found.");
+
+            var roles = await _authRepo.GetRolesAsync(user);
+            if (roles.Contains(AppRoles.Seller))
+                return Result.Failure("User is already a Seller.");
+
+            await _authRepo.AddToRoleAsync(user, AppRoles.Seller);
+            return Result.Success();
+        }
+
+        public async Task<Result> ToggleUserBanStatusAsync(string userId)
+        {
+            var user = await _authRepo.GetByIdAsync(userId);
+            if (user is null)
+                return Result.Failure("User not found.");
+
+            user.IsBanned = !user.IsBanned;
+            user.UpdatedAt = DateTime.UtcNow;
+            
+            var result = await _authRepo.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+            }
+
+            return Result.Success();
         }
     }
 }

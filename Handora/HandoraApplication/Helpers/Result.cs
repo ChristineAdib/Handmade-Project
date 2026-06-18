@@ -20,7 +20,7 @@ public class Result<T>
 
     public static Result<T> Failure(params string[] errors)
     {
-        return new Result<T>(false, default, [.. errors]);
+        return new Result<T>(false, default, errors);
     }
 }
 public class Result
@@ -41,6 +41,6 @@ public class Result
 
     public static Result Failure(params string[] errors)
     {
-        return new Result(false, [.. errors]);
+        return new Result(false, errors);
     }
 }

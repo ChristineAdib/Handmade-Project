@@ -954,10 +954,16 @@ namespace HandoraInfrastructure.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("IsOnePiece")
+                        .HasColumnType("bit");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
@@ -999,6 +1005,91 @@ namespace HandoraInfrastructure.Migrations
                     b.HasIndex("ShopId");
 
                     b.ToTable("Products", (string)null);
+                });
+
+            modelBuilder.Entity("HandoraDomain.Models.ProductEntities.ProductDraft", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DescriptionAr")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("DescriptionEn")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<decimal?>("DiscountPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("NewImageUrlsJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<decimal?>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProposedTagsJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<int?>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RemoveImageIdsJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TitleAr")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("TitleEn")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId")
+                        .IsUnique();
+
+                    b.HasIndex("ProductId", "Status");
+
+                    b.ToTable("ProductDrafts", (string)null);
                 });
 
             modelBuilder.Entity("HandoraDomain.Models.ProductEntities.ProductImage", b =>
@@ -1115,8 +1206,17 @@ namespace HandoraInfrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccountHolderName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccountNumber")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("AvailableBalance")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("BankName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("CommissionRate")
                         .HasColumnType("decimal(18,2)");
@@ -1950,6 +2050,17 @@ namespace HandoraInfrastructure.Migrations
                     b.Navigation("Shop");
                 });
 
+            modelBuilder.Entity("HandoraDomain.Models.ProductEntities.ProductDraft", b =>
+                {
+                    b.HasOne("HandoraDomain.Models.ProductEntities.Product", "Product")
+                        .WithOne("PendingDraft")
+                        .HasForeignKey("HandoraDomain.Models.ProductEntities.ProductDraft", "ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("HandoraDomain.Models.ProductEntities.ProductImage", b =>
                 {
                     b.HasOne("HandoraDomain.Models.ProductEntities.Product", "Product")
@@ -2153,6 +2264,8 @@ namespace HandoraInfrastructure.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("OrderItems");
+
+                    b.Navigation("PendingDraft");
 
                     b.Navigation("Reviews");
 

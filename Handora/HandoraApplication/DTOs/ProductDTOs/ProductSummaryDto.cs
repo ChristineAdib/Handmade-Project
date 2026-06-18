@@ -1,3 +1,7 @@
+
+using HandoraDomain.Models.ProductEntities;
+
+using HandoraDomain.Models.ProductEntities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +23,10 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public int ReviewCount { get; set; }
         public string CategoryNameEn { get; set; } = string.Empty;
         public string ShopName { get; set; } = string.Empty;
+        public ProductStatus Status { get; set; }
+        public bool IsActive { get; set; }
         public int Quantity { get; set; }
+        public bool IsOnePiece { get; set; }
 
     }
 }
