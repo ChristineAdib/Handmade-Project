@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.Common;
+using HandoraApplication.DTOs.Common;
 using HandoraDomain.Models.ProductEntities;
 using System;
 using System.Collections.Generic;
@@ -17,8 +17,10 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public decimal? MaxPrice { get; set; }
         public decimal? MinRating { get; set; }
         public ProductStatus? Status { get; set; }
+        public bool? IsAdmin { get; set; }
         public string? SortBy { get; set; }          // "price", "rating", "newest"
         public bool SortDescending { get; set; } = false;
+        public bool? OnlyOnePiece { get; set; }
         public List<string>? Tags { get; set; }
     }
 }

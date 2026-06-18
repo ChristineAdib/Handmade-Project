@@ -8,6 +8,7 @@ using HandoraDomain.Models.ProductEntities;
 using HandoraDomain.Models.ShopEntities;
 using HandoraDomain.Models.WishListEntoties;
 using Mapster;
+using System.Text.Json;
 
 namespace HandoraApplication.Mappers;
 
@@ -18,10 +19,14 @@ public class MapsterSettings
         TypeAdapterConfig<Product, ProductResponseDto>.NewConfig()
             .Map(dest => dest.CategoryNameEn, src => src.Category.NameEn)
             .Map(dest => dest.CategoryNameAr, src => src.Category.NameAr)
+            .Map(dest => dest.ParentCategoryId, src => src.Category.ParentId)
             .Map(dest => dest.ShopName, src => src.Shop.Name)
             .Map(dest => dest.Status, src => src.Status.ToString())
             .Map(dest => dest.Tags, src => src.Tags.Select(t => t.Name).ToList())
             .Map(dest => dest.Images, src => src.Images.Adapt<List<ProductImageDto>>())
+            .Map(dest => dest.IsAvailable, src => src.Quantity > 0 && src.Status == ProductStatus.Active)
+            .Map(dest => dest.StockQuantity, src => src.Quantity)
+            .Map(dest => dest.IsSoldOut, src => src.Quantity <= 0)
             .Map(dest => dest.LatestReviews, src => src.Reviews
                 .OrderByDescending(r => r.CreatedAt)
                 .Take(5)
@@ -58,6 +63,9 @@ public class MapsterSettings
             .Map(dest => dest.TitleAr, src => src.Product.TitleAr)
             .Map(dest => dest.Price, src => src.Product.Price)
             .Map(dest => dest.DiscountPrice, src => src.Product.DiscountPrice)
+            .Map(dest => dest.IsAvailable, src => src.Product.Quantity > 0 && src.Product.Status == ProductStatus.Active)
+            .Map(dest => dest.StockQuantity, src => src.Product.Quantity)
+            .Map(dest => dest.IsSoldOut, src => src.Product.Quantity <= 0)
             .Map(dest => dest.ImageUrl, src => src.Product.Images
                 .Where(i => i.IsMain)
                 .Select(i => i.ImageUrl)
@@ -66,6 +74,29 @@ public class MapsterSettings
         // Mapping for Coupon to CouponResponseDto
         TypeAdapterConfig<Coupon, CouponResponseDto>.NewConfig()
             .Map(dest => dest.DiscountType, src => src.DiscountType.ToString());
+
+        // Mapping for ProductDraft to ProductDraftResponseDto
+        TypeAdapterConfig<ProductDraft, ProductDraftResponseDto>.NewConfig()
+            .Map(dest => dest.DraftId, src => src.Id)
+            .Map(dest => dest.Status, src => src.Status.ToString())
+            .Map(dest => dest.ProposedTags, src =>
+                string.IsNullOrEmpty(src.ProposedTagsJson)
+                    ? null
+                    : JsonSerializer.Deserialize<List<string>>(src.ProposedTagsJson, (JsonSerializerOptions?)null))
+            .Map(dest => dest.NewImageUrls, src =>
+                string.IsNullOrEmpty(src.NewImageUrlsJson)
+                    ? null
+                    : JsonSerializer.Deserialize<List<string>>(src.NewImageUrlsJson, (JsonSerializerOptions?)null))
+            .Map(dest => dest.RemoveImageIds, src =>
+                string.IsNullOrEmpty(src.RemoveImageIdsJson)
+                    ? null
+                    : JsonSerializer.Deserialize<List<Guid>>(src.RemoveImageIdsJson, (JsonSerializerOptions?)null));
+
+        // Mapping for UpdateProductDto to Product
+        TypeAdapterConfig<UpdateProductDto, Product>.NewConfig()
+            .IgnoreNullValues(true)
+            .Ignore(dest => dest.Tags)
+            .Ignore(dest => dest.Images);
     }
 }
 

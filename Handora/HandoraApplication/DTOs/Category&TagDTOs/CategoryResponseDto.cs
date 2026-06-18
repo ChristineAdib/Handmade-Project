@@ -13,7 +13,7 @@ namespace HandoraApplication.DTOs.Category_TagDTOs
         public string NameAr { get; set; } = string.Empty;
         public string? ImageUrl { get; set; } 
         public Guid? ParentId { get; set; }
-        public List<CategorySummaryDto> SubCategories { get; set; } = [];
+        public List<CategorySummaryDto> SubCategories { get; set; } = new List<CategorySummaryDto>();
 
 
 
