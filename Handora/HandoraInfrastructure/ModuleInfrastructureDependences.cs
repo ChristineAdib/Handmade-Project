@@ -21,9 +21,7 @@ public static class ModuleInfrastructureDependences
         configuration.GetSection("Paymob"));
         service.AddScoped<IOtpRepository, OtpRepository>();
         service.AddScoped<IUserStatsRepository, UserStatsRepository>();
-        
         service.AddScoped<IAiReviewService, GeminiAiService>();
-        
         return service;
     }
 }

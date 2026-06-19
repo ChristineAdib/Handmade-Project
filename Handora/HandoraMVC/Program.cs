@@ -72,6 +72,10 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<UserManager<User>>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEscrowService, EscrowService>();
+builder.Services.AddScoped<IPayoutService, PayoutService>();
+builder.Services.AddScoped<ICommissionService, CommissionService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 builder.Services.AddScoped<IUserStatsRepository, UserStatsRepository>();
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
