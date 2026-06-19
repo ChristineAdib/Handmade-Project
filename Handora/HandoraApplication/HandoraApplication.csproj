@@ -20,6 +20,9 @@
     <PackageReference Include="Tokenizers.DotNet" Version="1.4.1" />
     <PackageReference Include="Tokenizers.DotNet.runtime.win-x64" Version="1.4.1" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="IServices\AI\" />
+  </ItemGroup>
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

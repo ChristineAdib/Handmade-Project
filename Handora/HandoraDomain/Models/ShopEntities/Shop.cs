@@ -30,6 +30,11 @@ namespace HandoraDomain.Models.ShopEntities
         public decimal TotalSales { get; set; } = 0;
         public bool IsVerified { get; set; } = false;   // [IMPROVEMENT] admin verifies shops before going live
 
+        // Bank Account / Payout Method (Simulation info)
+        public string? BankName { get; set; }
+        public string? AccountHolderName { get; set; }
+        public string? AccountNumber { get; set; }
+
         // FK — string because IdentityUser.Id is string
         public string OwnerId { get; set; } = string.Empty;
         public User Owner { get; set; } = null!;

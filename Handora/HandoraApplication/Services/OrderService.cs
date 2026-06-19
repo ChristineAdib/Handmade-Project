@@ -12,10 +12,11 @@ using HandoraDomain.Models.CouponEntities;
 
 namespace HandoraApplication.Services;
 
-public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWork) : IOrderService
+public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWork, IEscrowService escrowService) : IOrderService
 {
     private readonly IOrderRepository _orderRepository = orderRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IEscrowService _escrowService = escrowService;
 
     public async Task<Result<OrderResponseDto>> CreateOrder(string userId, string buyerEmail, CreateOrderDto dto)
     {
@@ -257,16 +258,12 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
         if (!isAdmin)
         {
-            var shopRepo = _unitOfWork.Repository<Shop, Guid>();
-            var shopQuery = await shopRepo.GetAllAsNoTracking();
-            var sellerShop = await shopQuery.FirstOrDefaultAsync(s => s.OwnerId == userId && !s.IsDeleted);
+            return Result<OrderResponseDto>.Failure("Only Admin is authorized to change order status");
+        }
 
-            if (sellerShop is null)
-                return Result<OrderResponseDto>.Failure("You do not own a shop");
-
-            var orderContainsSellerProducts = order.Items.Any(i => i.ShopId == sellerShop.Id);
-            if (!orderContainsSellerProducts)
-                return Result<OrderResponseDto>.Failure("You are not authorized to update this order");
+        if (order.Status == OrderStatus.Delivered)
+        {
+            return Result<OrderResponseDto>.Failure("Order is already delivered and cannot be modified.");
         }
 
         var currentStatus = order.Status;
@@ -290,18 +287,32 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
                     await productRepo.UpdateAsync(product);
                 }
             }
+            order.Status = nextStatus;
+            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedBy = userId;
+            await _orderRepository.UpdateAsync(order);
+            await _unitOfWork.SaveChangesAsync();
         }
         else if (nextStatus == OrderStatus.Delivered)
         {
-            order.DeliveredAt = DateTime.UtcNow;
+            var releaseResult = await _escrowService.RecordDeliveryAsync(orderId);
+            if (!releaseResult.IsSuccess)
+            {
+                return Result<OrderResponseDto>.Failure(releaseResult.Errors.FirstOrDefault() ?? "Failed to release funds on delivery");
+            }
+            // Reload order details to pick up status, DeliveredAt, and other fields set by EscrowService
+            order = await _orderRepository.GetOrderByIdWithDetailsAsync(orderId);
+            if (order is null)
+                return Result<OrderResponseDto>.Failure("Order not found after updating status");
         }
-
-        order.Status = nextStatus;
-        order.UpdatedAt = DateTime.UtcNow;
-        order.UpdatedBy = userId;
-
-        await _orderRepository.UpdateAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        else
+        {
+            order.Status = nextStatus;
+            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedBy = userId;
+            await _orderRepository.UpdateAsync(order);
+            await _unitOfWork.SaveChangesAsync();
+        }
 
         return Result<OrderResponseDto>.Success(MapToResponse(order));
     }
@@ -315,6 +326,9 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
         if (order.UserId != userId)
             return Result.Failure("You are not authorized to cancel this order");
+
+        if (order.Status == OrderStatus.Delivered)
+            return Result.Failure("Order is already delivered and cannot be modified.");
 
         if (order.Status != OrderStatus.Pending)
             return Result.Failure("Only pending orders can be cancelled");
