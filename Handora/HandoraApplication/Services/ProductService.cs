@@ -262,6 +262,7 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         }
 
         // 2. Map properties manually from main (Instead of dto.Adapt(product) so we don't overwrite CategoryId)
+        // Update basic properties
         if (dto.TitleEn != null) product.TitleEn = dto.TitleEn;
         if (dto.TitleAr != null) product.TitleAr = dto.TitleAr;
         if (dto.DescriptionEn != null) product.DescriptionEn = dto.DescriptionEn;

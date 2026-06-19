@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.OrderDTOs;
+using HandoraApplication.DTOs.OrderDTOs;
 using HandoraApplication.IServices;
 using HandoraDomain.Models.OrderEntity;
 using HandoraMVC.ViewModels;
@@ -97,5 +97,23 @@ public class OrdersController : Controller
         };
 
         return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateStatus(Guid id, OrderStatus status)
+    {
+        var dto = new UpdateOrderStatusDto { Status = status };
+        var userId = User.Identity?.Name ?? "Admin";
+        var result = await _orderService.UpdateOrderStatus(id, dto, userId, isAdmin: true);
+        if (!result.IsSuccess)
+        {
+            TempData["Error"] = string.Join(", ", result.Errors);
+        }
+        else
+        {
+            TempData["Success"] = "Order status updated successfully.";
+        }
+        return RedirectToAction(nameof(Details), new { id });
     }
 }
