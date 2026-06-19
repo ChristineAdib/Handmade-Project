@@ -30,7 +30,12 @@ public class MapsterSettings
             .Map(dest => dest.LatestReviews, src => src.Reviews
                 .OrderByDescending(r => r.CreatedAt)
                 .Take(5)
-                .Adapt<List<ReviewSummaryDto>>());
+                .Adapt<List<ReviewSummaryDto>>())
+            .Map(dest => dest.AiSummary, src => src.ReviewSummary);
+
+        TypeAdapterConfig<ProductReviewSummary, AiReviewSummaryDto>.NewConfig()
+            .Map(dest => dest.Pros, src => string.IsNullOrEmpty(src.Pros) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(src.Pros, (JsonSerializerOptions?)null))
+            .Map(dest => dest.Cons, src => string.IsNullOrEmpty(src.Cons) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(src.Cons, (JsonSerializerOptions?)null));
 
         TypeAdapterConfig<Review, ReviewSummaryDto>.NewConfig()
             .Map(dest => dest.UserName, src => src.User.UserName ?? "Anonymous");
