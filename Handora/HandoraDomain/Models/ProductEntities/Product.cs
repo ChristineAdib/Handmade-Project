@@ -32,6 +32,7 @@ namespace HandoraDomain.Models.ProductEntities
 
         // Navigation Properties
         public ProductDraft? PendingDraft { get; set; }
+        public ProductReviewSummary? ReviewSummary { get; set; }
         public ICollection<ProductImage> Images { get; set; } = [];
         public ICollection<Review> Reviews { get; set; } = [];
         public ICollection<Tag> Tags { get; set; } = [];
