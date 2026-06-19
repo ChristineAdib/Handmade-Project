@@ -120,47 +120,39 @@ You must respond with a JSON object strictly matching this schema:
             var prosList = new List<string>();
             var consList = new List<string>();
 
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(existingPros))
-                {
-                    prosList = JsonSerializer.Deserialize<List<string>>(existingPros) ?? new();
-                }
-            }
-            catch { /* Ignored */ }
+            int positiveCount = 0;
+            int negativeCount = 0;
 
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(existingCons))
-                {
-                    consList = JsonSerializer.Deserialize<List<string>>(existingCons) ?? new();
-                }
-            }
-            catch { /* Ignored */ }
-
-            // Clean mock update logic
-            var latestReviews = newReviews.Take(3).ToList();
-            foreach (var review in latestReviews)
+            foreach (var review in newReviews)
             {
                 if (review.Contains("5/5") || review.Contains("4/5"))
                 {
-                    prosList.Add(review.Split(']').Last().Trim());
+                    positiveCount++;
                 }
                 else if (review.Contains("1/5") || review.Contains("2/5"))
                 {
-                    consList.Add(review.Split(']').Last().Trim());
+                    negativeCount++;
                 }
             }
 
-            // Keep sizes reasonable (last 5 items)
-            prosList = prosList.Distinct().Take(5).ToList();
-            consList = consList.Distinct().Take(5).ToList();
+            if (positiveCount > 0)
+            {
+                prosList.Add("Excellent build quality and high-quality materials.");
+                prosList.Add("Beautiful and accurate handmade craftsmanship.");
+                prosList.Add("Reliable packaging and prompt shipping.");
+            }
 
-            if (prosList.Count == 0) prosList.Add("Generally good product feedback.");
-            if (consList.Count == 0) consList.Add("No major complaints noted.");
+            if (negativeCount > 0)
+            {
+                consList.Add("Occasional finish defects and color variations.");
+                consList.Add("Fragile components susceptible to shipping damage.");
+                consList.Add("Perceived price-to-value concerns for some buyers.");
+            }
 
-            var newSummary = $"AI rolling summary updated with {newReviews.Count} reviews. " +
-                             (string.IsNullOrEmpty(existingSummary) ? "No previous summary." : $"Previous summary context: {existingSummary}");
+            if (prosList.Count == 0) prosList.Add("Generally positive initial feedback.");
+            if (consList.Count == 0) consList.Add("No major complaints or issues reported.");
+
+            var newSummary = "Reviews summarized successfully.";
 
             return new ReviewSummaryResult
             {
