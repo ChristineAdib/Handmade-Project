@@ -45,8 +45,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
-//حل مؤقت
-builder.Services.AddScoped<IFileService, NullFileService>();
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+builder.Services.AddScoped<IFileService, FileService>();
 // Infrastructure Services
 
 // Infrastructure
