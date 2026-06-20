@@ -1,4 +1,4 @@
-﻿@model HandoraMVC.ViewModels.CreateCategoryViewModel
+@model HandoraMVC.ViewModels.CreateCategoryViewModel
 
 @{
     ViewData["Title"] = "Create Category";
@@ -12,7 +12,7 @@
     </div>
 
     <div class="form-card">
-        <form asp-action="Create" method="post">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="validation-error"></div>
 
             <div class="form-group">
@@ -51,8 +51,9 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="ImageUrl">Image URL <span style="color:#aaa;font-weight:400">(optional)</span></label>
-                <input asp-for="ImageUrl" class="form-input" placeholder="https://..." />
+                <label asp-for="ImageFile">Category Image <span style="color:#aaa;font-weight:400">(optional)</span></label>
+                <input asp-for="ImageFile" type="file" accept="image/*" class="form-input" />
+                <span asp-validation-for="ImageFile" class="field-error"></span>
             </div>
 
             <div class="form-actions">
