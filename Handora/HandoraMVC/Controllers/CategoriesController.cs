@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.Category_TagDTOs;
+using HandoraApplication.DTOs.Category_TagDTOs;
 using HandoraApplication.IServices;
 using HandoraMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -9,10 +9,12 @@ namespace HandoraMVC.Controllers;
 public class CategoriesController : Controller
 {
     private readonly ICategoryService _categoryService;
+    private readonly IFileService _fileService;
 
-    public CategoriesController(ICategoryService categoryService)
+    public CategoriesController(ICategoryService categoryService, IFileService fileService)
     {
         _categoryService = categoryService;
+        _fileService = fileService;
     }
 
     // GET: /Categories
@@ -62,17 +64,36 @@ public class CategoriesController : Controller
             return View(vm);
         }
 
+        string? imageUrl = null;
+        if (vm.ImageFile != null && vm.ImageFile.Length > 0)
+        {
+            try
+            {
+                imageUrl = await _fileService.UploadFileAsync(vm.ImageFile, "categories");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Failed to upload image: {ex.Message}");
+                vm.ParentCategories = await GetParentCategoriesSelectList();
+                return View(vm);
+            }
+        }
+
         var dto = new CreateCategoryDto
         {
             NameEn = vm.NameEn,
             NameAr = vm.NameAr,
-            ImageUrl = vm.ImageUrl,
+            ImageUrl = imageUrl,
             ParentId = vm.ParentId
         };
 
         var result = await _categoryService.CreateCategory(dto);
         if (!result.IsSuccess)
         {
+            if (!string.IsNullOrEmpty(imageUrl))
+            {
+                try { await _fileService.DeleteFileAsync(imageUrl); } catch { /* ignore */ }
+            }
             ModelState.AddModelError("", string.Join(", ", result.Errors ?? System.Array.Empty<string>()));
             vm.ParentCategories = await GetParentCategoriesSelectList();
             return View(vm);
@@ -112,20 +133,46 @@ public class CategoriesController : Controller
             return View(vm);
         }
 
+        string? imageUrl = vm.ImageUrl;
+        string? oldImageUrl = vm.ImageUrl;
+
+        if (vm.ImageFile != null && vm.ImageFile.Length > 0)
+        {
+            try
+            {
+                imageUrl = await _fileService.UploadFileAsync(vm.ImageFile, "categories");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Failed to upload image: {ex.Message}");
+                vm.ParentCategories = await GetParentCategoriesSelectList();
+                return View(vm);
+            }
+        }
+
         var dto = new UpdateCategoryDto
         {
             NameEn = vm.NameEn,
             NameAr = vm.NameAr,
-            ImageUrl = vm.ImageUrl,
+            ImageUrl = imageUrl,
             ParentId = vm.ParentId
         };
 
         var result = await _categoryService.UpdateCategory(id, dto);
         if (!result.IsSuccess)
         {
+            if (imageUrl != oldImageUrl && !string.IsNullOrEmpty(imageUrl))
+            {
+                try { await _fileService.DeleteFileAsync(imageUrl); } catch { /* ignore */ }
+            }
             ModelState.AddModelError("", string.Join(", ", result.Errors ?? System.Array.Empty<string>()));
             vm.ParentCategories = await GetParentCategoriesSelectList();
             return View(vm);
+        }
+
+        if (imageUrl != oldImageUrl && !string.IsNullOrEmpty(oldImageUrl))
+        {
+            try { await _fileService.DeleteFileAsync(oldImageUrl); } catch { /* ignore */ }
         }
 
         return RedirectToAction(nameof(Index));
