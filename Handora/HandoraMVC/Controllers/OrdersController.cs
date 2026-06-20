@@ -92,7 +92,11 @@ public class OrdersController : Controller
                 PictureUrl = i.PictureUrl,
                 Quantity = i.Quantity,
                 Price = i.Price,
-                Total = i.Total
+                Total = i.Total,
+                ShopName = i.ShopName,
+                SellerName = i.SellerName,
+                SellerEmail = i.SellerEmail,
+                SellerPhone = i.SellerPhone
             }).ToList()
         };
 
