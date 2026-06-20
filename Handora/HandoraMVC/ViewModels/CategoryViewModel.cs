@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 namespace HandoraMVC.ViewModels;
@@ -28,6 +28,7 @@ public class CreateCategoryViewModel
     [Required]
     public string NameAr { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
+    public IFormFile? ImageFile { get; set; }
     public Guid? ParentId { get; set; }
     public List<SelectListItem> ParentCategories { get; set; } = [];
 }
@@ -40,6 +41,7 @@ public class EditCategoryViewModel
     [Required]
     public string NameAr { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
+    public IFormFile? ImageFile { get; set; }
     public Guid? ParentId { get; set; }
     public List<SelectListItem> ParentCategories { get; set; } = [];
 }
