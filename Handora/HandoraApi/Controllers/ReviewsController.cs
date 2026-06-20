@@ -110,4 +110,32 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
             return Ok(result.Data);
         return BadRequest(result.Errors);
     }
+
+    // POST /api/reviews/demo/{productId}
+    [HttpPost("demo/{productId}")]
+    [Authorize]
+    public async Task<IActionResult> GenerateDemoReviews(Guid productId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await _reviewService.GenerateDemoReviewsAsync(productId, userId);
+        if (result.IsSuccess)
+            return Ok(new { success = true, message = "Demo reviews generated successfully." });
+
+        return BadRequest(new { success = false, message = result.Errors?.FirstOrDefault() ?? "Failed to generate demo reviews." });
+    }
+
+    // POST /api/reviews/summarize/{productId}
+    [HttpPost("summarize/{productId}")]
+    [Authorize]
+    public async Task<IActionResult> GenerateAiSummary(Guid productId)
+    {
+        var result = await _reviewService.GenerateAiSummaryAsync(productId);
+        if (result.IsSuccess)
+            return Ok(new { success = true, message = "AI review summary generated successfully." });
+
+        return BadRequest(new { success = false, message = result.Errors?.FirstOrDefault() ?? "Failed to generate AI summary." });
+    }
 }
