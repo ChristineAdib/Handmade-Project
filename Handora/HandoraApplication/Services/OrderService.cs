@@ -383,7 +383,11 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
                 PictureUrl = i.Product.PictureUrl,
                 Quantity = i.Quantity,
                 Price = i.Price,
-                Total = i.Price * i.Quantity
+                Total = i.Price * i.Quantity,
+                ShopName = i.Shop?.Name ?? string.Empty,
+                SellerName = i.Shop?.Owner?.Name ?? string.Empty,
+                SellerEmail = i.Shop?.Owner?.Email ?? string.Empty,
+                SellerPhone = i.Shop?.Owner?.PhoneNumber ?? string.Empty
             }).ToList()
         };
     }
