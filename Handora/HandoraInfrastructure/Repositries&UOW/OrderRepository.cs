@@ -18,6 +18,9 @@ public class OrderRepository(AppDbContext context)
             .Include(o => o.DeliveryMethod)
             .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
+            .Include(o => o.Items)
+                .ThenInclude(i => i.Shop)
+                    .ThenInclude(s => s.Owner)
             .Include(o => o.Coupon)
             .FirstOrDefaultAsync(o => o.Id == orderId && !o.IsDeleted);
     }

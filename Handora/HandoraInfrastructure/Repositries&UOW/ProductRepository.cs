@@ -18,6 +18,7 @@ public class ProductRepository(AppDbContext context)
             .Include(p => p.Images)
             .Include(p => p.Tags)
             .Include(p => p.PendingDraft)
+            .Include(p => p.ReviewSummary)
             .Include(p => p.Reviews.OrderByDescending(r => r.CreatedAt).Take(5))
                 .ThenInclude(r => r.User)
             .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);

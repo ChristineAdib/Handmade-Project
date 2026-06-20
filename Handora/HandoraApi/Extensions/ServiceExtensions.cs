@@ -1,12 +1,19 @@
-﻿using HandoraApi.Hubs;
+using HandoraApi.Hubs;
 using HandoraApi.Services;
+using HandoraApplication.AI.Embeddings;
+using HandoraApplication.AI.Interfaces;
 using HandoraApplication.Helpers.AuthHelper;
 using HandoraApplication.Hubs;
 using HandoraApplication.IServices;
 using HandoraApplication.Services;
 using HandoraApplication.Settings;
 using HandoraDomain.Interfaces;
+using HandoraInfrastructure.AI.OpenAI;
+using HandoraInfrastructure.AI.Options;
 using HandoraInfrastructure.Repositries_UOW;
+using HandoraInfrastructure.AI.Qdrant;
+using HandoraInfrastructure.AI.Documents;
+using HandoraApplication.AI.Services;
 
 namespace HandoraApi.Extensions
 {
@@ -29,6 +36,28 @@ namespace HandoraApi.Extensions
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<ICartService, CartService>();
            services.AddScoped<IWishListService, WishListService>();
+            // ✅ OpenAI config
+            services.Configure<OpenAIOptions>(
+                configuration.GetSection(OpenAIOptions.SectionName));
+
+            // ✅ Qdrant config
+            services.Configure<QdrantOptions>(
+                configuration.GetSection(QdrantOptions.SectionName));
+
+            // ✅ Gemini config
+            services.Configure<GeminiOptions>(
+                configuration.GetSection(GeminiOptions.SectionName));
+            services.AddHttpClient<IGeminiService, GeminiService>();
+
+            services.AddSingleton<IEmbeddingService, OnnxEmbeddingService>();
+            services.AddSingleton<IVectorStoreService, QdrantService>();
+            services.AddSingleton<IChunkService, ChunkService>();
+            services.AddScoped<IRagService, RagService>();
+
+            services.AddScoped<IGiftConversationManager, GiftConversationManager>();
+            services.AddScoped<IGiftAssistantService, GiftAssistantService>();
+            services.AddScoped<IProductIndexerService, ProductIndexerService>();
+
             return services;
         }
     }
