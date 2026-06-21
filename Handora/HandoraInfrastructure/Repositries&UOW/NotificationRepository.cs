@@ -1,4 +1,4 @@
-﻿using HandoraDomain.Interfaces;
+using HandoraDomain.Interfaces;
 using HandoraDomain.Models.NotificationEntities;
 using HandoraInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,14 +20,32 @@ namespace HandoraInfrastructure.Repositries_UOW
         public async Task<IReadOnlyList<Notification>> GetUserNotificationsAsync(
             string userId, CancellationToken ct = default)
             => await _context.Notifications
-                .Where(n => n.UserId == userId)
+                .Where(n => n.UserId == userId && n.Type != NotificationType.Message)
                 .OrderByDescending(n => n.CreatedAt)
                 .AsNoTracking()
                 .ToListAsync(ct);
 
+        public async Task<(IReadOnlyList<Notification> Items, int TotalCount)> GetUserNotificationsPagedAsync(
+            string userId, int pageNumber, int pageSize, CancellationToken ct = default)
+        {
+            var query = _context.Notifications
+                .Where(n => n.UserId == userId && n.Type != NotificationType.Message);
+
+            var totalCount = await query.CountAsync(ct);
+
+            var items = await query
+                .OrderByDescending(n => n.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync(ct);
+
+            return (items, totalCount);
+        }
+
         public async Task<int> GetUnreadCountAsync(string userId, CancellationToken ct = default)
             => await _context.Notifications
-                .CountAsync(n => n.UserId == userId && !n.IsRead, ct);
+                .CountAsync(n => n.UserId == userId && !n.IsRead && n.Type != NotificationType.Message, ct);
 
         public async Task<Notification?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => await _context.Notifications.FindAsync([id], ct);
@@ -45,7 +63,7 @@ namespace HandoraInfrastructure.Repositries_UOW
         public async Task MarkAllAsReadAsync(string userId, CancellationToken ct = default)
         {
             await _context.Notifications
-                .Where(n => n.UserId == userId && !n.IsRead)
+                .Where(n => n.UserId == userId && !n.IsRead && n.Type != NotificationType.Message)
                 .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true), ct);
         }
 

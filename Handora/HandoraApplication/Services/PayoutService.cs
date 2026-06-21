@@ -15,6 +15,9 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
+using HandoraDomain.Models.NotificationEntities;
+using HandoraApplication.DTOs.NotificationsDto;
+
 namespace HandoraApplication.Services;
 
 public class PayoutService : IPayoutService
@@ -23,18 +26,21 @@ public class PayoutService : IPayoutService
     private readonly IConfiguration _configuration;
     private readonly UserManager<User> _userManager;
     private readonly ILogger<PayoutService> _logger;
+    private readonly INotificationService _notificationService;
     private static readonly HttpClient _httpClient = new();
 
     public PayoutService(
         IUnitOfWork unitOfWork, 
         IConfiguration configuration,
         UserManager<User> userManager,
-        ILogger<PayoutService> logger)
+        ILogger<PayoutService> logger,
+        INotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
         _configuration = configuration;
         _userManager = userManager;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     public async Task<WithdrawalRequest> RequestWithdrawalAsync(User seller, decimal amount)
@@ -90,6 +96,26 @@ public class PayoutService : IPayoutService
             {
                 request.Status = WithdrawalStatus.Paid;
                 request.PaidAt = DateTime.UtcNow;
+
+                // Send Notification (Scenario 8)
+                try
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = request.SellerId,
+                        TitleEn = "Payout Completed",
+                        TitleAr = "تم تحويل الأرباح",
+                        MessageEn = $"Your withdrawal request of {request.Amount} EGP has been successfully transferred.",
+                        MessageAr = $"تم تحويل طلب السحب الخاص بك بقيمة {request.Amount} جنيه بنجاح.",
+                        Type = NotificationType.PaymentReceived,
+                        ReferenceId = request.Id,
+                        ReferenceType = "Payment"
+                    });
+                }
+                catch (System.Exception)
+                {
+                    // Ignore
+                }
             }
             else
             {
@@ -130,6 +156,26 @@ public class PayoutService : IPayoutService
                     request.PaidAt = DateTime.UtcNow;
                     await requestRepo.UpdateAsync(request);
                     _logger.LogInformation("Withdrawal {RequestId} processed successfully", request.Id);
+
+                    // Send Notification (Scenario 8)
+                    try
+                    {
+                        await _notificationService.SendAsync(new SendNotificationDto
+                        {
+                            UserId = request.SellerId,
+                            TitleEn = "Payout Completed",
+                            TitleAr = "تم تحويل الأرباح",
+                            MessageEn = $"Your withdrawal request of {request.Amount} EGP has been successfully transferred.",
+                            MessageAr = $"تم تحويل طلب السحب الخاص بك بقيمة {request.Amount} جنيه بنجاح.",
+                            Type = NotificationType.PaymentReceived,
+                            ReferenceId = request.Id,
+                            ReferenceType = "Payment"
+                        });
+                    }
+                    catch (System.Exception)
+                    {
+                        // Ignore
+                    }
                 }
                 else
                 {

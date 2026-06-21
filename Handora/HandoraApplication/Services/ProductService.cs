@@ -8,13 +8,26 @@ using Mapster;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
+using HandoraDomain.Models.NotificationEntities;
+using HandoraApplication.DTOs.NotificationsDto;
+using HandoraDomain.Models.AppUser;
+using HandoraDomain.Models.FollowEntities;
+using HandoraDomain.Models.ShopEntities;
+
 namespace HandoraApplication.Services;
 
-public class ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IFileService fileService) : IProductService
+public class ProductService(
+    IProductRepository productRepository,
+    IUnitOfWork unitOfWork,
+    IFileService fileService,
+    IAuthRepository authRepository,
+    INotificationService notificationService) : IProductService
 {
     private readonly IProductRepository _productRepository = productRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IFileService _fileService = fileService;
+    private readonly IAuthRepository _authRepository = authRepository;
+    private readonly INotificationService _notificationService = notificationService;
 
     public async Task<Result<ProductResponseDto>> GetProduct(Guid id)
     {
@@ -197,6 +210,30 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         await _productRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
+        // Notify admins (Scenario 3)
+        try
+        {
+            var admins = await _authRepository.GetUsersInRoleAsync(AppRoles.Admin);
+            foreach (var admin in admins)
+            {
+                await _notificationService.SendAsync(new SendNotificationDto
+                {
+                    UserId = admin.Id,
+                    TitleEn = "New Product Submitted",
+                    TitleAr = "تم تقديم منتج جديد",
+                    MessageEn = $"Product '{product.TitleEn}' has been submitted and is pending review.",
+                    MessageAr = $"تم تقديم المنتج '{product.TitleAr}' وهو قيد المراجعة.",
+                    Type = NotificationType.ProductSubmitted,
+                    ReferenceId = product.Id,
+                    ReferenceType = "Product"
+                });
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
         return await GetProduct(product.Id);
     }
 
@@ -207,14 +244,47 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (product is null)
             return Result<ProductResponseDto>.Failure("Product not found");
 
+        Result<ProductResponseDto> updateResult;
+
         // ── BRANCHING: Live products get a draft, non-live products get direct edits ──
         if (product.IsActive)
         {
-            return await CreateOrUpdateDraft(product, dto);
+            updateResult = await CreateOrUpdateDraft(product, dto);
+        }
+        else
+        {
+            // Product is NOT yet live — apply changes directly (existing behavior)
+            updateResult = await ApplyDirectUpdate(product, dto);
         }
 
-        // Product is NOT yet live — apply changes directly (existing behavior)
-        return await ApplyDirectUpdate(product, dto);
+        if (updateResult.IsSuccess)
+        {
+            // Notify admins of the update (Scenario 11)
+            try
+            {
+                var admins = await _authRepository.GetUsersInRoleAsync(AppRoles.Admin);
+                foreach (var admin in admins)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = admin.Id,
+                        TitleEn = "Product Updated",
+                        TitleAr = "تم تحديث المنتج",
+                        MessageEn = $"Product '{product.TitleEn}' has been updated and is pending review.",
+                        MessageAr = $"تم تحديث المنتج '{product.TitleAr}' وهو قيد المراجعة.",
+                        Type = NotificationType.ProductUpdated,
+                        ReferenceId = product.Id,
+                        ReferenceType = "Product"
+                    });
+                }
+            }
+            catch (System.Exception)
+            {
+                // Ignore
+            }
+        }
+
+        return updateResult;
     }
 
     /// <summary>
@@ -470,7 +540,7 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
 
     public async Task<Result> ApproveProductAsync(Guid productId)
     {
-        var product = await _productRepository.GetByIdAsync(productId);
+        var product = await _productRepository.GetProductByIDWithDetailsAsync(productId);
         if (product == null)
             return Result.Failure("Product not found");
 
@@ -479,6 +549,57 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         product.Status = ProductStatus.Active;
 
         await _unitOfWork.SaveChangesAsync();
+
+        // Notify seller and followers (Scenario 4 & 6)
+        try
+        {
+            var shop = product.Shop;
+            if (shop == null)
+            {
+                shop = await _unitOfWork.Repository<Shop, Guid>().GetByIdAsync(product.ShopId);
+            }
+            if (shop != null)
+            {
+                await _notificationService.SendAsync(new SendNotificationDto
+                {
+                    UserId = shop.OwnerId,
+                    TitleEn = "Product Approved",
+                    TitleAr = "تمت الموافقة على المنتج",
+                    MessageEn = $"Your product '{product.TitleEn}' has been approved and is now active.",
+                    MessageAr = $"تمت الموافقة على منتجك '{product.TitleAr}' وهو الآن نشط.",
+                    Type = NotificationType.ProductApproved,
+                    ReferenceId = product.Id,
+                    ReferenceType = "Product"
+                });
+
+                // Notify followers (Scenario 6)
+                var followRepo = _unitOfWork.Repository<Follow, Guid>();
+                var followersQuery = await followRepo.GetAllAsNoTracking();
+                var followers = await followersQuery
+                    .Where(f => f.ShopId == product.ShopId)
+                    .ToListAsync();
+
+                foreach (var f in followers)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = f.UserId,
+                        TitleEn = $"New Product from {shop.Name}",
+                        TitleAr = $"منتج جديد من {shop.Name}",
+                        MessageEn = $"A new product '{product.TitleEn}' has been added to {shop.Name}.",
+                        MessageAr = $"تمت إضافة منتج جديد '{product.TitleAr}' إلى {shop.Name}.",
+                        Type = NotificationType.NewProductFromFollowedShop,
+                        ReferenceId = product.Id,
+                        ReferenceType = "Product"
+                    });
+                }
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
         return Result.Success();
     }
 
@@ -492,6 +613,31 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         product.Status = ProductStatus.Inactive;
 
         await _unitOfWork.SaveChangesAsync();
+
+        // Notify seller (Scenario 5)
+        try
+        {
+            var shop = await _unitOfWork.Repository<Shop, Guid>().GetByIdAsync(product.ShopId);
+            if (shop != null)
+            {
+                await _notificationService.SendAsync(new SendNotificationDto
+                {
+                    UserId = shop.OwnerId,
+                    TitleEn = "Product Rejected",
+                    TitleAr = "تم رفض المنتج",
+                    MessageEn = $"Your product '{product.TitleEn}' has been rejected by the administrator.",
+                    MessageAr = $"تم رفض منتجك '{product.TitleAr}' من قبل المسؤول.",
+                    Type = NotificationType.ProductRejected,
+                    ReferenceId = product.Id,
+                    ReferenceType = "Product"
+                });
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
         return Result.Success();
     }
 
@@ -589,6 +735,35 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         _productRepository.RemoveDraft(draft);
 
         await _unitOfWork.SaveChangesAsync();
+
+        // Notify seller (Scenario 12)
+        try
+        {
+            var shop = product.Shop;
+            if (shop == null)
+            {
+                shop = await _unitOfWork.Repository<Shop, Guid>().GetByIdAsync(product.ShopId);
+            }
+            if (shop != null)
+            {
+                await _notificationService.SendAsync(new SendNotificationDto
+                {
+                    UserId = shop.OwnerId,
+                    TitleEn = "Product Update Approved",
+                    TitleAr = "تمت الموافقة على تحديث المنتج",
+                    MessageEn = $"The update for your product '{product.TitleEn}' has been approved.",
+                    MessageAr = $"تمت الموافقة على تحديث منتجك '{product.TitleAr}'.",
+                    Type = NotificationType.ProductUpdateApproved,
+                    ReferenceId = product.Id,
+                    ReferenceType = "Product"
+                });
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
         return Result.Success();
     }
 
@@ -612,6 +787,35 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         _productRepository.RemoveDraft(draft);
 
         await _unitOfWork.SaveChangesAsync();
+
+        // Notify seller (Scenario 13)
+        try
+        {
+            var product = await _productRepository.GetByIdAsync(productId);
+            if (product != null)
+            {
+                var shop = await _unitOfWork.Repository<Shop, Guid>().GetByIdAsync(product.ShopId);
+                if (shop != null)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = shop.OwnerId,
+                        TitleEn = "Product Update Rejected",
+                        TitleAr = "تم رفض تحديث المنتج",
+                        MessageEn = $"The update for your product '{product.TitleEn}' has been rejected.",
+                        MessageAr = $"تم رفض تحديث منتجك '{product.TitleAr}'.",
+                        Type = NotificationType.ProductUpdateRejected,
+                        ReferenceId = product.Id,
+                        ReferenceType = "Product"
+                    });
+                }
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
         return Result.Success();
     }
 }

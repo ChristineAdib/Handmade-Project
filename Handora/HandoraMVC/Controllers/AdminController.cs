@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.AdminDashboardDTOs;
+using HandoraApplication.DTOs.AdminDashboardDTOs;
 using HandoraApplication.IServices;
 using Microsoft.AspNetCore.Mvc;
 
@@ -41,6 +41,18 @@ namespace HandoraMVC.Controllers
             };
 
             return Json(payload);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAllNotificationsAsRead([FromServices] INotificationService notificationService)
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await notificationService.MarkAllAsReadAsync(userId);
+            }
+            return Redirect(Request.Headers["Referer"].ToString() ?? "/Admin/Analytics");
         }
     }
 }
