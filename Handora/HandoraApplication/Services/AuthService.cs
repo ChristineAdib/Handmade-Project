@@ -7,6 +7,8 @@ using HandoraDomain.Models.AppUser;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Google.Apis.Auth;
+using HandoraDomain.Models.NotificationEntities;
+using HandoraApplication.DTOs.NotificationsDto;
 
 namespace HandoraApplication.Services
 {
@@ -19,6 +21,7 @@ namespace HandoraApplication.Services
         private readonly ILogger<AuthService> _logger;
         private readonly IFileService _fileService;
         private readonly IConfiguration _configuration;
+        private readonly INotificationService _notificationService;
         private readonly string _googleClientId;
         private const int OTP_EXPIRY_MINUTES = 10;
         private const int OTP_LENGTH = 6;
@@ -30,7 +33,8 @@ namespace HandoraApplication.Services
             JwtHelper jwtHelper,
             ILogger<AuthService> logger,
             IFileService fileService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            INotificationService notificationService)
         {
             _authRepo = authRepo;
             _otpRepo = otpRepo;
@@ -39,6 +43,7 @@ namespace HandoraApplication.Services
             _logger = logger;
             _fileService = fileService;
             _configuration = configuration;
+            _notificationService = notificationService;
             _googleClientId = configuration["Google:ClientId"] ?? string.Empty;
         }
 
@@ -514,6 +519,29 @@ namespace HandoraApplication.Services
             if (!result.Succeeded)
             {
                 return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+            }
+
+            if (user.IsBanned)
+            {
+                // Send Notification (Scenario 9)
+                try
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = user.Id,
+                        TitleEn = "Account Suspended",
+                        TitleAr = "تم تعليق الحساب",
+                        MessageEn = "Your account has been suspended by the administrator. Please contact support.",
+                        MessageAr = "تم تعليق حسابك من قبل المسؤول. يرجى الاتصال بالدعم.",
+                        Type = NotificationType.UserBanned,
+                        ReferenceId = null,
+                        ReferenceType = "User"
+                    });
+                }
+                catch (System.Exception)
+                {
+                    // Ignore
+                }
             }
 
             return Result.Success();

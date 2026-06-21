@@ -14,6 +14,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using HandoraDomain.Models.NotificationEntities;
+using HandoraApplication.DTOs.NotificationsDto;
+
 namespace HandoraApplication.Services
 {
 
@@ -23,17 +26,20 @@ namespace HandoraApplication.Services
         private readonly IChatHubContext _hubContext; 
         private readonly ILogger<ChatService> _logger;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationService _notificationService;
 
         public ChatService(
             IChatRepository chatRepo,
             IChatHubContext hubContext, 
             ILogger<ChatService> logger,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            INotificationService notificationService)
         {
             _chatRepo = chatRepo;
             _hubContext = hubContext;
             _logger = logger;
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         public async Task<ConversationDto> StartConversationByShopAsync(

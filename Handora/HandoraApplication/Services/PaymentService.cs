@@ -10,6 +10,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using HandoraDomain.Models.NotificationEntities;
+using HandoraApplication.DTOs.NotificationsDto;
+using HandoraDomain.Models.AppUser;
+using HandoraDomain.Models.ShopEntities;
+
 namespace HandoraApplication.Services;
 
 public class PaymentService : IPaymentService
@@ -17,17 +22,23 @@ public class PaymentService : IPaymentService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration _configuration;
     private readonly ILogger<PaymentService> _logger;
+    private readonly INotificationService _notificationService;
+    private readonly IAuthRepository _authRepository;
 
     private static readonly HttpClient _httpClient = new();
 
     public PaymentService(
         IUnitOfWork unitOfWork,
         IConfiguration configuration,
-        ILogger<PaymentService> logger)
+        ILogger<PaymentService> logger,
+        INotificationService notificationService,
+        IAuthRepository authRepository)
     {
         _unitOfWork = unitOfWork;
         _configuration = configuration;
         _logger = logger;
+        _notificationService = notificationService;
+        _authRepository = authRepository;
     }
 
     public async Task<Result<string>> CreatePaymentIntentAsync(Order order)
@@ -160,6 +171,58 @@ public class PaymentService : IPaymentService
             await paymentRepo.AddAsync(payment);
 
             await _unitOfWork.SaveChangesAsync();
+
+            // Send Notifications (Scenario 7)
+            try
+            {
+                // 1) Notify Admins
+                var admins = await _authRepository.GetUsersInRoleAsync(AppRoles.Admin);
+                foreach (var admin in admins)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = admin.Id,
+                        TitleEn = "New Paid Order Placed",
+                        TitleAr = "تم تقديم طلب مدفوع جديد",
+                        MessageEn = $"Order {order.Id} has been successfully paid and is pending processing.",
+                        MessageAr = $"تم دفع قيمة الطلب {order.Id} بنجاح وهو قيد التجهيز.",
+                        Type = NotificationType.NewOrder,
+                        ReferenceId = order.Id,
+                        ReferenceType = "Order"
+                    });
+                }
+
+                // 2) Notify Sellers of the order items
+                var orderItemsRepo = _unitOfWork.Repository<OrderItem, Guid>();
+                var orderItemsQuery = await orderItemsRepo.GetAllAsNoTracking();
+                var orderItems = await orderItemsQuery.Where(oi => oi.OrderId == order.Id).ToListAsync();
+
+                var shopIds = orderItems.Select(oi => oi.ShopId).Distinct().ToList();
+                var shopRepo = _unitOfWork.Repository<Shop, Guid>();
+
+                foreach (var shopId in shopIds)
+                {
+                    var shop = await shopRepo.GetByIdAsync(shopId);
+                    if (shop != null)
+                    {
+                        await _notificationService.SendAsync(new SendNotificationDto
+                        {
+                            UserId = shop.OwnerId,
+                            TitleEn = "New Paid Order",
+                            TitleAr = "طلب مدفوع جديد",
+                            MessageEn = "A new paid order has been placed. Money is held by Admin until delivery.",
+                            MessageAr = "تم تقديم طلب مدفوع جديد. يحتفظ المسؤول بالأموال حتى الاستلام.",
+                            Type = NotificationType.NewOrder,
+                            ReferenceId = order.Id,
+                            ReferenceType = "Order"
+                        });
+                    }
+                }
+            }
+            catch (System.Exception)
+            {
+                // Ignore
+            }
 
             return Result.Success();
         }
