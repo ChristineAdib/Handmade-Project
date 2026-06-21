@@ -45,8 +45,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
-//حل مؤقت
-builder.Services.AddScoped<IFileService, NullFileService>();
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+builder.Services.AddScoped<IFileService, FileService>();
 // Infrastructure Services
 
 // Infrastructure
@@ -79,12 +79,17 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 builder.Services.AddScoped<IUserStatsRepository, UserStatsRepository>();
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
-//builder.Services.AddScoped<INotificationService, NotificationService>();
-//builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
-
-// Application Services اللي في ServiceExtensions
-//builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
-//builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddHttpClient<INotificationHubContext, HttpNotificationHubContext>(client =>
+{
+    var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5216/";
+    if (!apiBaseUrl.EndsWith("/"))
+    {
+        apiBaseUrl += "/";
+    }
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
 
 
 // Redis (نفس pattern الـ API)

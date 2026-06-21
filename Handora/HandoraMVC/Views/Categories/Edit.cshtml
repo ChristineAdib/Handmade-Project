@@ -1,4 +1,4 @@
-﻿@model HandoraMVC.ViewModels.EditCategoryViewModel
+@model HandoraMVC.ViewModels.EditCategoryViewModel
 
 @{
     ViewData["Title"] = "Edit Category";
@@ -7,7 +7,7 @@
 
 <div class="form-card">
     <h2>Edit Category</h2>
-    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
         <div asp-validation-summary="ModelOnly" class="validation-error"></div>
 
         <div class="form-group">
@@ -22,9 +22,20 @@
             <span asp-validation-for="NameAr" class="field-error"></span>
         </div>
 
+        <input type="hidden" asp-for="ImageUrl" />
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <div class="form-group">
+                <label>Current Image</label>
+                <div style="margin-top: 6px; margin-bottom: 12px;">
+                    <img src="@Model.ImageUrl" alt="Current Image" style="max-height: 120px; border-radius: 8px; border: 1px solid #e8e0d8; object-fit: cover;" />
+                </div>
+            </div>
+        }
         <div class="form-group">
-            <label asp-for="ImageUrl">Image URL</label>
-            <input asp-for="ImageUrl" class="form-input" />
+            <label asp-for="ImageFile">Change Image <span style="color:#aaa;font-weight:400">(optional)</span></label>
+            <input asp-for="ImageFile" type="file" accept="image/*" class="form-input" />
+            <span asp-validation-for="ImageFile" class="field-error"></span>
         </div>
 
         <div class="form-group">
