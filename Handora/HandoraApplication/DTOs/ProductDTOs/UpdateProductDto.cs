@@ -29,5 +29,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
 
         public List<Guid>? RemoveImageIds { get; set; } //delete images
         public List<IFormFile>? NewImages { get; set; } //add images
+        public IFormFile? ArModel { get; set; } // Optional new GLB 3D model
+        public bool? RemoveArModel { get; set; } // Flag to remove the existing GLB model
     }
 }
