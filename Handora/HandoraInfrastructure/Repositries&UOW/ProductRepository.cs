@@ -14,6 +14,7 @@ public class ProductRepository(AppDbContext context)
     {
         return await _context.Products
             .Include(p => p.Category)
+                .ThenInclude(c => c.Parent)
             .Include(p => p.Shop)
             .Include(p => p.Images)
             .Include(p => p.Tags)
@@ -29,6 +30,7 @@ public class ProductRepository(AppDbContext context)
         return _context.Products
             .AsNoTracking()
             .Include(p => p.Category)
+                .ThenInclude(c => c.Parent)
             .Include(p => p.Shop)
             .Include(p => p.Images)
             .Include(p => p.Tags)
