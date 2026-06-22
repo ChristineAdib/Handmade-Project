@@ -15,6 +15,11 @@ project.nuget.cache
 *.nuget.targets
 appsettings.Development.json
 appsettings.json
+# Ignore local appsettings containing secrets
+/Handora/HandoraApi/appsettings.json
+/HandoraApi/appsettings.json
+appsettings.*.json
+.env
 
 *.log
 .DS_Store
