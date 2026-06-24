@@ -32,6 +32,10 @@ public static class ModuleApplicationDependences
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 
         services.AddScoped<ISellerAnalyticsService, SellerAnalyticsService>();
+        services.AddHttpClient();
+
+        services.AddScoped<IProductAgentService, ProductAgentService>();
+
         return services;
     }
 }
