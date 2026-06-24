@@ -9,6 +9,7 @@ using HandoraDomain.Models.PaymentEntities;
 using HandoraDomain.Models.ProductEntities;
 using HandoraDomain.Models.ShopEntities;
 using HandoraDomain.Models.WishListEntoties;
+using HandoraDomain.Models.CustomStudioEntities;
 using HandoraInfrastructure.Data.Configuration;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -45,18 +46,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
 
     public DbSet<WithdrawalRequest> WithdrawalRequests { get; set; }
 
-    //public DbSet<HandoraDomain.Models.AppUser.Address> Addresses { get; set; }
-    //public DbSet<OtpVerification> OtpVerifications { get; set; }
-
-    //public DbSet<Address> Addresses { get; set; }
-    //public DbSet<Address> Addresses { get; set; }
-
     public DbSet<Follow> Follows { get; set; }
 
-    //public DbSet<Address> Addresses { get; set; }
-    // في AppDbContext.cs
     public DbSet<Conversation> Conversations { get; set; }
     public DbSet<Message> Messages { get; set; }
+
+    // Handora Custom Studio
+    public DbSet<CustomRequest> CustomRequests { get; set; }
+    public DbSet<CustomConfiguration> CustomConfigurations { get; set; }
+    public DbSet<GeneratedDesign> GeneratedDesigns { get; set; }
+    public DbSet<SellerRecommendation> SellerRecommendations { get; set; }
+    public DbSet<CustomOffer> CustomOffers { get; set; }
+    public DbSet<ProjectWorkspace> ProjectWorkspaces { get; set; }
+    public DbSet<CustomStudioSetting> CustomStudioSettings { get; set; }
+    public DbSet<CustomStudioAuditLog> CustomStudioAuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

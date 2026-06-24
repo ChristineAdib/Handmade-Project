@@ -26,5 +26,18 @@ namespace HandoraMVC.Services
                 // Silence exception to avoid blocking or failing MVC flows if API indexing is temporarily unavailable
             }
         }
+
+        public async Task IndexAllArtisansAsync()
+        {
+            try
+            {
+                // Trigger the API endpoint to index artisans on the API side
+                await _httpClient.PostAsync("api/ai/index-artisans", null);
+            }
+            catch (Exception)
+            {
+                // Silence exception to avoid blocking or failing MVC flows if API indexing is temporarily unavailable
+            }
+        }
     }
 }

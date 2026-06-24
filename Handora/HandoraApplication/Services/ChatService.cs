@@ -16,6 +16,10 @@ using System.Threading.Tasks;
 
 using HandoraDomain.Models.NotificationEntities;
 using HandoraApplication.DTOs.NotificationsDto;
+using HandoraDomain.Models.CustomStudioEntities;
+using HandoraApplication.DTOs.CustomStudioDTOs;
+using HandoraDomain.Consts;
+using Mapster;
 
 namespace HandoraApplication.Services
 {
@@ -102,7 +106,24 @@ namespace HandoraApplication.Services
                 throw new AuthException("Unauthorized access to this conversation.");
 
             var messages = await _chatRepo.GetMessagesAsync(conversationId, ct);
-            return messages.Select(MapMessage).ToList();
+            var dtos = messages.Select(MapMessage).ToList();
+
+            // Enrich CustomOffer messages
+            var offerRepo = _unitOfWork.Repository<CustomOffer, Guid>();
+            for (int i = 0; i < dtos.Count; i++)
+            {
+                var dto = dtos[i];
+                if (dto.Type == MessageType.CustomOffer && Guid.TryParse(dto.Content, out var offerId))
+                {
+                    var offer = await offerRepo.GetByIdAsync(offerId);
+                    if (offer != null)
+                    {
+                        dtos[i] = dto with { CustomOffer = offer.Adapt<CustomOfferDto>() };
+                    }
+                }
+            }
+
+            return dtos;
         }
 
         public async Task<MessageDto> SendMessageAsync(

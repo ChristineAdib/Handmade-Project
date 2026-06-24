@@ -14,6 +14,11 @@ using HandoraDomain.Models.NotificationEntities;
 using HandoraApplication.DTOs.NotificationsDto;
 using HandoraDomain.Models.AppUser;
 using HandoraDomain.Models.ShopEntities;
+using HandoraDomain.Models.CustomStudioEntities;
+using HandoraDomain.Models.ChatEntities;
+using HandoraDomain.Consts;
+using HandoraApplication.Hubs;
+using HandoraApplication.DTOs.ChatDTOs;
 
 namespace HandoraApplication.Services;
 
@@ -24,6 +29,7 @@ public class PaymentService : IPaymentService
     private readonly ILogger<PaymentService> _logger;
     private readonly INotificationService _notificationService;
     private readonly IAuthRepository _authRepository;
+    private readonly IChatHubContext? _chatHubContext;
 
     private static readonly HttpClient _httpClient = new();
 
@@ -32,13 +38,15 @@ public class PaymentService : IPaymentService
         IConfiguration configuration,
         ILogger<PaymentService> logger,
         INotificationService notificationService,
-        IAuthRepository authRepository)
+        IAuthRepository authRepository,
+        IChatHubContext? chatHubContext = null)
     {
         _unitOfWork = unitOfWork;
         _configuration = configuration;
         _logger = logger;
         _notificationService = notificationService;
         _authRepository = authRepository;
+        _chatHubContext = chatHubContext;
     }
 
     public async Task<Result<string>> CreatePaymentIntentAsync(Order order)
@@ -224,6 +232,85 @@ public class PaymentService : IPaymentService
                 // Ignore
             }
 
+            // Check if the order represents a Custom Studio request and complete payment
+            try
+            {
+                var orderItemsRepo = _unitOfWork.Repository<OrderItem, Guid>();
+                var orderItemsQuery = await orderItemsRepo.GetAllAsNoTracking();
+                var orderItems = await orderItemsQuery.Where(oi => oi.OrderId == order.Id).ToListAsync();
+
+                var customRequestRepo = _unitOfWork.Repository<CustomRequest, Guid>();
+                foreach (var item in orderItems)
+                {
+                    var requestsQuery = await customRequestRepo.GetAllAsync();
+                    var requestWithWorkspace = await requestsQuery
+                        .Include(r => r.ProjectWorkspace)
+                        .Include(r => r.Buyer)
+                        .FirstOrDefaultAsync(r => r.Id == item.Product.ProductId);
+
+                    if (requestWithWorkspace != null && requestWithWorkspace.Status == CustomRequestStatus.PaymentPending)
+                    {
+                        requestWithWorkspace.CompletePayment();
+                        await customRequestRepo.UpdateAsync(requestWithWorkspace);
+                        await _unitOfWork.SaveChangesAsync();
+
+                        _logger.LogInformation("[CUSTOM_STUDIO_AUDIT] Custom request {RequestId} payment successfully completed. Status transitioned to Paid and Workspace to DepositPaid.", requestWithWorkspace.Id);
+
+                        var shopRepo = _unitOfWork.Repository<Shop, Guid>();
+                        var shop = await shopRepo.GetByIdAsync(item.ShopId);
+                        if (shop != null)
+                        {
+                            // Notify Seller
+                            await _notificationService.SendAsync(new SendNotificationDto
+                            {
+                                UserId = shop.OwnerId,
+                                TitleEn = "Custom Request Deposit Paid",
+                                TitleAr = "تم دفع عربون الطلب الخاص",
+                                MessageEn = $"The deposit for custom request '{item.Product.ProductName}' has been paid. You can now begin crafting.",
+                                MessageAr = $"تم دفع عربون الطلب الخاص '{item.Product.ProductName}'. يمكنك الآن البدء في التصنيع.",
+                                Type = NotificationType.NewOrder,
+                                ReferenceId = requestWithWorkspace.Id,
+                                ReferenceType = "CustomRequest"
+                            });
+
+                            // Notify Buyer
+                            await _notificationService.SendAsync(new SendNotificationDto
+                            {
+                                UserId = requestWithWorkspace.BuyerId,
+                                TitleEn = "Custom Request Deposit Paid Successfully",
+                                TitleAr = "تم دفع عربون الطلب الخاص بنجاح",
+                                MessageEn = $"Your deposit for custom request '{item.Product.ProductName}' has been successfully paid.",
+                                MessageAr = $"تم دفع عربون الطلب الخاص '{item.Product.ProductName}' بنجاح.",
+                                Type = NotificationType.NewOrder,
+                                ReferenceId = requestWithWorkspace.Id,
+                                ReferenceType = "CustomRequest"
+                            });
+
+                            // Send chat update message if chat is active
+                            if (requestWithWorkspace.ProjectWorkspace != null && requestWithWorkspace.ProjectWorkspace.ChatConversationId.HasValue)
+                            {
+                                var conversationId = requestWithWorkspace.ProjectWorkspace.ChatConversationId.Value;
+                                var buyerName = requestWithWorkspace.Buyer?.Name ?? "Buyer";
+                                var messageContent = $"Deposit paid! The custom request '{item.Product.ProductName}' is now active and in production.";
+
+                                await SendChatMessageAsync(
+                                    conversationId,
+                                    requestWithWorkspace.BuyerId,
+                                    buyerName,
+                                    shop.OwnerId,
+                                    messageContent,
+                                    MessageType.Text
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing CustomRequest state transition after payment capture for order {OrderId}", order.Id);
+            }
+
             return Result.Success();
         }
         catch (Exception ex)
@@ -235,6 +322,45 @@ public class PaymentService : IPaymentService
 
             return Result.Failure(
                 $"Capture failed: {ex.Message}");
+        }
+    }
+
+    private async Task SendChatMessageAsync(
+        Guid conversationId, string senderId, string senderName, string receiverId, string content, MessageType type = MessageType.Text, string? imageUrl = null)
+    {
+        var message = new Message
+        {
+            Id = Guid.NewGuid(),
+            ConversationId = conversationId,
+            SenderId = senderId,
+            Content = content,
+            Type = type,
+            ImageUrl = imageUrl,
+            CreatedAt = DateTime.UtcNow
+        };
+        
+        await _unitOfWork.Repository<Message, Guid>().AddAsync(message);
+        await _unitOfWork.SaveChangesAsync();
+
+        if (_chatHubContext != null)
+        {
+            var msgDto = new MessageDto
+            {
+                Id = message.Id,
+                ConversationId = conversationId,
+                SenderId = senderId,
+                SenderName = senderName,
+                Content = content,
+                Type = type,
+                ImageUrl = imageUrl,
+                CreatedAt = message.CreatedAt
+            };
+
+            await _chatHubContext.SendMessageAsync(receiverId, msgDto);
+        }
+        else
+        {
+            _logger.LogWarning("ChatHubContext is not registered. Saved message to DB but skipped SignalR broadcast.");
         }
     }
 
