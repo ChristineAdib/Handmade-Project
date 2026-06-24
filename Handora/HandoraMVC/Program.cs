@@ -91,6 +91,16 @@ builder.Services.AddHttpClient<INotificationHubContext, HttpNotificationHubConte
     client.BaseAddress = new Uri(apiBaseUrl);
 });
 
+builder.Services.AddHttpClient<HandoraApplication.AI.Interfaces.IProductIndexerService, HandoraMVC.Services.HttpProductIndexerService>(client =>
+{
+    var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5216/";
+    if (!apiBaseUrl.EndsWith("/"))
+    {
+        apiBaseUrl += "/";
+    }
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
+
 
 // Redis (نفس pattern الـ API)
 var redisConnection = builder.Configuration.GetConnectionString("Redis");
