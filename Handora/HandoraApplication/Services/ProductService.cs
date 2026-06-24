@@ -1,3 +1,4 @@
+using HandoraApplication.AI.Interfaces;
 using HandoraApplication.DTOs.Common;
 using HandoraApplication.DTOs.ProductDTOs;
 using HandoraApplication.Helpers;
@@ -21,6 +22,8 @@ public class ProductService(
     IUnitOfWork unitOfWork,
     IFileService fileService,
     IAuthRepository authRepository,
+    INotificationService notificationService,
+    IProductIndexerService productIndexerService) : IProductService
     INotificationService notificationService) : IProductService
 {
     private readonly IProductRepository _productRepository = productRepository;
@@ -28,6 +31,7 @@ public class ProductService(
     private readonly IFileService _fileService = fileService;
     private readonly IAuthRepository _authRepository = authRepository;
     private readonly INotificationService _notificationService = notificationService;
+    private readonly IProductIndexerService _productIndexerService = productIndexerService;
 
     public async Task<Result<ProductResponseDto>> GetProduct(Guid id)
     {
@@ -582,6 +586,8 @@ public class ProductService(
         await _productRepository.SoftDeleteAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
+        _ = Task.Run(() => _productIndexerService.IndexAllProductsAsync());
+
         return Result.Success();
     }
 
@@ -647,6 +653,8 @@ public class ProductService(
             // Ignore
         }
 
+        _ = Task.Run(() => _productIndexerService.IndexAllProductsAsync());
+
         return Result.Success();
     }
 
@@ -684,6 +692,8 @@ public class ProductService(
         {
             // Ignore
         }
+
+        _ = Task.Run(() => _productIndexerService.IndexAllProductsAsync());
 
         return Result.Success();
     }
@@ -828,6 +838,8 @@ public class ProductService(
         {
             // Ignore
         }
+
+        _ = Task.Run(() => _productIndexerService.IndexAllProductsAsync());
 
         return Result.Success();
     }

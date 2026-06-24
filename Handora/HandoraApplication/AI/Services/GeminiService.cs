@@ -35,11 +35,11 @@ namespace HandoraApplication.AI.Services
                    _options.ApiKey.StartsWith("YOUR_");
         }
 
-        public async Task<GeminiAnalysisResult> AnalyzeConversationAsync(GiftRequestState currentState, string userMessage)
+        public async Task<GeminiAnalysisResult> AnalyzeConversationAsync(GiftRequestState currentState, string userMessage, int questionsAsked = 0)
         {
             if (IsMockMode())
             {
-                return AnalyzeConversationMock(currentState, userMessage);
+                return AnalyzeConversationMock(currentState, userMessage, questionsAsked);
             }
 
             var systemInstruction = @"You are a friendly AI Gift Assistant. Your goal is to help the user find the perfect gift from our catalog by asking follow-up questions and collecting their preferences.
@@ -57,8 +57,10 @@ Follow these rules:
 1. Ask only 1-2 questions at a time. Do not overwhelm the user with a long list of questions.
 2. Be conversational and natural. Adapt your questions based on what the user has already told you.
 3. Keep track of the current preferences state. Update the fields as the user provides details.
-4. Parse the budget text. If a clear budget range is mentioned, extract and output the minPrice and maxPrice (as numeric values) in the state.
-5. Output your response as a JSON object matching this schema:
+4. Parse the budget text. If a specific price (e.g. ""price 99"", ""99 dollars"") or budget range/limit is mentioned, extract and output the minPrice and maxPrice (as numeric values) in the state. If the user specifies an exact target price (e.g. 99), set both minPrice and maxPrice to that value (99).
+5. You must ask a maximum of 5 questions before generating recommendations. If you have already asked 5 questions (i.e. 'Number of questions asked by the assistant so far' is 5 or more), or if you already have enough information before reaching 5 questions, you MUST set readyToRecommend to true, stop asking any more questions, and generate a search query string to search our product catalog based on the preferences collected so far.
+6. You only recommend in-stock products from our catalog, and never invent or suggest unavailable or out-of-stock items.
+7. Output your response as a JSON object matching this schema:
 {
   ""state"": {
     ""recipientType"": ""string or null"",
@@ -79,6 +81,8 @@ Follow these rules:
 
             var contextPrompt = $@"Current Gift Preference State:
 {JsonSerializer.Serialize(currentState, JsonOptions)}
+
+Number of questions asked by the assistant so far: {questionsAsked}
 
 User's Message:
 ""{userMessage}""";
@@ -116,7 +120,7 @@ User's Message:
             var systemInstruction = @"You are a friendly AI Gift Assistant. You have gathered the user's gift preferences and searched our product catalog.
 Your task is to write a personalized response explaining why the retrieved candidate products match the user's preferences.
 Follow these rules:
-1. Recommend ONLY the products from the retrieved catalog. DO NOT hallucinate, guess, or invent any other products.
+1. Recommend ONLY the products from the retrieved catalog, which are verified to be in-stock. DO NOT hallucinate, guess, or invent any other products, and never suggest unavailable or out-of-stock items.
 2. For each product, write a brief, convincing explanation (1-2 sentences) of why it fits their preferences (e.g., recipient type, occasion, interests, budget).
 3. Output your response as a JSON object matching this schema:
 {
@@ -160,7 +164,7 @@ Retrieved Candidate Products Catalog:
 
         #region Mock Fallback Reasoning Engine
 
-        private GeminiAnalysisResult AnalyzeConversationMock(GiftRequestState state, string message)
+        private GeminiAnalysisResult AnalyzeConversationMock(GiftRequestState state, string message, int questionsAsked)
         {
             message = message.ToLowerInvariant();
             
@@ -202,36 +206,72 @@ Retrieved Candidate Products Catalog:
             else if (message.Contains("adult")) state.AgeRange = "Adults";
             else if (message.Contains("kid") || message.Contains("child")) state.AgeRange = "Kids";
 
-            // 4. Budget Detection
-            if (message.Contains("affordable") || message.Contains("cheap") || message.Contains("under 25") || message.Contains("under $25"))
+            // 4. Budget & Price Detection
+            var numbers = System.Text.RegularExpressions.Regex.Matches(message, @"\b\d+(?:\.\d+)?\b")
+                .Cast<System.Text.RegularExpressions.Match>()
+                .Select(m => decimal.Parse(m.Value))
+                .ToList();
+
+            if (numbers.Count > 0)
             {
-                state.Budget = "Under $25";
-                state.MinPrice = 0;
-                state.MaxPrice = 25;
+                if (numbers.Count == 1)
+                {
+                    var val = numbers[0];
+                    if (message.Contains("under") || message.Contains("less than") || message.Contains("below") || message.Contains("max") || message.Contains("up to"))
+                    {
+                        state.MinPrice = 0;
+                        state.MaxPrice = val;
+                        state.Budget = $"Under ${val}";
+                    }
+                    else if (message.Contains("above") || message.Contains("more than") || message.Contains("at least") || message.Contains("min") || message.Contains("over"))
+                    {
+                        state.MinPrice = val;
+                        state.MaxPrice = 999999;
+                        state.Budget = $"Above ${val}";
+                    }
+                    else
+                    {
+                        // Exact target price match (e.g. "price 99")
+                        state.MinPrice = val;
+                        state.MaxPrice = val;
+                        state.Budget = $"Around ${val}";
+                    }
+                }
+                else if (numbers.Count >= 2)
+                {
+                    var sorted = numbers.OrderBy(n => n).ToList();
+                    state.MinPrice = sorted[0];
+                    state.MaxPrice = sorted[1];
+                    state.Budget = $"${sorted[0]} - ${sorted[1]}";
+                }
             }
-            else if (message.Contains("under 50") || message.Contains("less than 50") || message.Contains("under $50") || message.Contains("50 dollars") || message.Contains("cheaper"))
+            else
             {
-                state.Budget = "Under $50";
-                state.MinPrice = 0;
-                state.MaxPrice = 50;
-            }
-            else if (message.Contains("50 to 100") || message.Contains("between 50 and 100") || message.Contains("50-100") || message.Contains("moderate") || message.Contains("medium"))
-            {
-                state.Budget = "$50 - $100";
-                state.MinPrice = 50;
-                state.MaxPrice = 100;
-            }
-            else if (message.Contains("100 to 200") || message.Contains("100-200") || message.Contains("premium"))
-            {
-                state.Budget = "$100 - $200";
-                state.MinPrice = 100;
-                state.MaxPrice = 200;
-            }
-            else if (message.Contains("luxury") || message.Contains("expensive") || message.Contains("high end") || message.Contains("above 100") || message.Contains("over 100") || message.Contains("no limit") || message.Contains("any budget"))
-            {
-                state.Budget = "Luxury ($200+)";
-                state.MinPrice = 200;
-                state.MaxPrice = 10000;
+                // Fallback to standard descriptive terms if no exact number is present
+                if (message.Contains("affordable") || message.Contains("cheap"))
+                {
+                    state.Budget = "Under $25";
+                    state.MinPrice = 0;
+                    state.MaxPrice = 25;
+                }
+                else if (message.Contains("moderate") || message.Contains("medium"))
+                {
+                    state.Budget = "$50 - $100";
+                    state.MinPrice = 50;
+                    state.MaxPrice = 100;
+                }
+                else if (message.Contains("premium"))
+                {
+                    state.Budget = "$100 - $200";
+                    state.MinPrice = 100;
+                    state.MaxPrice = 200;
+                }
+                else if (message.Contains("luxury") || message.Contains("expensive") || message.Contains("high end") || message.Contains("no limit") || message.Contains("any budget"))
+                {
+                    state.Budget = "Luxury ($200+)";
+                    state.MinPrice = 200;
+                    state.MaxPrice = 10000;
+                }
             }
 
             // 5. Interests Detection
@@ -268,7 +308,19 @@ Retrieved Candidate Products Catalog:
             var ready = false;
             string? searchQuery = null;
 
-            if (string.IsNullOrEmpty(state.RecipientType))
+            if (questionsAsked >= 5 || (!string.IsNullOrEmpty(state.RecipientType) && !string.IsNullOrEmpty(state.Occasion) && !string.IsNullOrEmpty(state.Budget) && state.Interests.Count > 0))
+            {
+                ready = true;
+                var interestsText = state.Interests.Count > 0 ? string.Join(", ", state.Interests.Select(i => i.ToLower())) : "handmade items";
+                var styleText = !string.IsNullOrEmpty(state.StylePreferences) ? $" {state.StylePreferences.ToLower()} style" : "";
+                var recipientText = !string.IsNullOrEmpty(state.RecipientType) ? $" for {state.RecipientType}" : "";
+                var occasionText = !string.IsNullOrEmpty(state.Occasion) ? $" {state.Occasion}" : "special occasion";
+                var budgetText = !string.IsNullOrEmpty(state.Budget) ? $" budget {state.Budget}" : "";
+
+                searchQuery = $"{occasionText} gift{recipientText} who likes {interestsText}{styleText}{budgetText}";
+                reply = $"I've got a clear picture now! 🔍 Let me search our handmade collection for the perfect gift...";
+            }
+            else if (string.IsNullOrEmpty(state.RecipientType))
             {
                 reply = "Hi there! ✨ I'd love to help you find the perfect handmade gift. Who are you shopping for? For example, a friend, your mom, a partner, or someone else?";
             }

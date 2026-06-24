@@ -38,11 +38,31 @@ namespace HandoraApplication.AI.Services
             // 1. Get all active products from DB (eager loading Category, Images, Tags)
             var productsQuery = await _productRepository.GetAllProductsQueryAsync();
             var products = await productsQuery
-                .Include(p => p.Category)
+                 .Include(p => p.Category)
+                     .ThenInclude(c => c.Parent)
                 .Include(p => p.Images)
                 .Include(p => p.Tags)
                 .Where(p => p.IsActive && p.Status == ProductStatus.Active)
                 .ToListAsync();
+
+            // 1b. Also retrieve inactive/deleted product IDs to clean them up from vector store
+            var inactiveOrDeletedProducts = await productsQuery
+                .IgnoreQueryFilters()
+                .Where(p => !p.IsActive || p.Status != ProductStatus.Active || p.IsDeleted)
+                .Select(p => p.Id)
+                .ToListAsync();
+
+            foreach (var productId in inactiveOrDeletedProducts)
+            {
+                try
+                {
+                    await _vectorStoreService.DeleteAsync(collectionName, productId.ToString());
+                }
+                catch
+                {
+                    // Ignore failures for individual deletes to ensure overall indexing continues
+                }
+            }
 
             if (products.Count == 0)
             {
@@ -60,7 +80,6 @@ namespace HandoraApplication.AI.Services
                 // Build a structured, descriptive text document for LLM and vector search matching
                 var textBuilder = new StringBuilder();
                 textBuilder.AppendLine($"Product: {product.TitleEn}");
-                textBuilder.AppendLine($"Category: {product.Category?.NameEn ?? "General"}");
                 textBuilder.AppendLine($"Price: {product.Price}");
                 if (!string.IsNullOrWhiteSpace(product.DescriptionEn))
                 {
@@ -89,7 +108,6 @@ namespace HandoraApplication.AI.Services
                     { "price", (double)(product.DiscountPrice ?? product.Price) }, // numeric for range filtering
                     { "description", product.DescriptionEn ?? string.Empty },
                     { "imageUrl", imageUrl ?? string.Empty },
-                    { "category", product.Category?.NameEn ?? string.Empty },
                     { "tags", tagsList }
                 };
 
