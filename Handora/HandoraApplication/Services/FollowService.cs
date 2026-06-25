@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.FollowDTOs;
+using HandoraApplication.DTOs.FollowDTOs;
 using HandoraApplication.DTOs.NotificationsDto;
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
@@ -51,7 +51,7 @@ namespace HandoraApplication.Services
                 UserId = shopExists.OwnerId,
                 TitleEn = "New Follower",
                 TitleAr = "متابع جديد",
-                MessageEn = $"{follower.UserName ?? "A user"} started following your shop",
+                MessageEn = $"{follower?.UserName ?? "A user"} started following your shop",
                 MessageAr = $"قام {follower?.UserName ?? "مستخدم"} بمتابعة متجرك",
 
                 Type = NotificationType.Follow,

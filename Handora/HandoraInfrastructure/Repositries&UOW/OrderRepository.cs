@@ -18,6 +18,9 @@ public class OrderRepository(AppDbContext context)
             .Include(o => o.DeliveryMethod)
             .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
+            .Include(o => o.Items)
+                .ThenInclude(i => i.Shop)
+                    .ThenInclude(s => s.Owner)
             .Include(o => o.Coupon)
             .FirstOrDefaultAsync(o => o.Id == orderId && !o.IsDeleted);
     }
@@ -45,6 +48,9 @@ public class OrderRepository(AppDbContext context)
             .Include(c => c.Items)
                 .ThenInclude(ci => ci.Product)
                     .ThenInclude(p => p.Images)
+            .Include(c => c.Items)
+                .ThenInclude(ci => ci.Product)
+                    .ThenInclude(p => p.Shop)
             .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsDeleted);
     }
 
@@ -68,5 +74,13 @@ public class OrderRepository(AppDbContext context)
             .Include(o => o.DeliveryMethod)
             .Include(o => o.Items)
             .Where(o => o.Items.Any(i => i.ShopId == shopId) && !o.IsDeleted);
+    }
+    public async Task<IQueryable<Order>> GetAllOrdersQueryAsync()
+    {
+        return _context.Orders
+            .AsNoTracking()
+            .Include(o => o.DeliveryMethod)
+            .Include(o => o.Items)
+            .Where(o => !o.IsDeleted);
     }
 }

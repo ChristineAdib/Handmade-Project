@@ -1,0 +1,113 @@
+@model HandoraMVC.ViewModels.CreateCategoryViewModel
+
+@{
+    ViewData["Title"] = "Create Category";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div style="max-width:600px">
+    <div class="page-header">
+        <h2>New Category</h2>
+        <a asp-action="Index" class="btn-secondary">← Back</a>
+    </div>
+
+    <div class="form-card">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="validation-error"></div>
+
+            <div class="form-group">
+                <label>Type</label>
+                <div style="display:flex;gap:16px;margin-top:6px">
+                    <label class="radio-option" id="opt-parent">
+                        <input type="radio" name="categoryType" value="parent" checked onchange="toggleParent(this)" />
+                        <i class="ti ti-folder" aria-hidden="true"></i>
+                        <span>Parent Category</span>
+                    </label>
+                    <label class="radio-option" id="opt-sub">
+                        <input type="radio" name="categoryType" value="sub" onchange="toggleParent(this)" />
+                        <i class="ti ti-corner-down-right" aria-hidden="true"></i>
+                        <span>Subcategory</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" id="parent-select-group" style="display:none">
+                <label asp-for="ParentId">Parent Category</label>
+                <select asp-for="ParentId" asp-items="Model.ParentCategories" class="form-input">
+                    <option value="">-- Select Parent --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="NameEn">Name (English)</label>
+                <input asp-for="NameEn" class="form-input" placeholder="e.g. Pottery" />
+                <span asp-validation-for="NameEn" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="NameAr">Name (Arabic)</label>
+                <input asp-for="NameAr" class="form-input" placeholder="مثال: الفخار" />
+                <span asp-validation-for="NameAr" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ImageFile">Category Image <span style="color:#aaa;font-weight:400">(optional)</span></label>
+                <input asp-for="ImageFile" type="file" accept="image/*" class="form-input" />
+                <span asp-validation-for="ImageFile" class="field-error"></span>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <i class="ti ti-check" aria-hidden="true"></i> Create
+                </button>
+                <a asp-action="Index" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: 0.5px solid #e8e0d8;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        color: #555;
+        transition: all 0.15s;
+        flex: 1;
+    }
+
+        .radio-option:has(input:checked) {
+            border-color: #c4956a;
+            background: #fdf5ee;
+            color: #7a5433;
+        }
+
+        .radio-option input {
+            display: none;
+        }
+
+        .radio-option i {
+            font-size: 16px;
+        }
+</style>
+
+
+      <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const parentId = '@Model.ParentId';
+        if (parentId) {
+            document.querySelector('input[value="sub"]').checked = true;
+            document.getElementById('parent-select-group').style.display = 'block';
+        }
+    });
+
+    function toggleParent(el) {
+        const group = document.getElementById('parent-select-group');
+        group.style.display = el.value === 'sub' ? 'block' : 'none';
+    }
+</script>

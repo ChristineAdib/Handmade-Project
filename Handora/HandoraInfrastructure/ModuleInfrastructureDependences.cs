@@ -4,6 +4,7 @@ using HandoraDomain.Interfaces;
 using HandoraInfrastructure.Repositries;
 using HandoraInfrastructure.Repositries_UOW;
 using HandoraInfrastructure.Settings;
+using HandoraInfrastructure.Services;
 using Microsoft.Extensions.Configuration;
 
 public static class ModuleInfrastructureDependences
@@ -19,6 +20,8 @@ public static class ModuleInfrastructureDependences
         service.Configure<PaymobSettings>(
         configuration.GetSection("Paymob"));
         service.AddScoped<IOtpRepository, OtpRepository>();
+        service.AddScoped<IUserStatsRepository, UserStatsRepository>();
+        service.AddScoped<IAiReviewService, GeminiAiService>();
         return service;
     }
 }

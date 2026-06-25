@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.ReviewDTOs;
+using HandoraApplication.DTOs.ReviewDTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,12 +21,15 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public decimal FinalPrice => DiscountPrice ?? Price; // calculated
 
         public int Quantity { get; set; }
+        public bool IsOnePiece { get; set; }
         public string Status { get; set; } // "Active", "Inactive", "OutOfStock"
+        public bool IsActive { get; set; }
 
         public decimal AverageRating { get; set; }
         public int ReviewCount { get; set; }
 
         public Guid CategoryId { get; set; }
+        public Guid? ParentCategoryId { get; set; }
         public string CategoryNameEn { get; set; }
         public string CategoryNameAr { get; set; }
 
@@ -39,8 +42,23 @@ namespace HandoraApplication.DTOs.ProductDTOs
 
 
         public List<ReviewSummaryDto> LatestReviews { get; set; }
+        public AiReviewSummaryDto? AiSummary { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public ProductDraftResponseDto? PendingDraft { get; set; }
+        public bool HasPendingDraft => PendingDraft != null;
+
+
+        public bool IsAvailable { get; set; }
+        public int StockQuantity { get; set; }
+        public bool IsSoldOut { get; set; }
+    }
+
+    public record AiReviewSummaryDto
+    {
+        public string OverallSummary { get; set; } = string.Empty;
+        public List<string> Pros { get; set; } = new();
+        public List<string> Cons { get; set; } = new();
     }
 }
