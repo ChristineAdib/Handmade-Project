@@ -9,7 +9,7 @@ namespace HandoraApplication.AI.Interfaces
         /// <summary>
         /// Analyzes the conversation context, merges user input, updates state, and outputs the next conversational reply plus whether RAG catalog query should trigger.
         /// </summary>
-        Task<GeminiAnalysisResult> AnalyzeConversationAsync(GiftRequestState currentState, string userMessage);
+        Task<GeminiAnalysisResult> AnalyzeConversationAsync(GiftRequestState currentState, string userMessage, int questionsAsked = 0);
 
         /// <summary>
         /// Takes candidate products retrieved via RAG and explains how each fits the user's gift preferences, returning structured reasons.
