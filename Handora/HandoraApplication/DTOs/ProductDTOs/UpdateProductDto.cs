@@ -1,3 +1,4 @@
+using HandoraDomain.Models.ProductEntities;
 using Microsoft.AspNetCore.Http;
 
 namespace HandoraApplication.DTOs.ProductDTOs

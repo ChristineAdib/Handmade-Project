@@ -24,7 +24,6 @@ public class ProductService(
     IAuthRepository authRepository,
     INotificationService notificationService,
     IProductIndexerService productIndexerService) : IProductService
-    INotificationService notificationService) : IProductService
 {
     private readonly IProductRepository _productRepository = productRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
