@@ -20,6 +20,7 @@ public class MapsterSettings
             .Map(dest => dest.CategoryNameEn, src => src.Category.NameEn)
             .Map(dest => dest.CategoryNameAr, src => src.Category.NameAr)
             .Map(dest => dest.ParentCategoryId, src => src.Category.ParentId)
+            .Map(dest => dest.ParentCategoryNameEn, src => src.Category.Parent != null ? src.Category.Parent.NameEn : null)
             .Map(dest => dest.ShopName, src => src.Shop.Name)
             .Map(dest => dest.Status, src => src.Status.ToString())
             .Map(dest => dest.Tags, src => src.Tags.Select(t => t.Name).ToList())

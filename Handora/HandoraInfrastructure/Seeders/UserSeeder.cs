@@ -1,4 +1,4 @@
-﻿using HandoraDomain.Models.AppUser;
+using HandoraDomain.Models.AppUser;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -51,6 +51,7 @@ namespace HandoraInfrastructure.Seeders
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 EmailConfirmed = true,
+                IsEmailVerified = true,
             };
 
             await userManager.CreateAsync(admin, "Admin@123");
@@ -103,6 +104,7 @@ namespace HandoraInfrastructure.Seeders
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     EmailConfirmed = true,
+                    IsEmailVerified = true,
                 };
 
                 await userManager.CreateAsync(user, "Seller@123");
