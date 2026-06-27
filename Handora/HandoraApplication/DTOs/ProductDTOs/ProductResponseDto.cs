@@ -54,6 +54,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public bool IsAvailable { get; set; }
         public int StockQuantity { get; set; }
         public bool IsSoldOut { get; set; }
+        public string? ArModelUrl { get; set; }
     }
 
     public record AiReviewSummaryDto

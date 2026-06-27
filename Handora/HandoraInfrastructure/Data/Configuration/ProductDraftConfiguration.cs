@@ -39,6 +39,9 @@ namespace HandoraInfrastructure.Data.Configuration
 
             // Index for fast lookup by ProductId + Status
             builder.HasIndex(d => new { d.ProductId, d.Status });
+
+            builder.Property(d => d.ArModelUrl).HasMaxLength(500);
+            builder.Property(d => d.RemoveArModel).HasDefaultValue(false);
         }
     }
 }

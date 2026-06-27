@@ -546,5 +546,14 @@ namespace HandoraApplication.Services
 
             return Result.Success();
         }
+
+        public async Task<bool> CheckUserBanStatusAsync(string userId, CancellationToken ct = default)
+        {
+            var user = await _authRepo.GetByIdAsync(userId, ct);
+            if (user is null || user.IsDeleted)
+                return true; // treat as banned
+
+            return user.IsBanned;
+        }
     }
 }

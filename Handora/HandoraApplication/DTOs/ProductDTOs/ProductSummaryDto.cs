@@ -27,6 +27,6 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public bool IsActive { get; set; }
         public int Quantity { get; set; }
         public bool IsOnePiece { get; set; }
-
+        public string? ArModelUrl { get; set; }
     }
 }
