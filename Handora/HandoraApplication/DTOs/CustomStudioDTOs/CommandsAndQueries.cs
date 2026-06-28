@@ -55,6 +55,17 @@ namespace HandoraApplication.DTOs.CustomStudioDTOs
         int DeliveryTimeDays,
         int RevisionsAllowed,
         List<string> Attachments,
+        string Notes,
+        string? Status = null,
+        Guid? OfferId = null
+    );
+
+    public record CreateCustomServiceCommand(
+        Guid RequestId,
+        Guid ShopId,
+        string Title,
+        decimal Price,
+        int EstimatedDeliveryDays,
         string Notes
     );
 
@@ -86,6 +97,12 @@ namespace HandoraApplication.DTOs.CustomStudioDTOs
         Guid DeliveryMethodId,
         string? CouponCode = null,
         string? Notes = null
+    );
+
+    public record RefineDesignCommand(
+        Guid RequestId,
+        Guid DesignId,
+        string Prompt
     );
 
     #endregion

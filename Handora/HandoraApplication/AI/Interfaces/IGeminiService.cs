@@ -15,6 +15,11 @@ namespace HandoraApplication.AI.Interfaces
         /// Takes candidate products retrieved via RAG and explains how each fits the user's gift preferences, returning structured reasons.
         /// </summary>
         Task<GeminiRecommendationResult> ExplainRecommendationsAsync(GiftRequestState state, List<GiftProductDto> candidateProducts);
+
+        /// <summary>
+        /// Analyzes a real person's photo and describes face characteristics to pre-configure a customized crochet doll.
+        /// </summary>
+        Task<string> AnalyzeCrochetDollPhotoAsync(string base64Image, string mimeType, CancellationToken ct = default);
     }
 
     public class GeminiAnalysisResult

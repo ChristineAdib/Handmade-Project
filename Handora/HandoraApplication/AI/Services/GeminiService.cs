@@ -389,6 +389,70 @@ Retrieved Candidate Products Catalog:
 
         #endregion
 
+        public async Task<string> AnalyzeCrochetDollPhotoAsync(string base64Image, string mimeType, CancellationToken ct = default)
+        {
+            if (IsMockMode())
+            {
+                return @"{
+                  ""gender"": ""Girl"",
+                  ""skinTone"": ""Ivory (Very Fair)"",
+                  ""hairStyle"": ""Long"",
+                  ""hairColor"": ""Chestnut Brown"",
+                  ""smileType"": ""Happy"",
+                  ""eyebrowStyle"": ""Normal"",
+                  ""hasFreckles"": false,
+                  ""hasBlush"": true,
+                  ""glasses"": false,
+                  ""beard"": false
+                }";
+            }
+
+            var promptText = @"Analyze the uploaded photo of a person's face. You must extract and describe their appearance details to configure a custom crochet amigurumi doll inspired by them.
+Output your response as a JSON object matching this schema:
+{
+  ""gender"": ""Girl"" or ""Boy"" or ""Both"",
+  ""skinTone"": ""Ivory (Very Fair)"" or ""Peach (Fair)"" or ""Honey (Golden)"" or ""Golden (Caramel)"" or ""Cocoa (Deep)"" or ""Espresso (Dark)"",
+  ""hairStyle"": ""Long"" or ""Curly"" or ""Braids"" or ""Buns"" or ""Ponytail"" or ""Short"" or ""Spiky"" or ""Slicked Back"",
+  ""hairColor"": ""Golden Blonde"" or ""Chestnut Brown"" or ""Midnight Black"" or ""Auburn Red"" or ""Forest Green"" or ""Pastel Pink"" or ""Lavender Purple"",
+  ""smileType"": ""Happy"" or ""Grin"" or ""Cute"" or ""Shy"",
+  ""eyebrowStyle"": ""Normal"" or ""Soft"" or ""Thick"",
+  ""hasFreckles"": true,
+  ""hasBlush"": true,
+  ""glasses"": true,
+  ""beard"": true
+}
+Be very precise and try to extract the details as accurately as possible to match the person's face proportions, hair style, hair color, glasses (if any), beard (if any), smile, skin tone. Only return the JSON object.";
+
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new object[]
+                        {
+                            new { text = promptText },
+                            new
+                            {
+                                inlineData = new
+                                {
+                                    mimeType = mimeType,
+                                    data = base64Image
+                                }
+                            }
+                        }
+                    }
+                },
+                generationConfig = new
+                {
+                    responseMimeType = "application/json",
+                    temperature = 0.2
+                }
+            };
+
+            return await CallGeminiApiAsync(requestBody);
+        }
+
         #region Private Helpers
 
         private async Task<string> CallGeminiApiAsync(object requestBody)

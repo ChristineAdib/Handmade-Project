@@ -110,6 +110,26 @@ namespace HandoraInfrastructure.Data.Configuration
                 .HasForeignKey(o => o.ShopId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasOne(o => o.Conversation)
+                .WithMany()
+                .HasForeignKey(o => o.ConversationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(o => o.Design)
+                .WithMany()
+                .HasForeignKey(o => o.DesignId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(o => o.Order)
+                .WithMany()
+                .HasForeignKey(o => o.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(o => o.Workspace)
+                .WithMany()
+                .HasForeignKey(o => o.WorkspaceId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Indexes
             builder.HasIndex(o => o.CustomRequestId);
             builder.HasIndex(o => o.ShopId);

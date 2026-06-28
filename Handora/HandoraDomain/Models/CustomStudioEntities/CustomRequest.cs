@@ -35,6 +35,7 @@ namespace HandoraDomain.Models.CustomStudioEntities
         public ICollection<GeneratedDesign> GeneratedDesigns { get; set; } = new List<GeneratedDesign>();
         public ICollection<SellerRecommendation> SellerRecommendations { get; set; } = new List<SellerRecommendation>();
         public ICollection<CustomOffer> CustomOffers { get; set; } = new List<CustomOffer>();
+        public CustomService? CustomService { get; set; }
         public ProjectWorkspace? ProjectWorkspace { get; set; }
 
         #region Domain Logic & State Machine Transitions
@@ -71,7 +72,11 @@ namespace HandoraDomain.Models.CustomStudioEntities
 
         public void StartGeneration(int maxGenerations)
         {
-            if (Status != CustomRequestStatus.ReadyForGeneration && Status != CustomRequestStatus.Generated)
+            if (Status != CustomRequestStatus.ReadyForGeneration &&
+                Status != CustomRequestStatus.Generated &&
+                Status != CustomRequestStatus.DesignSelected &&
+                Status != CustomRequestStatus.SellerMatched &&
+                Status != CustomRequestStatus.Negotiation)
             {
                 throw new InvalidOperationException("Request must be ready for generation or already have generated designs to run another generation.");
             }
@@ -100,9 +105,12 @@ namespace HandoraDomain.Models.CustomStudioEntities
 
         public void SelectDesign(Guid designId)
         {
-            if (Status != CustomRequestStatus.Generated)
+            if (Status != CustomRequestStatus.Generated &&
+                Status != CustomRequestStatus.DesignSelected &&
+                Status != CustomRequestStatus.SellerMatched &&
+                Status != CustomRequestStatus.Negotiation)
             {
-                throw new InvalidOperationException("Design selection can only occur on generated requests.");
+                throw new InvalidOperationException("Design selection can only occur on generated or negotiating requests.");
             }
 
             var exists = GeneratedDesigns.Any(d => d.Id == designId);
@@ -112,7 +120,13 @@ namespace HandoraDomain.Models.CustomStudioEntities
             }
 
             SelectedDesignId = designId;
-            Status = CustomRequestStatus.DesignSelected;
+            // Only advance to DesignSelected if we're still at Generated;
+            // preserve higher states (SellerMatched, Negotiation) so we don't
+            // break the downstream workflow.
+            if (Status == CustomRequestStatus.Generated)
+            {
+                Status = CustomRequestStatus.DesignSelected;
+            }
             UpdatedAt = DateTime.UtcNow;
         }
 
@@ -150,16 +164,23 @@ namespace HandoraDomain.Models.CustomStudioEntities
 
         public void ReceiveOffer(CustomOffer offer)
         {
-            if (Status != CustomRequestStatus.Negotiation && Status != CustomRequestStatus.OfferSent)
+            if (Status == CustomRequestStatus.Draft || Status == CustomRequestStatus.Configuring || Status == CustomRequestStatus.ReadyForGeneration || Status == CustomRequestStatus.Generating)
             {
                 throw new InvalidOperationException("Custom request is not open for receiving offers.");
             }
 
             // Ensure offer matches request
             offer.CustomRequestId = Id;
-            CustomOffers.Add(offer);
+            if (!CustomOffers.Any(o => o.Id == offer.Id))
+            {
+                CustomOffers.Add(offer);
+            }
 
-            Status = CustomRequestStatus.OfferSent;
+            if (Status == CustomRequestStatus.DesignSelected || Status == CustomRequestStatus.SellerMatched || Status == CustomRequestStatus.Negotiation)
+            {
+                Status = CustomRequestStatus.OfferSent;
+            }
+            
             UpdatedAt = DateTime.UtcNow;
         }
 
@@ -177,29 +198,10 @@ namespace HandoraDomain.Models.CustomStudioEntities
             }
 
             offer.Status = OfferStatus.Accepted;
-
-            // Reject all other pending offers
-            foreach (var otherOffer in CustomOffers.Where(o => o.Id != offerId && o.Status == OfferStatus.Pending))
-            {
-                otherOffer.Status = OfferStatus.Rejected;
-            }
+            offer.AcceptedAt = DateTime.UtcNow;
 
             SelectedSellerId = offer.ShopId;
             Status = CustomRequestStatus.OfferAccepted;
-
-            // Initialize Project Workspace
-            ProjectWorkspace = new ProjectWorkspace
-            {
-                Id = Guid.NewGuid(),
-                CustomRequestId = Id,
-                SelectedOfferId = offerId,
-                SelectedOffer = offer,
-                ChatConversation = conversation,
-                ChatConversationId = conversation.Id,
-                Status = ProjectWorkspaceStatus.Initiated,
-                PaymentStatus = PaymentStatus.Pending,
-                CreatedAt = DateTime.UtcNow
-            };
 
             UpdatedAt = DateTime.UtcNow;
         }
@@ -209,11 +211,6 @@ namespace HandoraDomain.Models.CustomStudioEntities
             if (Status != CustomRequestStatus.OfferAccepted)
             {
                 throw new InvalidOperationException("Payment can only be initiated after accepting a seller's offer.");
-            }
-
-            if (ProjectWorkspace == null)
-            {
-                throw new InvalidOperationException("Project workspace must be initialized before processing payment.");
             }
 
             Status = CustomRequestStatus.PaymentPending;
@@ -227,14 +224,7 @@ namespace HandoraDomain.Models.CustomStudioEntities
                 throw new InvalidOperationException("Can only complete payment on custom requests in PaymentPending status.");
             }
 
-            if (ProjectWorkspace == null)
-            {
-                throw new InvalidOperationException("Project workspace not found.");
-            }
-
             Status = CustomRequestStatus.Paid;
-            ProjectWorkspace.PaymentStatus = PaymentStatus.Paid;
-            ProjectWorkspace.Status = ProjectWorkspaceStatus.DepositPaid;
             UpdatedAt = DateTime.UtcNow;
         }
 

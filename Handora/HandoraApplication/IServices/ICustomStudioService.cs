@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using HandoraApplication.DTOs.Common;
 using HandoraApplication.DTOs.CustomStudioDTOs;
 using HandoraApplication.DTOs.OrderDTOs;
+using HandoraApplication.DTOs.ChatDTOs;
 using HandoraApplication.Helpers;
 using HandoraDomain.Consts;
 
@@ -17,17 +18,23 @@ namespace HandoraApplication.IServices
         Task<Result<CustomRequestDetailDto>> UpdateWizardStepAsync(string buyerId, UpdateWizardStepCommand command, CancellationToken ct = default);
         Task<Result<CustomRequestDetailDto>> SaveConfigurationAsync(string buyerId, SaveConfigurationCommand command, CancellationToken ct = default);
         Task<Result<CustomRequestDetailDto>> UploadReferenceImageMetadataAsync(string buyerId, UploadReferenceImageMetadataCommand command, CancellationToken ct = default);
+        Task<Result<CustomRequestDetailDto>> AnalyzePhotoForDollAsync(string buyerId, Guid requestId, string base64Image, string mimeType, string fileUrl, CancellationToken ct = default);
         Task<Result<CustomRequestDetailDto>> SaveGeneratedDesignAsync(string buyerId, SaveGeneratedDesignCommand command, CancellationToken ct = default);
         Task<Result<CustomRequestDetailDto>> ChooseGeneratedDesignAsync(string buyerId, ChooseGeneratedDesignCommand command, CancellationToken ct = default);
         Task<Result<CustomRequestDetailDto>> SelectSellerAsync(string buyerId, SelectSellerCommand command, CancellationToken ct = default);
+        Task<Result<ConversationDto>> InitializeNegotiationAsync(string buyerId, Guid requestId, Guid shopId, CancellationToken ct = default);
         Task<Result<CustomOfferDto>> CreateSellerOfferAsync(string sellerUserId, CreateSellerOfferCommand command, CancellationToken ct = default);
         Task<Result<CustomRequestDetailDto>> AcceptOfferAsync(string buyerId, AcceptOfferCommand command, CancellationToken ct = default);
         Task<Result<CustomOfferDto>> RejectOfferAsync(string buyerId, RejectOfferCommand command, CancellationToken ct = default);
         Task<Result<CustomRequestDetailDto>> CancelCustomRequestAsync(string buyerId, CancelCustomRequestCommand command, CancellationToken ct = default);
         Task<Result<CustomRequestDetailDto>> ArchiveRequestAsync(string buyerId, ArchiveRequestCommand command, CancellationToken ct = default);
         Task<Result<CustomRequestDetailDto>> GenerateDesignAsync(string buyerId, Guid requestId, CancellationToken ct = default);
+        Task<Result<CustomRequestDetailDto>> RefineDesignAsync(string buyerId, RefineDesignCommand command, CancellationToken ct = default);
         Task<Result<CustomOfferDto>> RequestChangesAsync(string buyerId, Guid offerId, string feedback, CancellationToken ct = default);
         Task<Result<OrderResponseDto>> CheckoutCustomRequestAsync(string buyerId, CheckoutCustomRequestCommand command, CancellationToken ct = default);
+        Task<Result<CustomServiceDto>> CreateCustomServiceAsync(string sellerUserId, CreateCustomServiceCommand command, CancellationToken ct = default);
+        Task<Result<CustomRequestDetailDto>> ApproveCustomServiceAsync(string buyerUserId, Guid serviceId, CancellationToken ct = default);
+        Task<Result<CustomRequestDetailDto>> RejectCustomServiceAsync(string buyerUserId, Guid serviceId, CancellationToken ct = default);
 
         // Workspace Commands
         Task<Result<CustomRequestDetailDto>> UpdateWorkspaceProgressAsync(string sellerUserId, Guid requestId, int milestoneStep, string? trackingNumber, CancellationToken ct = default);

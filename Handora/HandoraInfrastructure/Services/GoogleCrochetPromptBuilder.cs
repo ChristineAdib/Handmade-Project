@@ -10,8 +10,8 @@ namespace HandoraInfrastructure.Services
 {
     public class GoogleCrochetPromptBuilder : IAIPromptBuilder
     {
-        private const string PositiveStyleTokens = "Crochet texture, Handmade yarn, Premium craftsmanship, Natural lighting, Studio photography, Cute proportions, Highly detailed stitches, Soft shadows, Photorealistic crochet doll";
-        private const string NegativeStyleTokens = "Plastic, Toy, Pixar, Anime, Cartoon, CGI, Low quality";
+        private const string PositiveStyleTokens = "Crochet texture, realistic stitches, Studio quality, 8k, soft lighting, Natural lighting, Studio photography, Cute proportions, Highly detailed stitches, Soft shadows, Photorealistic crochet doll";
+        private const string NegativeStyleTokens = "plastic, cartoon, 3d render, toy, blurry, low quality, watermark, text, logo, extra limbs";
 
         public PromptBuildResult BuildPrompt(CustomConfiguration configuration)
         {
@@ -40,6 +40,15 @@ namespace HandoraInfrastructure.Services
                     return new PromptBuildResult
                     {
                         PositivePrompt = $"A beautiful handmade amigurumi crochet doll. {PositiveStyleTokens}",
+                        NegativePrompt = NegativeStyleTokens
+                    };
+                }
+
+                if (!string.IsNullOrEmpty(config.ReferenceImageUrl))
+                {
+                    return new PromptBuildResult
+                    {
+                        PositivePrompt = "Create a premium handmade crochet amigurumi doll inspired by the uploaded person. Preserve: facial proportions, hairstyle, expression, clothing style, accessories, overall personality. Transform everything into a realistic handcrafted crochet doll with soft yarn texture, visible crochet stitches, premium amigurumi craftsmanship, warm lighting, clean studio background, highly detailed, cute but realistic proportions.",
                         NegativePrompt = NegativeStyleTokens
                     };
                 }

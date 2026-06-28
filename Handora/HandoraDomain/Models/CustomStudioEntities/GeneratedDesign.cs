@@ -13,8 +13,10 @@ namespace HandoraDomain.Models.CustomStudioEntities
         public bool IsSelected { get; set; }
         public bool IsSaved { get; set; }
         public bool IsDownloaded { get; set; }
+        public bool IsLocked { get; set; }
 
         public string PatternStepsMarkdown { get; set; } = string.Empty;
+        public string DesignSummaryJson { get; set; } = string.Empty;
 
         // Relationship
         public Guid CustomRequestId { get; set; }

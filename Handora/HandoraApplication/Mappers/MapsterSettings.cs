@@ -115,7 +115,12 @@ public class MapsterSettings
             .Map(dest => dest.SelectedSellerName, src => src.SelectedSeller != null ? src.SelectedSeller.Name : null)
             .Map(dest => dest.GeneratedDesigns, src => src.GeneratedDesigns.Adapt<List<GeneratedDesignDto>>())
             .Map(dest => dest.SellerRecommendations, src => src.SellerRecommendations.Adapt<List<SellerRecommendationDto>>())
-            .Map(dest => dest.CustomOffers, src => src.CustomOffers.Adapt<List<CustomOfferDto>>());
+            .Map(dest => dest.CustomOffers, src => src.CustomOffers.Adapt<List<CustomOfferDto>>())
+            .Map(dest => dest.CustomService, src => src.CustomService.Adapt<CustomServiceDto>())
+            .Map(dest => dest.ReferenceImageUrl, src =>
+                src.CustomConfiguration != null && !string.IsNullOrEmpty(src.CustomConfiguration.ConfigurationDataJson)
+                    ? ExtractReferenceImageUrl(src.CustomConfiguration.ConfigurationDataJson)
+                    : null);
 
         TypeAdapterConfig<CustomRequest, CustomRequestSummaryDto>.NewConfig()
             .Map(dest => dest.ProductType, src => src.ProductType.ToString())
@@ -139,9 +144,33 @@ public class MapsterSettings
                 ? new List<string>()
                 : JsonSerializer.Deserialize<List<string>>(src.AttachmentsJson, (JsonSerializerOptions?)null));
 
+        TypeAdapterConfig<CustomService, CustomServiceDto>.NewConfig()
+            .Map(dest => dest.Status, src => src.Status.ToString());
+
         TypeAdapterConfig<ProjectWorkspace, ProjectWorkspaceDto>.NewConfig()
             .Map(dest => dest.Status, src => src.Status.ToString())
             .Map(dest => dest.PaymentStatus, src => src.PaymentStatus.ToString());
+    }
+
+    private static string? ExtractReferenceImageUrl(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("referenceImageUrl", out var prop))
+            {
+                return prop.GetString();
+            }
+            if (doc.RootElement.TryGetProperty("ReferenceImageUrl", out var propCamel))
+            {
+                return propCamel.GetString();
+            }
+        }
+        catch
+        {
+            // Ignore
+        }
+        return null;
     }
 }
 

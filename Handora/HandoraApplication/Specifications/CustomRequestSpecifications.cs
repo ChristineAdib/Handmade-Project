@@ -20,7 +20,9 @@ namespace HandoraApplication.Specifications
                     .ThenInclude(sr => sr.Shop)
                 .Include(r => r.CustomOffers)
                     .ThenInclude(co => co.Shop)
-                .Include(r => r.ProjectWorkspace);
+                .Include(r => r.CustomService)
+                .Include(r => r.ProjectWorkspace)
+                    .ThenInclude(w => w.TimelineEntries);
         }
 
         public static IQueryable<CustomRequest> ByBuyer(this IQueryable<CustomRequest> query, string buyerId)

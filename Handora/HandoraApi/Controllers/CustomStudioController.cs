@@ -268,6 +268,63 @@ namespace HandoraApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Upload face photo and analyze using Gemini to pre-populate custom crochet configuration.
+        /// </summary>
+        [HttpPost("request/{id:guid}/analyze-photo")]
+        [Authorize(Roles = AppRoles.Buyer)]
+        [ProducesResponseType(typeof(ApiResponse<CustomRequestDetailDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> AnalyzeReferencePhoto(
+            Guid id, IFormFile file, CancellationToken ct)
+        {
+            var validation = _imageValidationService.ValidateImage(file);
+            if (!validation.IsValid)
+            {
+                return BadRequest(ApiResponse<object>.Fail(validation.ErrorMessage));
+            }
+
+            try
+            {
+                var buyerId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+                // Read file bytes and convert to base64
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms, ct);
+                var fileBytes = ms.ToArray();
+                var base64Image = Convert.ToBase64String(fileBytes);
+                var mimeType = file.ContentType;
+
+                // Upload to Cloudinary (with fallback to data URI if it fails)
+                string imageUrl;
+                try
+                {
+                    imageUrl = await _fileService.UploadFileAsync(file, "reference_images");
+                }
+                catch (Exception uploadEx)
+                {
+                    // Cloudinary upload failed — use a data URI as a fallback so we can still proceed
+                    imageUrl = $"data:{mimeType};base64,{base64Image}";
+                    // Log but don't block the user
+                    Console.Error.WriteLine($"Cloudinary upload failed, using data URI fallback: {uploadEx.Message}");
+                }
+
+                // Analyze using Gemini and update configuration
+                var result = await _customStudioService.AnalyzePhotoForDollAsync(
+                    buyerId, id, base64Image, mimeType, imageUrl, ct);
+
+                if (result.IsSuccess)
+                {
+                    return Ok(ApiResponse<CustomRequestDetailDto>.Ok(result.Data!));
+                }
+                return BadRequest(ApiResponse<object>.Fail("Failed to analyze photo details", result.Errors));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.Fail($"Photo analysis failed: {ex.Message}"));
+            }
+        }
+
         #endregion
 
         #region AI Generation Endpoints
@@ -305,6 +362,31 @@ namespace HandoraApi.Controllers
                 return Ok(ApiResponse<CustomRequestDetailDto>.Ok(result.Data!));
             }
             return BadRequest(ApiResponse<object>.Fail("AI Generation failed", result.Errors));
+        }
+
+        public class RefineDesignRequest
+        {
+            public Guid DesignId { get; set; }
+            public string Prompt { get; set; } = string.Empty;
+        }
+
+        /// <summary>
+        /// Refine AI design image with instructions.
+        /// </summary>
+        [HttpPost("request/{id:guid}/refine")]
+        [Authorize(Roles = AppRoles.Buyer)]
+        [ProducesResponseType(typeof(ApiResponse<CustomRequestDetailDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RefineAiImage(Guid id, [FromBody] RefineDesignRequest requestBody, CancellationToken ct)
+        {
+            var buyerId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var command = new RefineDesignCommand(id, requestBody.DesignId, requestBody.Prompt);
+            var result = await _customStudioService.RefineDesignAsync(buyerId, command, ct);
+            if (result.IsSuccess)
+            {
+                return Ok(ApiResponse<CustomRequestDetailDto>.Ok(result.Data!));
+            }
+            return BadRequest(ApiResponse<object>.Fail("AI Refinement failed", result.Errors));
         }
 
         /// <summary>
@@ -455,15 +537,19 @@ namespace HandoraApi.Controllers
             
             try
             {
-                // If sellerId can be parsed as a shop Guid, start conversation by shop
+                // If sellerId can be parsed as a shop Guid, initialize negotiation and send auto-details
                 if (Guid.TryParse(sellerId, out var shopId))
                 {
-                    var result = await _chatService.StartConversationByShopAsync(buyerId, shopId, ct);
-                    return Ok(ApiResponse<ConversationDto>.Ok(result));
+                    var result = await _customStudioService.InitializeNegotiationAsync(buyerId, id, shopId, ct);
+                    if (result.IsSuccess)
+                    {
+                        return Ok(ApiResponse<ConversationDto>.Ok(result.Data!));
+                    }
+                    return BadRequest(ApiResponse<object>.Fail("Failed to initialize discussion", result.Errors));
                 }
                 else
                 {
-                    // Otherwise, start conversation by seller's user ID
+                    // Otherwise, start conversation by seller's user ID (fallback)
                     var result = await _chatService.StartConversationAsync(buyerId, sellerId, ct);
                     return Ok(ApiResponse<ConversationDto>.Ok(result));
                 }
@@ -498,6 +584,24 @@ namespace HandoraApi.Controllers
                 return Ok(ApiResponse<CustomRequestDetailDto>.Ok(result.Data!));
             }
             return NotFound(ApiResponse<object>.Fail("No custom request linked to this conversation", result.Errors));
+        }
+
+        /// <summary>
+        /// Get design request context by ID.
+        /// </summary>
+        [HttpGet("/api/designs/{id:guid}")]
+        [ProducesResponseType(typeof(ApiResponse<CustomRequestDetailDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetDesignRequest(Guid id, CancellationToken ct)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var userRole = User.IsInRole(AppRoles.Admin) ? AppRoles.Admin : (User.IsInRole(AppRoles.Seller) ? AppRoles.Seller : AppRoles.Buyer);
+            var result = await _customStudioService.GetCustomRequestDetailsAsync(new GetCustomRequestDetailsQuery(id), ct, userId, userRole);
+            if (result.IsSuccess)
+            {
+                return Ok(ApiResponse<CustomRequestDetailDto>.Ok(result.Data!));
+            }
+            return BadRequest(ApiResponse<object>.Fail("Failed to load design context", result.Errors));
         }
 
         #endregion
@@ -661,6 +765,67 @@ namespace HandoraApi.Controllers
                 return Ok(ApiResponse<OrderResponseDto>.Ok(result.Data!));
             }
             return BadRequest(ApiResponse<object>.Fail("Failed to complete checkout", result.Errors));
+        }
+
+        #endregion
+
+        #region Custom Service Endpoints
+
+        /// <summary>
+        /// Create a custom service proposal.
+        /// </summary>
+        [HttpPost("service")]
+        [Authorize(Roles = AppRoles.Seller)]
+        [ProducesResponseType(typeof(ApiResponse<CustomServiceDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateCustomService(
+            [FromBody] CreateCustomServiceCommand command, CancellationToken ct)
+        {
+            var sellerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _customStudioService.CreateCustomServiceAsync(sellerUserId, command, ct);
+            if (result.IsSuccess)
+            {
+                return Ok(ApiResponse<CustomServiceDto>.Ok(result.Data!));
+            }
+            return BadRequest(ApiResponse<object>.Fail("Failed to create custom service", result.Errors));
+        }
+
+        /// <summary>
+        /// Approve custom service proposal.
+        /// </summary>
+        [HttpPost("service/{id:guid}/approve")]
+        [Authorize(Roles = AppRoles.Buyer)]
+        [ProducesResponseType(typeof(ApiResponse<CustomRequestDetailDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ApproveCustomService(
+            Guid id, CancellationToken ct)
+        {
+            var buyerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _customStudioService.ApproveCustomServiceAsync(buyerUserId, id, ct);
+            if (result.IsSuccess)
+            {
+                return Ok(ApiResponse<CustomRequestDetailDto>.Ok(result.Data!));
+            }
+            return BadRequest(ApiResponse<object>.Fail("Failed to approve custom service", result.Errors));
+        }
+
+        /// <summary>
+        /// Reject custom service proposal.
+        /// </summary>
+        [HttpPost("service/{id:guid}/reject")]
+        [Authorize(Roles = AppRoles.Buyer)]
+        [ProducesResponseType(typeof(ApiResponse<CustomRequestDetailDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RejectCustomService(
+            Guid id, CancellationToken ct)
+        {
+            var buyerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _customStudioService.RejectCustomServiceAsync(buyerUserId, id, ct);
+            if (result.IsSuccess)
+            {
+                return Ok(ApiResponse<CustomRequestDetailDto>.Ok(result.Data!));
+            }
+            return BadRequest(ApiResponse<object>.Fail("Failed to reject custom service", result.Errors));
         }
 
         #endregion

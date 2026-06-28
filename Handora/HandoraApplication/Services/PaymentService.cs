@@ -246,20 +246,97 @@ public class PaymentService : IPaymentService
                     var requestWithWorkspace = await requestsQuery
                         .Include(r => r.ProjectWorkspace)
                         .Include(r => r.Buyer)
+                        .Include(r => r.CustomOffers)
                         .FirstOrDefaultAsync(r => r.Id == item.Product.ProductId);
 
-                    if (requestWithWorkspace != null && requestWithWorkspace.Status == CustomRequestStatus.PaymentPending)
+                    if (requestWithWorkspace != null && (requestWithWorkspace.Status == CustomRequestStatus.PaymentPending || requestWithWorkspace.Status == CustomRequestStatus.OfferAccepted))
                     {
-                        requestWithWorkspace.CompletePayment();
+                        requestWithWorkspace.Status = CustomRequestStatus.Paid;
                         await customRequestRepo.UpdateAsync(requestWithWorkspace);
                         await _unitOfWork.SaveChangesAsync();
 
-                        _logger.LogInformation("[CUSTOM_STUDIO_AUDIT] Custom request {RequestId} payment successfully completed. Status transitioned to Paid and Workspace to DepositPaid.", requestWithWorkspace.Id);
+                        _logger.LogInformation("[CUSTOM_STUDIO_AUDIT] Custom request {RequestId} payment completed. Creating Workspace and isolated Chat.", requestWithWorkspace.Id);
 
                         var shopRepo = _unitOfWork.Repository<Shop, Guid>();
                         var shop = await shopRepo.GetByIdAsync(item.ShopId);
                         if (shop != null)
                         {
+                            // 1. Create a NEW Conversation for the Workspace (WorkspaceChat)
+                            var conversation = new Conversation
+                            {
+                                Id = Guid.NewGuid(),
+                                BuyerId = requestWithWorkspace.BuyerId,
+                                SellerId = shop.OwnerId,
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            var conversationRepo = _unitOfWork.Repository<Conversation, Guid>();
+                            await conversationRepo.AddAsync(conversation);
+                            await _unitOfWork.SaveChangesAsync();
+
+                            // 2. Create the Project Workspace
+                            var workspace = new ProjectWorkspace
+                            {
+                                Id = Guid.NewGuid(),
+                                CustomRequestId = requestWithWorkspace.Id,
+                                Status = ProjectWorkspaceStatus.DepositPaid,
+                                PaymentStatus = PaymentStatus.Paid,
+                                OrderId = order.Id,
+                                ChatConversationId = conversation.Id,
+                                MilestoneStep = 2, // Deposit Paid
+                                CreatedAt = DateTime.UtcNow
+                            };
+
+                            var acceptedOffer = requestWithWorkspace.CustomOffers.FirstOrDefault(o => o.Status == OfferStatus.Accepted || o.Status == OfferStatus.Pending);
+                            if (acceptedOffer != null)
+                            {
+                                workspace.SelectedOfferId = acceptedOffer.Id;
+                                acceptedOffer.Status = OfferStatus.Paid;
+                                acceptedOffer.PaidAt = DateTime.UtcNow;
+                                acceptedOffer.WorkspaceId = workspace.Id;
+                                await _unitOfWork.Repository<CustomOffer, Guid>().UpdateAsync(acceptedOffer);
+                            }
+
+                            var serviceRepo = _unitOfWork.Repository<CustomService, Guid>();
+                            var service = await (await serviceRepo.GetAllAsync())
+                                .FirstOrDefaultAsync(s => s.CustomRequestId == requestWithWorkspace.Id && s.Status == "Approved");
+                            if (service != null)
+                            {
+                                workspace.CustomServiceId = service.Id;
+                            }
+
+                            var workspaceRepo = _unitOfWork.Repository<ProjectWorkspace, Guid>();
+                            await workspaceRepo.AddAsync(workspace);
+                            await _unitOfWork.SaveChangesAsync();
+
+                            // 3. Create 9 ProjectTimeline (WorkspaceTimelineEntry) records
+                            var timelineRepo = _unitOfWork.Repository<WorkspaceTimelineEntry, Guid>();
+                            
+                            var milestone1 = new WorkspaceTimelineEntry { Id = Guid.NewGuid(), ProjectWorkspaceId = workspace.Id, Title = "Offer Approved", Description = "Buyer accepted the custom service.", IsCompleted = true, Timestamp = service?.UpdatedAt ?? DateTime.UtcNow };
+                            var milestone2 = new WorkspaceTimelineEntry { Id = Guid.NewGuid(), ProjectWorkspaceId = workspace.Id, Title = "Payment Completed", Description = "Deposit payment secured in escrow.", IsCompleted = true, Timestamp = DateTime.UtcNow };
+                            var milestone3 = new WorkspaceTimelineEntry { Id = Guid.NewGuid(), ProjectWorkspaceId = workspace.Id, Title = "Workspace Created", Description = "Crafting workspace successfully opened.", IsCompleted = true, Timestamp = DateTime.UtcNow };
+                            
+                            var milestone4 = new WorkspaceTimelineEntry { Id = Guid.NewGuid(), ProjectWorkspaceId = workspace.Id, Title = "Materials Purchased", Description = "Yarn, stuffing, and accessories sourced.", IsCompleted = false };
+                            var milestone5 = new WorkspaceTimelineEntry { Id = Guid.NewGuid(), ProjectWorkspaceId = workspace.Id, Title = "Crochet Started", Description = "Doll assembly and stitching started.", IsCompleted = false };
+                            var milestone6 = new WorkspaceTimelineEntry { Id = Guid.NewGuid(), ProjectWorkspaceId = workspace.Id, Title = "Half Finished", Description = "Main body and structural crochet completed.", IsCompleted = false };
+                            var milestone7 = new WorkspaceTimelineEntry { Id = Guid.NewGuid(), ProjectWorkspaceId = workspace.Id, Title = "Ready For Review", Description = "Artisan uploaded progress photos for review.", IsCompleted = false };
+                            var milestone8 = new WorkspaceTimelineEntry { Id = Guid.NewGuid(), ProjectWorkspaceId = workspace.Id, Title = "Completed", Description = "Doll shipped with tracking details.", IsCompleted = false };
+                            var milestone9 = new WorkspaceTimelineEntry { Id = Guid.NewGuid(), ProjectWorkspaceId = workspace.Id, Title = "Delivered", Description = "Buyer approved delivery and funds released.", IsCompleted = false };
+
+                            await timelineRepo.AddAsync(milestone1);
+                            await timelineRepo.AddAsync(milestone2);
+                            await timelineRepo.AddAsync(milestone3);
+                            await timelineRepo.AddAsync(milestone4);
+                            await timelineRepo.AddAsync(milestone5);
+                            await timelineRepo.AddAsync(milestone6);
+                            await timelineRepo.AddAsync(milestone7);
+                            await timelineRepo.AddAsync(milestone8);
+                            await timelineRepo.AddAsync(milestone9);
+
+                            requestWithWorkspace.ProjectWorkspace = workspace;
+                            await customRequestRepo.UpdateAsync(requestWithWorkspace);
+                            await _unitOfWork.SaveChangesAsync();
+
+                            // 4. Notifications
                             // Notify Seller
                             await _notificationService.SendAsync(new SendNotificationDto
                             {
@@ -286,22 +363,31 @@ public class PaymentService : IPaymentService
                                 ReferenceType = "CustomRequest"
                             });
 
-                            // Send chat update message if chat is active
-                            if (requestWithWorkspace.ProjectWorkspace != null && requestWithWorkspace.ProjectWorkspace.ChatConversationId.HasValue)
+                            // Notify Admin
+                            await _notificationService.SendAsync(new SendNotificationDto
                             {
-                                var conversationId = requestWithWorkspace.ProjectWorkspace.ChatConversationId.Value;
-                                var buyerName = requestWithWorkspace.Buyer?.Name ?? "Buyer";
-                                var messageContent = $"Deposit paid! The custom request '{item.Product.ProductName}' is now active and in production.";
+                                UserId = "Admin",
+                                TitleEn = "New Custom Workspace Created",
+                                TitleAr = "تم إنشاء مساحة عمل مخصصة جديدة",
+                                MessageEn = $"A custom workspace was created for order #{order.Id.ToString().Substring(0,8).ToUpper()}.",
+                                MessageAr = $"تم إنشاء مساحة عمل للطلب #{order.Id.ToString().Substring(0,8).ToUpper()}.",
+                                Type = NotificationType.NewOrder,
+                                ReferenceId = requestWithWorkspace.Id,
+                                ReferenceType = "CustomRequest"
+                            });
 
-                                await SendChatMessageAsync(
-                                    conversationId,
-                                    requestWithWorkspace.BuyerId,
-                                    buyerName,
-                                    shop.OwnerId,
-                                    messageContent,
-                                    MessageType.Text
-                                );
-                            }
+                            // Send chat update message inside the newly created workspace chat
+                            var buyerName = requestWithWorkspace.Buyer?.Name ?? "Buyer";
+                            var messageContent = $"Workspace chat activated! The custom request '{item.Product.ProductName}' is now active and in production.";
+
+                            await SendChatMessageAsync(
+                                conversation.Id,
+                                requestWithWorkspace.BuyerId,
+                                buyerName,
+                                shop.OwnerId,
+                                messageContent,
+                                MessageType.Text
+                            );
                         }
                     }
                 }

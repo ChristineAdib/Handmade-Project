@@ -14,6 +14,8 @@ namespace HandoraApplication.DTOs.CustomStudioDTOs
         public DateTime? DeadlineDate { get; set; }
 
         public Guid? SelectedDesignId { get; set; }
+        public Guid? ConversationId { get; set; }
+        public GeneratedDesignDto? SelectedDesign { get; set; }
         public Guid? SelectedSellerId { get; set; }
         public string? SelectedSellerName { get; set; }
 
@@ -22,11 +24,13 @@ namespace HandoraApplication.DTOs.CustomStudioDTOs
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public string? ReferenceImageUrl { get; set; }
 
         public CustomConfigurationDto? CustomConfiguration { get; set; }
         public List<GeneratedDesignDto> GeneratedDesigns { get; set; } = new();
         public List<SellerRecommendationDto> SellerRecommendations { get; set; } = new();
         public List<CustomOfferDto> CustomOffers { get; set; } = new();
+        public CustomServiceDto? CustomService { get; set; }
         public ProjectWorkspaceDto? ProjectWorkspace { get; set; }
     }
 
@@ -61,7 +65,9 @@ namespace HandoraApplication.DTOs.CustomStudioDTOs
         public bool IsSelected { get; set; }
         public bool IsSaved { get; set; }
         public bool IsDownloaded { get; set; }
+        public bool IsLocked { get; set; }
         public string PatternStepsMarkdown { get; set; } = string.Empty;
+        public string DesignSummaryJson { get; set; } = string.Empty;
     }
 
     public class SellerRecommendationDto
@@ -92,6 +98,33 @@ namespace HandoraApplication.DTOs.CustomStudioDTOs
         public DateTime CreatedAt { get; set; }
     }
 
+    public class CustomServiceDto
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int EstimatedDeliveryDays { get; set; }
+        public string Notes { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string BuyerId { get; set; } = string.Empty;
+        public string SellerId { get; set; } = string.Empty;
+        public Guid ConversationId { get; set; }
+        public Guid CustomRequestId { get; set; }
+        public Guid? GeneratedDesignId { get; set; }
+        public Guid? OrderId { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class WorkspaceTimelineEntryDto
+    {
+        public Guid Id { get; set; }
+        public Guid ProjectWorkspaceId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
+        public bool IsCompleted { get; set; }
+    }
+
     public class ProjectWorkspaceDto
     {
         public Guid Id { get; set; }
@@ -103,5 +136,9 @@ namespace HandoraApplication.DTOs.CustomStudioDTOs
         public string? FinalPhotoUrl { get; set; }
         public string? TrackingNumber { get; set; }
         public Guid? ChatConversationId { get; set; }
+        public Guid? OrderId { get; set; }
+        public bool IsLocked { get; set; }
+        public Guid? CustomServiceId { get; set; }
+        public List<WorkspaceTimelineEntryDto> TimelineEntries { get; set; } = new();
     }
 }

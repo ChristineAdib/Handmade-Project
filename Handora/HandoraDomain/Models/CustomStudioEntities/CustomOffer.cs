@@ -1,6 +1,8 @@
 using System;
 using HandoraDomain.Consts;
 using HandoraDomain.Models.ShopEntities;
+using HandoraDomain.Models.ChatEntities;
+using HandoraDomain.Models.OrderEntity;
 
 namespace HandoraDomain.Models.CustomStudioEntities
 {
@@ -19,5 +21,24 @@ namespace HandoraDomain.Models.CustomStudioEntities
 
         public Guid CustomRequestId { get; set; }
         public CustomRequest CustomRequest { get; set; } = null!;
+
+        public Guid? ConversationId { get; set; }
+        public Conversation? Conversation { get; set; }
+
+        public string BuyerId { get; set; } = string.Empty;
+        public string SellerId { get; set; } = string.Empty;
+
+        public Guid? DesignId { get; set; }
+        public GeneratedDesign? Design { get; set; }
+
+        public DateTime? AcceptedAt { get; set; }
+        public DateTime? RejectedAt { get; set; }
+        public DateTime? PaidAt { get; set; }
+
+        public Guid? OrderId { get; set; }
+        public Order? Order { get; set; }
+
+        public Guid? WorkspaceId { get; set; }
+        public ProjectWorkspace? Workspace { get; set; }
     }
 }

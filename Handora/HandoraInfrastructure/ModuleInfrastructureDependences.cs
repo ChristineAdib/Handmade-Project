@@ -63,6 +63,24 @@ public static class ModuleInfrastructureDependences
                 );
             });
         }
+        else if (string.Equals(activeProvider, "Pollinations", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(activeProvider, "Pollinations.ai", StringComparison.OrdinalIgnoreCase))
+        {
+            service.AddHttpClient<PollinationsAIImageGenerationService>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(120);
+            });
+
+            service.AddScoped<IAIImageGenerationService>(sp =>
+            {
+                var pollinationsService = sp.GetRequiredService<PollinationsAIImageGenerationService>();
+                return new AIImageGenerationCacheDecorator(
+                    pollinationsService,
+                    sp.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>(),
+                    sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AIImageGenerationCacheDecorator>>()
+                );
+            });
+        }
         else
         {
             // Register IAIImageGenerationService wrapped with cache decorator

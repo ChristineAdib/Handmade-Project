@@ -4,6 +4,7 @@ using HandoraInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HandoraInfrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260626104116_AddShopIdToCustomService")]
+    partial class AddShopIdToCustomService
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -415,19 +418,9 @@ namespace HandoraInfrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("AcceptedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("AttachmentsJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BuyerId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("ConversationId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -444,9 +437,6 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<int>("DeliveryTimeDays")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("DesignId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -454,25 +444,12 @@ namespace HandoraInfrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("OrderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<DateTime?>("RejectedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("RevisionsAllowed")
                         .HasColumnType("int");
-
-                    b.Property<string>("SellerId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("ShopId")
                         .HasColumnType("uniqueidentifier");
@@ -486,24 +463,13 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("WorkspaceId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("ConversationId");
 
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("CustomRequestId");
 
-                    b.HasIndex("DesignId");
-
-                    b.HasIndex("OrderId");
-
                     b.HasIndex("ShopId");
-
-                    b.HasIndex("WorkspaceId");
 
                     b.ToTable("CustomOffers");
                 });
@@ -596,6 +562,9 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<Guid>("CustomRequestId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("CustomRequestId1")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
@@ -645,8 +614,11 @@ namespace HandoraInfrastructure.Migrations
 
                     b.HasIndex("ConversationId");
 
-                    b.HasIndex("CustomRequestId")
-                        .IsUnique();
+                    b.HasIndex("CustomRequestId");
+
+                    b.HasIndex("CustomRequestId1")
+                        .IsUnique()
+                        .HasFilter("[CustomRequestId1] IS NOT NULL");
 
                     b.HasIndex("GeneratedDesignId");
 
@@ -782,7 +754,9 @@ namespace HandoraInfrastructure.Migrations
 
                     b.Property<string>("DesignSummaryJson")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<long>("GenerationTimeMs")
                         .HasColumnType("bigint");
@@ -865,7 +839,9 @@ namespace HandoraInfrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsLocked")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<int>("MilestoneStep")
                         .HasColumnType("int");
@@ -876,7 +852,7 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("SelectedOfferId")
+                    b.Property<Guid>("SelectedOfferId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Status")
@@ -1200,9 +1176,6 @@ namespace HandoraInfrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("CustomOfferId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
@@ -1273,8 +1246,6 @@ namespace HandoraInfrastructure.Migrations
                     b.HasIndex("BuyerEmail");
 
                     b.HasIndex("CouponId");
-
-                    b.HasIndex("CustomOfferId");
 
                     b.HasIndex("DeliveryMethodId");
 
@@ -2530,26 +2501,11 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("HandoraDomain.Models.CustomStudioEntities.CustomOffer", b =>
                 {
-                    b.HasOne("HandoraDomain.Models.ChatEntities.Conversation", "Conversation")
-                        .WithMany()
-                        .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("HandoraDomain.Models.CustomStudioEntities.CustomRequest", "CustomRequest")
                         .WithMany("CustomOffers")
                         .HasForeignKey("CustomRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("HandoraDomain.Models.CustomStudioEntities.GeneratedDesign", "Design")
-                        .WithMany()
-                        .HasForeignKey("DesignId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("HandoraDomain.Models.OrderEntity.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("HandoraDomain.Models.ShopEntities.Shop", "Shop")
                         .WithMany()
@@ -2557,22 +2513,9 @@ namespace HandoraInfrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("HandoraDomain.Models.CustomStudioEntities.ProjectWorkspace", "Workspace")
-                        .WithMany()
-                        .HasForeignKey("WorkspaceId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Conversation");
-
                     b.Navigation("CustomRequest");
 
-                    b.Navigation("Design");
-
-                    b.Navigation("Order");
-
                     b.Navigation("Shop");
-
-                    b.Navigation("Workspace");
                 });
 
             modelBuilder.Entity("HandoraDomain.Models.CustomStudioEntities.CustomRequest", b =>
@@ -2615,10 +2558,14 @@ namespace HandoraInfrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("HandoraDomain.Models.CustomStudioEntities.CustomRequest", "CustomRequest")
-                        .WithOne("CustomService")
-                        .HasForeignKey("HandoraDomain.Models.CustomStudioEntities.CustomService", "CustomRequestId")
+                        .WithMany()
+                        .HasForeignKey("CustomRequestId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("HandoraDomain.Models.CustomStudioEntities.CustomRequest", null)
+                        .WithOne("CustomService")
+                        .HasForeignKey("HandoraDomain.Models.CustomStudioEntities.CustomService", "CustomRequestId1");
 
                     b.HasOne("HandoraDomain.Models.CustomStudioEntities.GeneratedDesign", "GeneratedDesign")
                         .WithMany()
@@ -2684,7 +2631,8 @@ namespace HandoraInfrastructure.Migrations
                     b.HasOne("HandoraDomain.Models.CustomStudioEntities.CustomOffer", "SelectedOffer")
                         .WithMany()
                         .HasForeignKey("SelectedOfferId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("ChatConversation");
 
@@ -2764,11 +2712,6 @@ namespace HandoraInfrastructure.Migrations
                         .HasForeignKey("CouponId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("HandoraDomain.Models.CustomStudioEntities.CustomOffer", "CustomOffer")
-                        .WithMany()
-                        .HasForeignKey("CustomOfferId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("HandoraDomain.Models.OrderEntity.DeliveryMethod", "DeliveryMethod")
                         .WithMany()
                         .HasForeignKey("DeliveryMethodId")
@@ -2821,8 +2764,6 @@ namespace HandoraInfrastructure.Migrations
                         });
 
                     b.Navigation("Coupon");
-
-                    b.Navigation("CustomOffer");
 
                     b.Navigation("DeliveryMethod");
 

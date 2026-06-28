@@ -278,6 +278,7 @@ namespace HandoraApplication.Services
                     .Include(r => r.SellerRecommendations).ThenInclude(sr => sr.Shop)
                     .Include(r => r.CustomOffers).ThenInclude(o => o.Shop)
                     .Include(r => r.ProjectWorkspace).ThenInclude(w => w.SelectedOffer).ThenInclude(o => o.Shop)
+                    .Include(r => r.ProjectWorkspace).ThenInclude(w => w.CustomService).ThenInclude(s => s.Shop)
                     .FirstOrDefaultAsync(r => r.Id == requestId, ct);
 
                 if (request == null)
@@ -436,7 +437,9 @@ namespace HandoraApplication.Services
 
                     var workspaces = await projectsQuery
                         .Include(w => w.SelectedOffer)
-                        .Where(w => w.SelectedOffer.ShopId == shop.Id)
+                        .Include(w => w.CustomService)
+                        .Where(w => (w.SelectedOffer != null && w.SelectedOffer.ShopId == shop.Id) ||
+                                     (w.CustomService != null && w.CustomService.ShopId == shop.Id))
                         .ToListAsync(ct);
 
                     var completedCount = workspaces.Count(w => w.Status == ProjectWorkspaceStatus.Completed);
@@ -449,7 +452,7 @@ namespace HandoraApplication.Services
                         : 0.0;
 
                     var totalRevenue = workspaces.Where(w => w.PaymentStatus == PaymentStatus.Paid || w.Status == ProjectWorkspaceStatus.Completed)
-                                                 .Sum(w => w.SelectedOffer.Price);
+                                                 .Sum(w => w.CustomService?.Price ?? w.SelectedOffer?.Price ?? 0);
 
                     list.Add(new AdminArtisanDto
                     {
@@ -543,11 +546,11 @@ namespace HandoraApplication.Services
                 var projectsQuery = await projectsRepo.GetAllAsNoTracking();
 
                 var acceptedWorkspaces = await projectsQuery
-                    .Include(w => w.SelectedOffer).ThenInclude(o => o.CustomRequest)
+                    .Include(w => w.CustomRequest)
                     .ToListAsync(ct);
 
                 double avgNegTimeHours = acceptedWorkspaces.Any()
-                    ? acceptedWorkspaces.Average(w => (w.CreatedAt - w.SelectedOffer.CustomRequest.CreatedAt).TotalHours)
+                    ? acceptedWorkspaces.Average(w => (w.CreatedAt - w.CustomRequest.CreatedAt).TotalHours)
                     : 0.0;
 
                 var metrics = new AdminOfferMetricsDto
@@ -580,6 +583,7 @@ namespace HandoraApplication.Services
                 var query = projectsQuery
                     .Include(w => w.CustomRequest).ThenInclude(r => r.Buyer)
                     .Include(w => w.SelectedOffer).ThenInclude(o => o.Shop)
+                    .Include(w => w.CustomService).ThenInclude(s => s.Shop)
                     .AsQueryable();
 
                 if (status.HasValue)
@@ -589,7 +593,8 @@ namespace HandoraApplication.Services
                 if (!string.IsNullOrWhiteSpace(search))
                 {
                     query = query.Where(w => w.CustomRequest.Buyer.Name.Contains(search) || 
-                                             w.SelectedOffer.Shop.Name.Contains(search));
+                                             (w.SelectedOffer != null && w.SelectedOffer.Shop.Name.Contains(search)) ||
+                                             (w.CustomService != null && w.CustomService.Shop.Name.Contains(search)));
                 }
 
                 var count = await query.CountAsync(ct);
@@ -619,9 +624,9 @@ namespace HandoraApplication.Services
                         _ => "Processing"
                     },
                     PaymentStatus = w.PaymentStatus.ToString(),
-                    SellerName = w.SelectedOffer.Shop.Name,
+                    SellerName = w.CustomService?.Shop?.Name ?? w.SelectedOffer?.Shop?.Name ?? "Unknown",
                     BuyerName = w.CustomRequest.Buyer.Name,
-                    EstimatedDeliveryDate = w.CreatedAt.AddDays(w.SelectedOffer.DeliveryTimeDays),
+                    EstimatedDeliveryDate = w.CreatedAt.AddDays(w.CustomService?.EstimatedDeliveryDays ?? w.SelectedOffer?.DeliveryTimeDays ?? 0),
                     CompletionPercentage = w.MilestoneStep * 14.28,
                     ProgressPhotosCount = string.IsNullOrEmpty(w.FinalPhotoUrl) ? 0 : 1,
                     CreatedAt = w.CreatedAt
@@ -836,6 +841,7 @@ namespace HandoraApplication.Services
                 var projects = await projectsQuery
                     .Include(w => w.CustomRequest).ThenInclude(r => r.Buyer)
                     .Include(w => w.SelectedOffer).ThenInclude(o => o.Shop)
+                    .Include(w => w.CustomService).ThenInclude(s => s.Shop)
                     .OrderByDescending(w => w.CreatedAt)
                     .ToListAsync(ct);
 
@@ -844,7 +850,9 @@ namespace HandoraApplication.Services
 
                 foreach (var w in projects)
                 {
-                    csv.AppendLine($"\"{w.Id}\",\"{w.CustomRequestId}\",\"{w.CustomRequest.Buyer.Name}\",\"{w.SelectedOffer.Shop.Name}\",\"{w.SelectedOffer.Price}\",\"{w.Status}\",\"{w.MilestoneStep}\",\"{w.PaymentStatus}\",\"{w.CreatedAt:yyyy-MM-dd HH:mm:ss}\"");
+                    var sellerName = w.CustomService?.Shop?.Name ?? w.SelectedOffer?.Shop?.Name ?? "Unknown";
+                    var price = w.CustomService?.Price ?? w.SelectedOffer?.Price ?? 0;
+                    csv.AppendLine($"\"{w.Id}\",\"{w.CustomRequestId}\",\"{w.CustomRequest.Buyer.Name}\",\"{sellerName}\",\"{price}\",\"{w.Status}\",\"{w.MilestoneStep}\",\"{w.PaymentStatus}\",\"{w.CreatedAt:yyyy-MM-dd HH:mm:ss}\"");
                 }
 
                 return Result<string>.Success(csv.ToString());

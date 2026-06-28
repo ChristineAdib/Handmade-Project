@@ -60,6 +60,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
     public DbSet<ProjectWorkspace> ProjectWorkspaces { get; set; }
     public DbSet<CustomStudioSetting> CustomStudioSettings { get; set; }
     public DbSet<CustomStudioAuditLog> CustomStudioAuditLogs { get; set; }
+    public DbSet<CustomService> CustomServices { get; set; }
+    public DbSet<WorkspaceTimelineEntry> WorkspaceTimelineEntries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -69,5 +71,41 @@ public class AppDbContext(DbContextOptions<AppDbContext> options):IdentityDbCont
         modelBuilder.Entity<OrderItem>()
             .OwnsOne(o => o.Product);
         modelBuilder.ApplyConfiguration(new FollowConfiguration());
+
+        modelBuilder.Entity<CustomService>(entity =>
+        {
+            entity.HasOne(cs => cs.Buyer)
+                .WithMany()
+                .HasForeignKey(cs => cs.BuyerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(cs => cs.Seller)
+                .WithMany()
+                .HasForeignKey(cs => cs.SellerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(cs => cs.Shop)
+                .WithMany()
+                .HasForeignKey(cs => cs.ShopId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(cs => cs.CustomRequest)
+                .WithOne(cr => cr.CustomService)
+                .HasForeignKey<CustomService>(cs => cs.CustomRequestId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(cs => cs.Conversation)
+                .WithMany()
+                .HasForeignKey(cs => cs.ConversationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.HasOne(o => o.CustomOffer)
+                .WithMany()
+                .HasForeignKey(o => o.CustomOfferId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 }
