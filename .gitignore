@@ -10,5 +10,12 @@
 **/Debug/
 **/Release/
 
-# User-specific files
+# User-specific files - NEVER commit these (contain secrets)
 **/appsettings.Development.json
+**/appsettings.Production.json
+
+# Large ML model files - use Git LFS or external storage instead
+**/*.onnx
+**/*.pt
+**/*.bin
+**/*.pkl
