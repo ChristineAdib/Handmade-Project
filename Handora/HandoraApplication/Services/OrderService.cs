@@ -8,15 +8,22 @@ using HandoraDomain.Models.ShopEntities;
 using HandoraDomain.Models.OrderEntity;
 using HandoraDomain.Models.ProductEntities;
 using Microsoft.EntityFrameworkCore;
+using HandoraDomain.Models.NotificationEntities;
+using HandoraApplication.DTOs.NotificationsDto;
 using HandoraDomain.Models.CouponEntities;
 
 namespace HandoraApplication.Services;
 
-public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWork, IEscrowService escrowService) : IOrderService
+public class OrderService(
+    IOrderRepository orderRepository,
+    IUnitOfWork unitOfWork,
+    IEscrowService escrowService,
+    INotificationService notificationService) : IOrderService
 {
     private readonly IOrderRepository _orderRepository = orderRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IEscrowService _escrowService = escrowService;
+    private readonly INotificationService _notificationService = notificationService;
 
     public async Task<Result<OrderResponseDto>> CreateOrder(string userId, string buyerEmail, CreateOrderDto dto)
     {
@@ -258,7 +265,31 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
 
         if (!isAdmin)
         {
-            return Result<OrderResponseDto>.Failure("Only Admin is authorized to change order status");
+            var shopRepo = _unitOfWork.Repository<Shop, Guid>();
+            var shopQuery = await shopRepo.GetAllAsNoTracking();
+            var sellerShop = await shopQuery.FirstOrDefaultAsync(s => s.OwnerId == userId && !s.IsDeleted);
+
+            bool isSellerForThisOrder = sellerShop != null && order.Items.Any(i => i.ShopId == sellerShop.Id);
+
+            if (!isSellerForThisOrder)
+            {
+                return Result<OrderResponseDto>.Failure("You are not authorized to update the status of this order.");
+            }
+
+            // Sellers can transition: Pending → Processing, Confirmed → Processing, Processing → Shipped
+            var isValidSellerTransition =
+                (order.Status == OrderStatus.Pending    && dto.Status == OrderStatus.Processing) ||
+                (order.Status == OrderStatus.Confirmed  && dto.Status == OrderStatus.Processing) ||
+                (order.Status == OrderStatus.Processing && dto.Status == OrderStatus.Shipped);
+
+            if (!isValidSellerTransition)
+            {
+                if (order.Status != dto.Status) // If it's a no-op, let it pass
+                {
+                    return Result<OrderResponseDto>.Failure(
+                        "Sellers are only allowed to transition orders: Pending/Confirmed → Processing, or Processing → Shipped.");
+                }
+            }
         }
 
         if (order.Status == OrderStatus.Delivered)
@@ -314,6 +345,61 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
             await _unitOfWork.SaveChangesAsync();
         }
 
+        // Send Notification (Scenario 10)
+        try
+        {
+            var statusStr = nextStatus.ToString();
+            string statusEn = statusStr;
+            string statusAr = statusStr;
+            switch (nextStatus)
+            {
+                case OrderStatus.Pending:
+                    statusEn = "Pending";
+                    statusAr = "معلق";
+                    break;
+                case OrderStatus.Confirmed:
+                    statusEn = "Confirmed";
+                    statusAr = "مؤكد";
+                    break;
+                case OrderStatus.Processing:
+                    statusEn = "Processing";
+                    statusAr = "قيد التجهيز";
+                    break;
+                case OrderStatus.Shipped:
+                    statusEn = "Shipped";
+                    statusAr = "تم الشحن";
+                    break;
+                case OrderStatus.Delivered:
+                    statusEn = "Delivered";
+                    statusAr = "تم التوصيل";
+                    break;
+                case OrderStatus.Cancelled:
+                    statusEn = "Cancelled";
+                    statusAr = "ملغي";
+                    break;
+                case OrderStatus.Refunded:
+                    statusEn = "Refunded";
+                    statusAr = "تم الاسترجاع";
+                    break;
+            }
+
+            await _notificationService.SendAsync(new SendNotificationDto
+            {
+                UserId = order.UserId,
+                TitleEn = "Order Status Updated",
+                TitleAr = "تحديث حالة الطلب",
+                MessageEn = $"Your order {order.Id} status has changed to {statusEn}.",
+                MessageAr = $"تغيرت حالة طلبك {order.Id} إلى {statusAr}.",
+                Type = NotificationType.OrderStatusChanged,
+                ReferenceId = order.Id,
+                ReferenceType = "Order"
+            });
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
         return Result<OrderResponseDto>.Success(MapToResponse(order));
     }
 
@@ -351,6 +437,26 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
         await _orderRepository.UpdateAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
+        // Send Notification (Scenario 10)
+        try
+        {
+            await _notificationService.SendAsync(new SendNotificationDto
+            {
+                UserId = order.UserId,
+                TitleEn = "Order Cancelled",
+                TitleAr = "تم إلغاء الطلب",
+                MessageEn = $"Your order {order.Id} has been cancelled.",
+                MessageAr = $"تم إلغاء طلبك {order.Id}.",
+                Type = NotificationType.OrderStatusChanged,
+                ReferenceId = order.Id,
+                ReferenceType = "Order"
+            });
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
         return Result.Success();
     }
 
@@ -375,6 +481,7 @@ public class OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWo
             Total = order.SubTotal + (order.DeliveryMethod?.Cost ?? 0) - (order.DiscountAmount ?? 0),
             Notes = order.Notes,
             CouponCode = order.Coupon?.Code,
+            PaymobOrderId = order.PaymobOrderId,
             Items = order.Items.Select(i => new OrderItemResponseDto
             {
                 Id = i.Id,

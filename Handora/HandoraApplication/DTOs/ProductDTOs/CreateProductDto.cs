@@ -20,5 +20,6 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public Guid ShopId { get; set; }
         public List<IFormFile>? Images { get; set; } // Multiple images
         public List<string>? Tags { get; set; }
+        public IFormFile? ArModel { get; set; } // Optional GLB 3D model
     }
 }

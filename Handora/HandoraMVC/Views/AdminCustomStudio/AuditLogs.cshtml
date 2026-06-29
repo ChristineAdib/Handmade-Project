@@ -1,0 +1,113 @@
+@model HandoraApplication.IServices.PagedList<HandoraDomain.Models.CustomStudioEntities.CustomStudioAuditLog>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Custom Studio Audit Logs";
+
+    var search = ViewData["Search"] as string;
+    var eventName = ViewData["EventName"] as string;
+}
+
+<style>
+    :root {
+        --br: #3d2010;
+        --border: #e8e0d8;
+        --text: #1b1c1c;
+        --muted: #888;
+        --lt: #c4956a;
+    }
+
+    .audit-container {
+        animation: fadeUp 0.4s ease both;
+    }
+</style>
+
+<div class="audit-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="font-size: 20px; font-weight: 600; color: var(--br);">Activity & Audit Trail</h2>
+    </div>
+
+    <!-- Filters Form -->
+    <form method="get" class="filter-bar" style="background:#fff; padding:16px; border-radius:12px; border:0.5px solid var(--border); display:flex; gap:12px; margin-bottom:20px;">
+        <input type="text" name="search" value="@search" placeholder="Search event description, Request ID..." class="filter-input" style="flex:1;" />
+        <select name="eventName" class="filter-input">
+            <option value="">-- All Event Types --</option>
+            <option value="Request Created" selected="@(eventName == "Request Created")">Request Created</option>
+            <option value="Design Chosen" selected="@(eventName == "Design Chosen")">Design Chosen</option>
+            <option value="Offer Created" selected="@(eventName == "Offer Created")">Offer Created</option>
+            <option value="Offer Accepted" selected="@(eventName == "Offer Accepted")">Offer Accepted</option>
+            <option value="Offer Rejected" selected="@(eventName == "Offer Rejected")">Offer Rejected</option>
+            <option value="Revision Requested" selected="@(eventName == "Revision Requested")">Revision Requested</option>
+            <option value="Project Started" selected="@(eventName == "Project Started")">Project Started</option>
+            <option value="Project Progress Updated" selected="@(eventName == "Project Progress Updated")">Project Progress Updated</option>
+            <option value="Progress Image Uploaded" selected="@(eventName == "Progress Image Uploaded")">Progress Image Uploaded</option>
+            <option value="Project Completed" selected="@(eventName == "Project Completed")">Project Completed</option>
+            <option value="Settings Updated" selected="@(eventName == "Settings Updated")">Settings Updated</option>
+        </select>
+        <button type="submit" class="btn-search">Filter Audit</button>
+        <a asp-action="AuditLogs" class="ptab" style="text-decoration:none;">Clear</a>
+    </form>
+
+    <!-- Table -->
+    <div class="an-card" style="padding:0; overflow:hidden;">
+        <table class="an-table">
+            <thead>
+                <tr>
+                    <th>Log ID</th>
+                    <th>Request ID</th>
+                    <th>Event Type</th>
+                    <th>Activity Details</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding: 24px; color: var(--muted);">No audit logs registered yet.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var l in Model.Items)
+                    {
+                        <tr>
+                            <td style="font-family: monospace; font-size:11px; color: var(--muted);">
+                                @l.Id.ToString().Substring(0, 8)...
+                            </td>
+                            <td style="font-family: monospace; font-size:11px;">
+                                @if (l.RequestId.HasValue)
+                                {
+                                    <a href="/AdminCustomStudio/Details/@l.RequestId" style="color: var(--lt); text-decoration:none;">
+                                        @l.RequestId.Value.ToString().Substring(0, 8)...
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge" style="background:#faf0e6; color: var(--br); padding: 4px 8px; border-radius:6px; font-size:11px; font-weight:600;">
+                                    @l.EventName
+                                </span>
+                            </td>
+                            <td style="font-weight: 500;">@l.Description</td>
+                            <td>@l.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        <span>Showing Page @Model.PageNumber of @Model.TotalPages (Total @Model.TotalCount Logs)</span>
+        <div style="display: flex; gap: 8px;">
+            <a href="@Url.Action("AuditLogs", new { search, eventName, pageNumber = Model.PageNumber - 1 })" 
+               class="btn-page @(Model.HasPreviousPage ? "" : "disabled")">Previous</a>
+            <a href="@Url.Action("AuditLogs", new { search, eventName, pageNumber = Model.PageNumber + 1 })" 
+               class="btn-page @(Model.HasNextPage ? "" : "disabled")">Next</a>
+        </div>
+    </div>
+</div>

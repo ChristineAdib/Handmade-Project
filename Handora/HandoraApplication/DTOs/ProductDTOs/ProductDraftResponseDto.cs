@@ -19,5 +19,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public List<string>? ProposedTags { get; set; }
         public List<string>? NewImageUrls { get; set; }
         public List<Guid>? RemoveImageIds { get; set; }
+        public string? ArModelUrl { get; set; }
+        public bool? RemoveArModel { get; set; }
     }
 }

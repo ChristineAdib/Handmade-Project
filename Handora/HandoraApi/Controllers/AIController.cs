@@ -43,6 +43,13 @@ namespace HandoraApi.Controllers
             return Ok(ApiResponse<object>.Ok(null!, "All active catalog products have been successfully indexed."));
         }
 
+        [HttpPost("index-artisans")]
+        public async Task<IActionResult> IndexArtisans()
+        {
+            await _productIndexerService.IndexAllArtisansAsync();
+            return Ok(ApiResponse<object>.Ok(null!, "All active artisans have been successfully indexed."));
+        }
+
         [HttpPost("search")]
         public async Task<IActionResult> Search([FromBody] RagSearchRequestDto request)
         {

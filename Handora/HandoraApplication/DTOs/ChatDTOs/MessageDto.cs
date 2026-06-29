@@ -1,4 +1,5 @@
-﻿using HandoraDomain.Consts;
+using HandoraDomain.Consts;
+using HandoraApplication.DTOs.CustomStudioDTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,5 +19,6 @@ namespace HandoraApplication.DTOs.ChatDTOs
         public string SenderName { get; init; } = string.Empty;
         public Guid ConversationId { get; init; }
         public DateTime CreatedAt { get; init; }
+        public CustomOfferDto? CustomOffer { get; init; }
     }
 }

@@ -1,3 +1,4 @@
+using HandoraApplication.AI.Interfaces;
 using HandoraApplication.DTOs.Common;
 using HandoraApplication.DTOs.ProductDTOs;
 using HandoraApplication.Helpers;
@@ -8,13 +9,28 @@ using Mapster;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
+using HandoraDomain.Models.NotificationEntities;
+using HandoraApplication.DTOs.NotificationsDto;
+using HandoraDomain.Models.AppUser;
+using HandoraDomain.Models.FollowEntities;
+using HandoraDomain.Models.ShopEntities;
+
 namespace HandoraApplication.Services;
 
-public class ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IFileService fileService) : IProductService
+public class ProductService(
+    IProductRepository productRepository,
+    IUnitOfWork unitOfWork,
+    IFileService fileService,
+    IAuthRepository authRepository,
+    INotificationService notificationService,
+    IProductIndexerService productIndexerService) : IProductService
 {
     private readonly IProductRepository _productRepository = productRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IFileService _fileService = fileService;
+    private readonly IAuthRepository _authRepository = authRepository;
+    private readonly INotificationService _notificationService = notificationService;
+    private readonly IProductIndexerService _productIndexerService = productIndexerService;
 
     public async Task<Result<ProductResponseDto>> GetProduct(Guid id)
     {
@@ -194,8 +210,39 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             }
         }
 
+        // Handle AR / 3D model
+        if (dto.ArModel != null)
+        {
+            var modelUrl = await _fileService.UploadRawFileAsync(dto.ArModel, "products/models");
+            product.ArModelUrl = modelUrl;
+        }
+
         await _productRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
+
+        // Notify admins (Scenario 3)
+        try
+        {
+            var admins = await _authRepository.GetUsersInRoleAsync(AppRoles.Admin);
+            foreach (var admin in admins)
+            {
+                await _notificationService.SendAsync(new SendNotificationDto
+                {
+                    UserId = admin.Id,
+                    TitleEn = "New Product Submitted",
+                    TitleAr = "تم تقديم منتج جديد",
+                    MessageEn = $"Product '{product.TitleEn}' has been submitted and is pending review.",
+                    MessageAr = $"تم تقديم المنتج '{product.TitleAr}' وهو قيد المراجعة.",
+                    Type = NotificationType.ProductSubmitted,
+                    ReferenceId = product.Id,
+                    ReferenceType = "Product"
+                });
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
 
         return await GetProduct(product.Id);
     }
@@ -207,14 +254,85 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (product is null)
             return Result<ProductResponseDto>.Failure("Product not found");
 
+        Result<ProductResponseDto> updateResult;
+
+        bool notifyAdmins = false;
+
         // ── BRANCHING: Live products get a draft, non-live products get direct edits ──
         if (product.IsActive)
         {
-            return await CreateOrUpdateDraft(product, dto);
+            bool liveProductChanged = false;
+            if (dto.Quantity.HasValue)
+            {
+                product.Quantity = dto.Quantity.Value;
+                product.IsOnePiece = dto.Quantity.Value == 1;
+                liveProductChanged = true;
+            }
+            if (dto.Status.HasValue)
+            {
+                product.Status = dto.Status.Value;
+                liveProductChanged = true;
+            }
+
+            bool hasDraftChanges = dto.TitleEn != null || dto.TitleAr != null ||
+                                   dto.DescriptionEn != null || dto.DescriptionAr != null ||
+                                   dto.Price.HasValue || dto.DiscountPrice.HasValue ||
+                                   dto.CategoryId.HasValue || dto.SubCategoryId.HasValue ||
+                                   dto.Tags != null ||
+                                   (dto.RemoveImageIds != null && dto.RemoveImageIds.Any()) ||
+                                   (dto.NewImages != null && dto.NewImages.Any());
+
+            if (hasDraftChanges)
+            {
+                updateResult = await ApplyDirectUpdate(product, dto);
+                notifyAdmins = true;
+            }
+            else
+            {
+                if (liveProductChanged)
+                {
+                    product.UpdatedAt = DateTime.UtcNow;
+                    await _unitOfWork.SaveChangesAsync();
+                    _ = Task.Run(() => _productIndexerService.IndexAllProductsAsync());
+                }
+                updateResult = await GetProduct(product.Id);
+            }
+        }
+        else
+        {
+            // Product is NOT yet live — apply changes directly (existing behavior)
+            updateResult = await ApplyDirectUpdate(product, dto);
+            notifyAdmins = true;
         }
 
-        // Product is NOT yet live — apply changes directly (existing behavior)
-        return await ApplyDirectUpdate(product, dto);
+        if (updateResult.IsSuccess && notifyAdmins)
+        {
+            // Notify admins of the update (Scenario 11)
+            try
+            {
+                var admins = await _authRepository.GetUsersInRoleAsync(AppRoles.Admin);
+                foreach (var admin in admins)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = admin.Id,
+                        TitleEn = "Product Updated",
+                        TitleAr = "تم تحديث المنتج",
+                        MessageEn = $"Product '{product.TitleEn}' has been updated and is pending review.",
+                        MessageAr = $"تم تحديث المنتج '{product.TitleAr}' وهو قيد المراجعة.",
+                        Type = NotificationType.ProductUpdated,
+                        ReferenceId = product.Id,
+                        ReferenceType = "Product"
+                    });
+                }
+            }
+            catch (System.Exception)
+            {
+                // Ignore
+            }
+        }
+
+        return updateResult;
     }
 
     /// <summary>
@@ -277,6 +395,23 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (dto.Status.HasValue) product.Status = dto.Status.Value;
 
         // 3. Your Logic from Feature
+        if (dto.RemoveArModel == true)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+                product.ArModelUrl = null;
+            }
+        }
+        if (dto.ArModel != null)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+            }
+            var modelUrl = await _fileService.UploadRawFileAsync(dto.ArModel, "products/models");
+            product.ArModelUrl = modelUrl;
+        }
      
 
         product.UpdatedAt = DateTime.UtcNow;
@@ -404,7 +539,6 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (dto.DescriptionAr != null) draft!.DescriptionAr = dto.DescriptionAr;
         if (dto.Price.HasValue) draft!.Price = dto.Price.Value;
         if (dto.DiscountPrice.HasValue) draft!.DiscountPrice = dto.DiscountPrice.Value;
-        if (dto.Quantity.HasValue) draft!.Quantity = dto.Quantity.Value;
         if (dto.CategoryId.HasValue) draft!.CategoryId = dto.CategoryId.Value;
 
         // Serialize tags
@@ -443,6 +577,29 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             draft.RemoveImageIdsJson = JsonSerializer.Serialize(removeIds.Distinct().ToList());
         }
 
+        // Handle AR model changes in draft
+        if (dto.RemoveArModel == true)
+        {
+            draft.RemoveArModel = true;
+            // Delete any draft uploaded URL if it existed
+            if (!string.IsNullOrEmpty(draft.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(draft.ArModelUrl);
+                draft.ArModelUrl = null;
+            }
+        }
+        if (dto.ArModel != null)
+        {
+            // If we already uploaded a new model in this draft, delete it from Cloudinary first
+            if (!string.IsNullOrEmpty(draft.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(draft.ArModelUrl);
+            }
+            var modelUrl = await _fileService.UploadRawFileAsync(dto.ArModel, "products/models");
+            draft.ArModelUrl = modelUrl;
+            draft.RemoveArModel = false;
+        }
+
         draft!.UpdatedAt = DateTime.UtcNow;
 
         if (isNewDraft)
@@ -465,12 +622,14 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         await _productRepository.SoftDeleteAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
+        _ = Task.Run(() => _productIndexerService.IndexAllProductsAsync());
+
         return Result.Success();
     }
 
     public async Task<Result> ApproveProductAsync(Guid productId)
     {
-        var product = await _productRepository.GetByIdAsync(productId);
+        var product = await _productRepository.GetProductByIDWithDetailsAsync(productId);
         if (product == null)
             return Result.Failure("Product not found");
 
@@ -479,6 +638,59 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         product.Status = ProductStatus.Active;
 
         await _unitOfWork.SaveChangesAsync();
+
+        // Notify seller and followers (Scenario 4 & 6)
+        try
+        {
+            var shop = product.Shop;
+            if (shop == null)
+            {
+                shop = await _unitOfWork.Repository<Shop, Guid>().GetByIdAsync(product.ShopId);
+            }
+            if (shop != null)
+            {
+                await _notificationService.SendAsync(new SendNotificationDto
+                {
+                    UserId = shop.OwnerId,
+                    TitleEn = "Product Approved",
+                    TitleAr = "تمت الموافقة على المنتج",
+                    MessageEn = $"Your product '{product.TitleEn}' has been approved and is now active.",
+                    MessageAr = $"تمت الموافقة على منتجك '{product.TitleAr}' وهو الآن نشط.",
+                    Type = NotificationType.ProductApproved,
+                    ReferenceId = product.Id,
+                    ReferenceType = "Product"
+                });
+
+                // Notify followers (Scenario 6)
+                var followRepo = _unitOfWork.Repository<Follow, Guid>();
+                var followersQuery = await followRepo.GetAllAsNoTracking();
+                var followers = await followersQuery
+                    .Where(f => f.ShopId == product.ShopId)
+                    .ToListAsync();
+
+                foreach (var f in followers)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = f.UserId,
+                        TitleEn = $"New Product from {shop.Name}",
+                        TitleAr = $"منتج جديد من {shop.Name}",
+                        MessageEn = $"A new product '{product.TitleEn}' has been added to {shop.Name}.",
+                        MessageAr = $"تمت إضافة منتج جديد '{product.TitleAr}' إلى {shop.Name}.",
+                        Type = NotificationType.NewProductFromFollowedShop,
+                        ReferenceId = product.Id,
+                        ReferenceType = "Product"
+                    });
+                }
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
+        _ = Task.Run(() => _productIndexerService.IndexAllProductsAsync());
+
         return Result.Success();
     }
 
@@ -492,6 +704,33 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         product.Status = ProductStatus.Inactive;
 
         await _unitOfWork.SaveChangesAsync();
+
+        // Notify seller (Scenario 5)
+        try
+        {
+            var shop = await _unitOfWork.Repository<Shop, Guid>().GetByIdAsync(product.ShopId);
+            if (shop != null)
+            {
+                await _notificationService.SendAsync(new SendNotificationDto
+                {
+                    UserId = shop.OwnerId,
+                    TitleEn = "Product Rejected",
+                    TitleAr = "تم رفض المنتج",
+                    MessageEn = $"Your product '{product.TitleEn}' has been rejected by the administrator.",
+                    MessageAr = $"تم رفض منتجك '{product.TitleAr}' من قبل المسؤول.",
+                    Type = NotificationType.ProductRejected,
+                    ReferenceId = product.Id,
+                    ReferenceType = "Product"
+                });
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
+        _ = Task.Run(() => _productIndexerService.IndexAllProductsAsync());
+
         return Result.Success();
     }
 
@@ -512,11 +751,6 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         if (draft.DescriptionAr != null) product.DescriptionAr = draft.DescriptionAr;
         if (draft.Price.HasValue) product.Price = draft.Price.Value;
         if (draft.DiscountPrice.HasValue) product.DiscountPrice = draft.DiscountPrice.Value;
-        if (draft.Quantity.HasValue)
-        {
-            product.Quantity = draft.Quantity.Value;
-            product.IsOnePiece = draft.Quantity.Value == 1;
-        }
         if (draft.CategoryId.HasValue) product.CategoryId = draft.CategoryId.Value;
 
         product.UpdatedAt = DateTime.UtcNow;
@@ -585,10 +819,59 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
             }
         }
 
+        // Apply AR model changes from draft
+        if (draft.RemoveArModel == true)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+                product.ArModelUrl = null;
+            }
+        }
+        if (draft.ArModelUrl != null)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+            }
+            product.ArModelUrl = draft.ArModelUrl;
+        }
+
         // Delete the draft
         _productRepository.RemoveDraft(draft);
 
         await _unitOfWork.SaveChangesAsync();
+
+        // Notify seller (Scenario 12)
+        try
+        {
+            var shop = product.Shop;
+            if (shop == null)
+            {
+                shop = await _unitOfWork.Repository<Shop, Guid>().GetByIdAsync(product.ShopId);
+            }
+            if (shop != null)
+            {
+                await _notificationService.SendAsync(new SendNotificationDto
+                {
+                    UserId = shop.OwnerId,
+                    TitleEn = "Product Update Approved",
+                    TitleAr = "تمت الموافقة على تحديث المنتج",
+                    MessageEn = $"The update for your product '{product.TitleEn}' has been approved.",
+                    MessageAr = $"تمت الموافقة على تحديث منتجك '{product.TitleAr}'.",
+                    Type = NotificationType.ProductUpdateApproved,
+                    ReferenceId = product.Id,
+                    ReferenceType = "Product"
+                });
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
+        _ = Task.Run(() => _productIndexerService.IndexAllProductsAsync());
+
         return Result.Success();
     }
 
@@ -612,6 +895,35 @@ public class ProductService(IProductRepository productRepository, IUnitOfWork un
         _productRepository.RemoveDraft(draft);
 
         await _unitOfWork.SaveChangesAsync();
+
+        // Notify seller (Scenario 13)
+        try
+        {
+            var product = await _productRepository.GetByIdAsync(productId);
+            if (product != null)
+            {
+                var shop = await _unitOfWork.Repository<Shop, Guid>().GetByIdAsync(product.ShopId);
+                if (shop != null)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = shop.OwnerId,
+                        TitleEn = "Product Update Rejected",
+                        TitleAr = "تم رفض تحديث المنتج",
+                        MessageEn = $"The update for your product '{product.TitleEn}' has been rejected.",
+                        MessageAr = $"تم رفض تحديث منتجك '{product.TitleAr}'.",
+                        Type = NotificationType.ProductUpdateRejected,
+                        ReferenceId = product.Id,
+                        ReferenceType = "Product"
+                    });
+                }
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore
+        }
+
         return Result.Success();
     }
 }

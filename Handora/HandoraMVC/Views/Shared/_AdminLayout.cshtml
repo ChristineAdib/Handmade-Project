@@ -1,4 +1,55 @@
-﻿<!DOCTYPE html>
+@inject HandoraApplication.IServices.INotificationService NotificationService
+@inject Microsoft.AspNetCore.Identity.UserManager<HandoraDomain.Models.AppUser.User> UserManager
+@inject HandoraApplication.Helpers.AuthHelper.JwtHelper JwtHelper
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@using System.Security.Claims
+@{
+    var unreadNotifCount = 0;
+    IReadOnlyList<HandoraApplication.DTOs.NotificationsDto.NotificationDto> recentNotifications = new List<HandoraApplication.DTOs.NotificationsDto.NotificationDto>();
+    var jwtToken = "";
+    var debugException = "";
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(userId))
+        {
+            try
+            {
+                unreadNotifCount = await NotificationService.GetUnreadCountAsync(userId);
+            }
+            catch (System.Exception ex)
+            {
+                debugException += "UnreadCount: " + ex.Message + " | ";
+            }
+
+            try
+            {
+                var pagedResult = await NotificationService.GetUserNotificationsAsync(userId, new HandoraApplication.DTOs.Common.PaginationQueryDto { PageNumber = 1, PageSize = 5 });
+                recentNotifications = pagedResult.Items;
+            }
+            catch (System.Exception ex)
+            {
+                debugException += "GetUserNotifications: " + ex.Message + " | ";
+            }
+
+            try
+            {
+                var user = await UserManager.FindByIdAsync(userId);
+                if (user != null)
+                {
+                    var roles = await UserManager.GetRolesAsync(user);
+                    var (token, _) = JwtHelper.GenerateToken(user, roles);
+                    jwtToken = token;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                debugException += "TokenGen: " + ex.Message + " | ";
+            }
+        }
+    }
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -42,6 +93,44 @@
                     <i class="ti ti-store" aria-hidden="true"></i> Shops
                 </a>
 
+                <div class="nav-label" style="margin-top: 16px;">Custom Studio</div>
+                <a asp-controller="AdminCustomStudio" asp-action="Dashboard"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Requests"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Requests" ? "active" : "")">
+                    <i class="ti ti-git-pull-request" aria-hidden="true"></i> Custom Requests
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="AiGenerations"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "AiGenerations" ? "active" : "")">
+                    <i class="ti ti-cpu" aria-hidden="true"></i> AI Generations
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Artisans"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Artisans" ? "active" : "")">
+                    <i class="ti ti-palette" aria-hidden="true"></i> Artisans
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Offers"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Offers" ? "active" : "")">
+                    <i class="ti ti-coin" aria-hidden="true"></i> Offers
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Projects"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Projects" ? "active" : "")">
+                    <i class="ti ti-hammer" aria-hidden="true"></i> Projects
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Analytics"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Analytics" ? "active" : "")">
+                    <i class="ti ti-chart-bar" aria-hidden="true"></i> Analytics
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="AuditLogs"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "AuditLogs" ? "active" : "")">
+                    <i class="ti ti-history" aria-hidden="true"></i> Audit Logs
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Settings"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Settings" ? "active" : "")">
+                    <i class="ti ti-settings" aria-hidden="true"></i> Settings
+                </a>
+
              
             </nav>
             <div class="nav-bottom">
@@ -59,7 +148,43 @@
             <header class="topbar">
                 <span class="topbar-title">@ViewData["Title"]</span>
                 <div class="topbar-right">
-                    <i class="ti ti-bell" aria-hidden="true"></i>
+                    <div class="notification-dropdown-wrapper">
+                        <button class="topbar-icon-btn" id="notifBell" aria-label="Notifications">
+                            <i class="ti ti-bell" aria-hidden="true"></i>
+                            @if (unreadNotifCount > 0)
+                            {
+                                <span class="notif-badge">@unreadNotifCount</span>
+                            }
+                        </button>
+                        <div class="notif-menu" id="notifMenu">
+                            <div class="notif-menu-header">
+                                <span>Notifications</span>
+                                <span id="markAllReadWrapper" style="display: @(unreadNotifCount > 0 ? "inline" : "none")">
+                                    <form asp-controller="Admin" asp-action="MarkAllNotificationsAsRead" method="post" style="display:inline; margin:0; padding:0;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="mark-all-read-btn">Mark all read</button>
+                                    </form>
+                                </span>
+                            </div>
+                            <div class="notif-menu-body">
+                                @if (!recentNotifications.Any())
+                                {
+                                    <div class="notif-item-empty">No notifications yet</div>
+                                }
+                                else
+                                {
+                                    @foreach (var notif in recentNotifications)
+                                    {
+                                        <a href="/Products" class="notif-item @(notif.IsRead ? "" : "unread")">
+                                            <div class="notif-item-title">@notif.TitleEn</div>
+                                            <div class="notif-item-desc">@notif.MessageEn</div>
+                                            <div class="notif-item-time">@notif.CreatedAt.ToString("g")</div>
+                                        </a>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
                     <div class="avatar">A</div>
                 </div>
             </header>
@@ -72,5 +197,105 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)   @* ← ضيفي السطر ده *@
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var bell = document.getElementById('notifBell');
+            var menu = document.getElementById('notifMenu');
+            if (bell && menu) {
+                bell.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    menu.classList.toggle('show');
+                });
+                document.addEventListener('click', function (e) {
+                    if (!menu.contains(e.target) && e.target !== bell) {
+                        menu.classList.remove('show');
+                    }
+                });
+            }
+
+            var token = '@jwtToken';
+            if (token) {
+                var apiBaseUrl = '@Configuration["ApiBaseUrl"]';
+                if (!apiBaseUrl) {
+                    apiBaseUrl = 'http://localhost:5216/';
+                }
+                if (!apiBaseUrl.endsWith('/')) {
+                    apiBaseUrl += '/';
+                }
+
+                var connection = new signalR.HubConnectionBuilder()
+                    .withUrl(apiBaseUrl + 'hubs/notifications', {
+                        accessTokenFactory: () => token
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on('ReceiveNotification', function (notification) {
+                    var menuBody = document.querySelector('.notif-menu-body');
+                    if (menuBody) {
+                        var emptyDiv = menuBody.querySelector('.notif-item-empty');
+                        if (emptyDiv) {
+                            emptyDiv.remove();
+                        }
+
+                        var dateOptions = {
+                            year: 'numeric',
+                            month: 'numeric',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            hour12: true,
+                            timeZone: 'Africa/Cairo'
+                        };
+                        var dateStr = new Date(notification.createdAt).toLocaleString('en-US', dateOptions);
+
+                        var newNotifHtml = `
+                            <a href="/Products" class="notif-item unread">
+                                <div class="notif-item-title">${notification.titleEn}</div>
+                                <div class="notif-item-desc">${notification.messageEn}</div>
+                                <div class="notif-item-time">${dateStr}</div>
+                            </a>
+                        `;
+                        menuBody.insertAdjacentHTML('afterbegin', newNotifHtml);
+
+                        var items = menuBody.querySelectorAll('.notif-item');
+                        if (items.length > 5) {
+                            for (var i = 5; i < items.length; i++) {
+                                items[i].remove();
+                            }
+                        }
+                    }
+                });
+
+                connection.on('UnreadCountUpdated', function (count) {
+                    var bell = document.getElementById('notifBell');
+                    if (bell) {
+                        var badge = bell.querySelector('.notif-badge');
+                        if (count > 0) {
+                            if (badge) {
+                                badge.textContent = count;
+                            } else {
+                                badge = document.createElement('span');
+                                badge.className = 'notif-badge';
+                                badge.textContent = count;
+                                bell.appendChild(badge);
+                            }
+                        } else {
+                            if (badge) {
+                                badge.remove();
+                            }
+                        }
+                    }
+                    var wrapper = document.getElementById('markAllReadWrapper');
+                    if (wrapper) {
+                        wrapper.style.display = count > 0 ? 'inline' : 'none';
+                    }
+                });
+
+                connection.start().catch(err => console.error('SignalR Connection Error: ', err));
+            }
+        });
+    </script>
 </body>
 </html>

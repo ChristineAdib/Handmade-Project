@@ -1,10 +1,12 @@
 namespace HandoraApplication;
 
 using HandoraApplication.DTOs.AdminDashboardDTOs;
+using HandoraApplication.DTOs.CustomStudioDTOs;
 using HandoraApplication.IServices;
 using HandoraApplication.Mappers;
 using HandoraApplication.Services;
 using HandoraDomain.Interfaces;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
 public static class ModuleApplicationDependences
@@ -30,8 +32,19 @@ public static class ModuleApplicationDependences
         services.AddScoped<IShopReviewService, ShopReviewService>();
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+        services.AddScoped<IAdminCustomStudioService, AdminCustomStudioService>();
 
         services.AddScoped<ISellerAnalyticsService, SellerAnalyticsService>();
+        services.AddHttpClient();
+
+        services.AddScoped<IProductAgentService, ProductAgentService>();
+
+        // Handora Custom Studio Services & Validators
+        services.AddScoped<ICustomStudioService, CustomStudioService>();
+        services.AddScoped<IValidator<CreateCustomRequestCommand>, CreateCustomRequestCommandValidator>();
+        services.AddScoped<IValidator<SaveConfigurationCommand>, SaveConfigurationCommandValidator>();
+        services.AddScoped<IValidator<CreateSellerOfferCommand>, CreateSellerOfferCommandValidator>();
+
         return services;
     }
 }

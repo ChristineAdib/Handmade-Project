@@ -1,4 +1,5 @@
-﻿using HandoraApplication.DTOs.NotificationsDto;
+using HandoraApplication.DTOs.NotificationsDto;
+using HandoraApplication.DTOs.Common;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
 using HandoraDomain.Models.NotificationEntities;
@@ -48,6 +49,21 @@ namespace HandoraApplication.Services
         {
             var notifications = await _repo.GetUserNotificationsAsync(userId, ct);
             return notifications.Select(MapToDto).ToList();
+        }
+
+        public async Task<PagedResultDto<NotificationDto>> GetUserNotificationsAsync(
+            string userId, PaginationQueryDto query, CancellationToken ct = default)
+        {
+            var (items, totalCount) = await _repo.GetUserNotificationsPagedAsync(
+                userId, query.PageNumber, query.PageSize, ct);
+
+            return new PagedResultDto<NotificationDto>
+            {
+                Items = items.Select(MapToDto).ToList(),
+                TotalCount = totalCount,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize
+            };
         }
 
         public Task<int> GetUnreadCountAsync(string userId, CancellationToken ct = default)

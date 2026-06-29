@@ -19,7 +19,11 @@ public class GenericRepository<TEntity, TId>(AppDbContext context)
 
     public async Task UpdateAsync(TEntity entity)
     {
-        _dbSet.Update(entity);
+        var entry = _context.Entry(entity);
+        if (entry.State == EntityState.Detached)
+        {
+            _dbSet.Update(entity);
+        }
     }
 
     public async Task SoftDeleteAsync(TEntity entity)

@@ -37,7 +37,10 @@ namespace HandoraDomain.Models.ProductEntities
         public ICollection<Review> Reviews { get; set; } = [];
         public ICollection<Tag> Tags { get; set; } = [];
         public ICollection<OrderItem> OrderItems { get; set; } = [];
-        public ICollection<CartItem> CartItems { get; set; } =[];
-        public ICollection<WishListItem> WishListItems { get; set; } =[];
+        public ICollection<CartItem> CartItems { get; set; } = [];
+        public ICollection<WishListItem> WishListItems { get; set; } = [];
+
+        // 3D / AR Model URL
+        public string? ArModelUrl { get; set; }
     }
 }

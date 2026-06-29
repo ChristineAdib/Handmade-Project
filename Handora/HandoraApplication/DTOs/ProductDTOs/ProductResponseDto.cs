@@ -32,6 +32,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public Guid? ParentCategoryId { get; set; }
         public string CategoryNameEn { get; set; }
         public string CategoryNameAr { get; set; }
+        public string? ParentCategoryNameEn { get; set; }
 
         public Guid ShopId { get; set; }
         public string ShopName { get; set; }
@@ -53,6 +54,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
         public bool IsAvailable { get; set; }
         public int StockQuantity { get; set; }
         public bool IsSoldOut { get; set; }
+        public string? ArModelUrl { get; set; }
     }
 
     public record AiReviewSummaryDto

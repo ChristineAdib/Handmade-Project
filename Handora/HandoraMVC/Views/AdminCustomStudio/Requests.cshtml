@@ -1,0 +1,209 @@
+@model HandoraApplication.IServices.PagedList<HandoraApplication.IServices.AdminCustomRequestDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Custom Requests Management";
+
+    var search = ViewData["Search"] as string;
+    var status = ViewData["Status"] as int?;
+    var offerStatus = ViewData["OfferStatus"] as int?;
+    var paymentStatus = ViewData["PaymentStatus"] as int?;
+    var sortBy = ViewData["SortBy"] as string ?? "newest";
+    var startDate = ViewData["StartDate"] as string;
+    var endDate = ViewData["EndDate"] as string;
+}
+
+<style>
+    :root {
+        --br: #3d2010;
+        --md: #7a5433;
+        --lt: #c4956a;
+        --border: #e8e0d8;
+        --text: #1b1c1c;
+        --muted: #888;
+    }
+
+    .requests-container {
+        animation: fadeUp 0.4s ease both;
+    }
+
+    /* Filters Bar */
+    .filter-bar {
+        background: #fff;
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .filter-input {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 0.5px solid var(--border);
+        font-size: 13px;
+        color: var(--text);
+        font-family: inherit;
+        background: #fff;
+    }
+
+    .btn-search {
+        background: var(--br);
+        color: #fff;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: background 0.2s;
+    }
+
+    .btn-search:hover {
+        background: var(--md);
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        font-size: 13px;
+        color: var(--muted);
+    }
+
+    .btn-page {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 0.5px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.15s;
+    }
+
+    .btn-page:hover {
+        background: #faf7f4;
+    }
+
+    .btn-page.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+</style>
+
+<div class="requests-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="font-size: 20px; font-weight: 600; color: var(--br);">Custom Studio Requests</h2>
+        <a asp-action="ExportRequests" class="ptab"><i class="ti ti-download"></i> Export CSV</a>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="get" class="filter-bar">
+        <input type="text" name="search" value="@search" placeholder="Search Request ID, Buyer, Seller..." class="filter-input" style="flex: 1; min-width: 200px;" />
+
+        <select name="status" class="filter-input">
+            <option value="">-- All Statuses --</option>
+            <option value="1" selected="@(status == 1)">Draft</option>
+            <option value="2" selected="@(status == 2)">Configuring</option>
+            <option value="5" selected="@(status == 5)">Generated</option>
+            <option value="6" selected="@(status == 6)">Design Selected</option>
+            <option value="8" selected="@(status == 8)">Negotiation</option>
+            <option value="9" selected="@(status == 9)">Offer Sent</option>
+            <option value="12" selected="@(status == 12)">Paid (Deposit)</option>
+            <option value="13" selected="@(status == 13)">In Crafting Progress</option>
+            <option value="14" selected="@(status == 14)">Completed</option>
+            <option value="15" selected="@(status == 15)">Cancelled</option>
+        </select>
+
+        <select name="sortBy" class="filter-input">
+            <option value="newest" selected="@(sortBy == "newest")">Newest</option>
+            <option value="oldest" selected="@(sortBy == "oldest")">Oldest</option>
+            <option value="highestprice" selected="@(sortBy == "highestprice")">Highest Price</option>
+            <option value="lowestprice" selected="@(sortBy == "lowestprice")">Lowest Price</option>
+        </select>
+
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="date" name="startDate" value="@startDate" class="filter-input" />
+            <span style="font-size: 12px; color: var(--muted);">to</span>
+            <input type="date" name="endDate" value="@endDate" class="filter-input" />
+        </div>
+
+        <button type="submit" class="btn-search">Apply Filters</button>
+        <a asp-action="Requests" class="ptab" style="text-decoration:none;">Clear</a>
+    </form>
+
+    <!-- Table -->
+    <div class="an-card" style="padding:0; overflow:hidden;">
+        <table class="an-table">
+            <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>Buyer</th>
+                    <th>Seller / Artisan</th>
+                    <th>Status</th>
+                    <th>Price Budget</th>
+                    <th>Payment Status</th>
+                    <th>Created Date</th>
+                    <th class="r">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="8" style="text-align:center; padding: 24px; color: var(--muted);">No custom requests found matching the filter criteria.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var r in Model.Items)
+                    {
+                        <tr>
+                            <td style="font-family: monospace; font-size:12px; font-weight:600; color: var(--md);">
+                                @r.RequestId.ToString().Substring(0, 8)...
+                            </td>
+                            <td>
+                                <div><strong>@r.BuyerName</strong></div>
+                                <span style="font-size:11px; color: var(--muted);">@r.BuyerEmail</span>
+                            </td>
+                            <td>@r.SellerName</td>
+                            <td>
+                                <span class="badge" style="background:#fcf1e3; color: var(--br); padding: 4px 8px; border-radius:6px; font-size:11px; font-weight:600;">
+                                    @r.StatusName
+                                </span>
+                            </td>
+                            <td>
+                                @(r.TargetBudget.HasValue ? r.TargetBudget.Value.ToString("C") : "N/A")
+                            </td>
+                            <td>@r.PaymentStatus</td>
+                            <td>@r.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td class="r">
+                                <a asp-action="Details" asp-route-id="@r.RequestId" class="btn-page" style="margin-right: 4px;">View</a>
+                                <form asp-action="ArchiveRequest" asp-route-id="@r.RequestId" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this request?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-page" style="border:none; color: var(--red);">Archive</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="pagination">
+        <span>Showing Page @Model.PageNumber of @Model.TotalPages (Total @Model.TotalCount Requests)</span>
+        <div style="display: flex; gap: 8px;">
+            <a href="@Url.Action("Requests", new { search, status, sortBy, startDate, endDate, pageNumber = Model.PageNumber - 1 })" 
+               class="btn-page @(Model.HasPreviousPage ? "" : "disabled")">Previous</a>
+            <a href="@Url.Action("Requests", new { search, status, sortBy, startDate, endDate, pageNumber = Model.PageNumber + 1 })" 
+               class="btn-page @(Model.HasNextPage ? "" : "disabled")">Next</a>
+        </div>
+    </div>
+</div>
