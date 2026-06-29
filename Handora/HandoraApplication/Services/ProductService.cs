@@ -210,6 +210,13 @@ public class ProductService(
             }
         }
 
+        // Handle AR / 3D model
+        if (dto.ArModel != null)
+        {
+            var modelUrl = await _fileService.UploadRawFileAsync(dto.ArModel, "products/models");
+            product.ArModelUrl = modelUrl;
+        }
+
         await _productRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
@@ -249,18 +256,56 @@ public class ProductService(
 
         Result<ProductResponseDto> updateResult;
 
+        bool notifyAdmins = false;
+
         // ── BRANCHING: Live products get a draft, non-live products get direct edits ──
         if (product.IsActive)
         {
-            updateResult = await CreateOrUpdateDraft(product, dto);
+            bool liveProductChanged = false;
+            if (dto.Quantity.HasValue)
+            {
+                product.Quantity = dto.Quantity.Value;
+                product.IsOnePiece = dto.Quantity.Value == 1;
+                liveProductChanged = true;
+            }
+            if (dto.Status.HasValue)
+            {
+                product.Status = dto.Status.Value;
+                liveProductChanged = true;
+            }
+
+            bool hasDraftChanges = dto.TitleEn != null || dto.TitleAr != null ||
+                                   dto.DescriptionEn != null || dto.DescriptionAr != null ||
+                                   dto.Price.HasValue || dto.DiscountPrice.HasValue ||
+                                   dto.CategoryId.HasValue || dto.SubCategoryId.HasValue ||
+                                   dto.Tags != null ||
+                                   (dto.RemoveImageIds != null && dto.RemoveImageIds.Any()) ||
+                                   (dto.NewImages != null && dto.NewImages.Any());
+
+            if (hasDraftChanges)
+            {
+                updateResult = await ApplyDirectUpdate(product, dto);
+                notifyAdmins = true;
+            }
+            else
+            {
+                if (liveProductChanged)
+                {
+                    product.UpdatedAt = DateTime.UtcNow;
+                    await _unitOfWork.SaveChangesAsync();
+                    _ = Task.Run(() => _productIndexerService.IndexAllProductsAsync());
+                }
+                updateResult = await GetProduct(product.Id);
+            }
         }
         else
         {
             // Product is NOT yet live — apply changes directly (existing behavior)
             updateResult = await ApplyDirectUpdate(product, dto);
+            notifyAdmins = true;
         }
 
-        if (updateResult.IsSuccess)
+        if (updateResult.IsSuccess && notifyAdmins)
         {
             // Notify admins of the update (Scenario 11)
             try
@@ -350,6 +395,23 @@ public class ProductService(
         if (dto.Status.HasValue) product.Status = dto.Status.Value;
 
         // 3. Your Logic from Feature
+        if (dto.RemoveArModel == true)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+                product.ArModelUrl = null;
+            }
+        }
+        if (dto.ArModel != null)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+            }
+            var modelUrl = await _fileService.UploadRawFileAsync(dto.ArModel, "products/models");
+            product.ArModelUrl = modelUrl;
+        }
      
 
         product.UpdatedAt = DateTime.UtcNow;
@@ -477,7 +539,6 @@ public class ProductService(
         if (dto.DescriptionAr != null) draft!.DescriptionAr = dto.DescriptionAr;
         if (dto.Price.HasValue) draft!.Price = dto.Price.Value;
         if (dto.DiscountPrice.HasValue) draft!.DiscountPrice = dto.DiscountPrice.Value;
-        if (dto.Quantity.HasValue) draft!.Quantity = dto.Quantity.Value;
         if (dto.CategoryId.HasValue) draft!.CategoryId = dto.CategoryId.Value;
 
         // Serialize tags
@@ -514,6 +575,29 @@ public class ProductService(
             }
             removeIds.AddRange(dto.RemoveImageIds);
             draft.RemoveImageIdsJson = JsonSerializer.Serialize(removeIds.Distinct().ToList());
+        }
+
+        // Handle AR model changes in draft
+        if (dto.RemoveArModel == true)
+        {
+            draft.RemoveArModel = true;
+            // Delete any draft uploaded URL if it existed
+            if (!string.IsNullOrEmpty(draft.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(draft.ArModelUrl);
+                draft.ArModelUrl = null;
+            }
+        }
+        if (dto.ArModel != null)
+        {
+            // If we already uploaded a new model in this draft, delete it from Cloudinary first
+            if (!string.IsNullOrEmpty(draft.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(draft.ArModelUrl);
+            }
+            var modelUrl = await _fileService.UploadRawFileAsync(dto.ArModel, "products/models");
+            draft.ArModelUrl = modelUrl;
+            draft.RemoveArModel = false;
         }
 
         draft!.UpdatedAt = DateTime.UtcNow;
@@ -667,11 +751,6 @@ public class ProductService(
         if (draft.DescriptionAr != null) product.DescriptionAr = draft.DescriptionAr;
         if (draft.Price.HasValue) product.Price = draft.Price.Value;
         if (draft.DiscountPrice.HasValue) product.DiscountPrice = draft.DiscountPrice.Value;
-        if (draft.Quantity.HasValue)
-        {
-            product.Quantity = draft.Quantity.Value;
-            product.IsOnePiece = draft.Quantity.Value == 1;
-        }
         if (draft.CategoryId.HasValue) product.CategoryId = draft.CategoryId.Value;
 
         product.UpdatedAt = DateTime.UtcNow;
@@ -738,6 +817,24 @@ public class ProductService(
                 _productRepository.AddProductImage(newImage);
                 hasRemainingImages = true;
             }
+        }
+
+        // Apply AR model changes from draft
+        if (draft.RemoveArModel == true)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+                product.ArModelUrl = null;
+            }
+        }
+        if (draft.ArModelUrl != null)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+            }
+            product.ArModelUrl = draft.ArModelUrl;
         }
 
         // Delete the draft

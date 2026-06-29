@@ -1,4 +1,4 @@
-﻿using HandoraDomain.Models.ProductEntities;
+using HandoraDomain.Models.ProductEntities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -61,6 +61,9 @@ namespace HandoraInfrastructure.Data.Configuration
                 .WithMany(s => s.Products)
                 .HasForeignKey(p => p.ShopId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(p => p.ArModelUrl)
+                .HasMaxLength(500);
         }
     }
 }

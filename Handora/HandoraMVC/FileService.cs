@@ -41,6 +41,26 @@ public class FileService : IFileService
         return result.SecureUrl.AbsoluteUri;
     }
 
+    public async Task<string> UploadRawFileAsync(IFormFile file, string folder)
+    {
+        if (file == null || file.Length == 0)
+            throw new ArgumentException("File is empty");
+
+        await using var stream = file.OpenReadStream();
+        var uploadParams = new RawUploadParams
+        {
+            File = new FileDescription(file.FileName, stream),
+            Folder = folder
+        };
+
+        var result = await _cloudinary.UploadAsync(uploadParams);
+
+        if (result.Error != null)
+            throw new Exception($"Cloudinary upload failed: {result.Error.Message}");
+
+        return result.SecureUrl.AbsoluteUri;
+    }
+
     public async Task DeleteFileAsync(string fileUrl)
     {
         if (string.IsNullOrWhiteSpace(fileUrl))

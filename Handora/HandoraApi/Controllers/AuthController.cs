@@ -149,5 +149,24 @@ namespace HandoraApi.Controllers
                 return BadRequest(ApiResponse<object>.Fail(ex.Message));
             }
         }
+
+        [HttpGet("check-status")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> CheckStatus(CancellationToken ct)
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(ApiResponse<object>.Fail("Unauthorized."));
+
+            var isBanned = await _authService.CheckUserBanStatusAsync(userId, ct);
+
+            if (isBanned)
+                return StatusCode(403, ApiResponse<object>.Fail("Your account has been suspended. Please contact support."));
+
+            return Ok(ApiResponse<object>.Ok(null!, "Active"));
+        }
     }
 }

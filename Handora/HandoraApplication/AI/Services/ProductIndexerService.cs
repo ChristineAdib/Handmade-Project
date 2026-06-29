@@ -86,27 +86,6 @@ namespace HandoraApplication.AI.Services
                 // Build a structured, descriptive text document for LLM and vector search matching
                 var textBuilder = new StringBuilder();
                 textBuilder.AppendLine($"Product: {product.TitleEn}");
-                
-                string mainCategory = "General";
-                string subcategory = "";
-                if (product.Category != null)
-                {
-                    if (product.Category.Parent != null)
-                    {
-                        mainCategory = product.Category.Parent.NameEn;
-                        subcategory = product.Category.NameEn;
-                    }
-                    else
-                    {
-                        mainCategory = product.Category.NameEn;
-                    }
-                }
-
-                textBuilder.AppendLine($"Category: {mainCategory}");
-                if (!string.IsNullOrWhiteSpace(subcategory))
-                {
-                    textBuilder.AppendLine($"Subcategory: {subcategory}");
-                }
                 textBuilder.AppendLine($"Price: {product.Price}");
                 if (!string.IsNullOrWhiteSpace(product.DescriptionEn))
                 {
@@ -135,8 +114,6 @@ namespace HandoraApplication.AI.Services
                     { "price", (double)(product.DiscountPrice ?? product.Price) }, // numeric for range filtering
                     { "description", product.DescriptionEn ?? string.Empty },
                     { "imageUrl", imageUrl ?? string.Empty },
-                    { "category", mainCategory },
-                    { "subcategory", subcategory },
                     { "tags", tagsList }
                 };
 

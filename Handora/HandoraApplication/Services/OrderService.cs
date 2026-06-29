@@ -276,12 +276,18 @@ public class OrderService(
                 return Result<OrderResponseDto>.Failure("You are not authorized to update the status of this order.");
             }
 
-            // Sellers can only transition from Processing to Shipped
-            if (order.Status != OrderStatus.Processing || dto.Status != OrderStatus.Shipped)
+            // Sellers can transition: Pending → Processing, Confirmed → Processing, Processing → Shipped
+            var isValidSellerTransition =
+                (order.Status == OrderStatus.Pending    && dto.Status == OrderStatus.Processing) ||
+                (order.Status == OrderStatus.Confirmed  && dto.Status == OrderStatus.Processing) ||
+                (order.Status == OrderStatus.Processing && dto.Status == OrderStatus.Shipped);
+
+            if (!isValidSellerTransition)
             {
                 if (order.Status != dto.Status) // If it's a no-op, let it pass
                 {
-                    return Result<OrderResponseDto>.Failure("Sellers are only allowed to transition orders from Processing to Shipped status.");
+                    return Result<OrderResponseDto>.Failure(
+                        "Sellers are only allowed to transition orders: Pending/Confirmed → Processing, or Processing → Shipped.");
                 }
             }
         }

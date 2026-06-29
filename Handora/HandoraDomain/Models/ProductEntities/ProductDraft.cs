@@ -23,5 +23,9 @@ namespace HandoraDomain.Models.ProductEntities
         public string? ProposedTagsJson { get; set; }       // List<string> serialized
         public string? NewImageUrlsJson { get; set; }        // List<string> serialized (already-uploaded URLs)
         public string? RemoveImageIdsJson { get; set; }      // List<Guid> serialized
+
+        // Proposed AR model changes
+        public string? ArModelUrl { get; set; }
+        public bool? RemoveArModel { get; set; }
     }
 }
