@@ -7,7 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
-builder.Services.AddControllers()
+builder.Services.AddControllersWithViews()
+    .AddApplicationPart(typeof(HandoraMVC.Controllers.HomeController).Assembly)
     .AddDataAnnotationsLocalization(options => {
         options.DataAnnotationLocalizerProvider = (type, factory) =>
             factory.Create(typeof(HandoraApi.SharedResource));
@@ -20,7 +21,7 @@ builder.Services.ConfigureDbContext(builder.Configuration);
 builder.Services.ConfigureIdentity();
 builder.Services.ConfigureAuthentication(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration).AddReposetoriesServices();
-builder.Services.ConfigureCors();
+builder.Services.ConfigureCors(builder.Configuration);
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.ConfigureRedis(builder.Configuration);
 

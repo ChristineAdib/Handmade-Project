@@ -19,10 +19,21 @@ public static class AuthenticationExtension
 
         services.AddAuthentication(options =>
         {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = "SmartScheme";
+            options.DefaultChallengeScheme = "SmartScheme";
+        })
+        .AddPolicyScheme("SmartScheme", "SmartScheme", options =>
+        {
+            options.ForwardDefaultSelector = context =>
+            {
+                var path = context.Request.Path.Value ?? "";
+                if (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase) || 
+                    path.StartsWith("/hubs", StringComparison.OrdinalIgnoreCase))
+                {
+                    return JwtBearerDefaults.AuthenticationScheme;
+                }
+                return Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme;
+            };
         })
         .AddJwtBearer(o =>
         {
@@ -67,6 +78,12 @@ public static class AuthenticationExtension
                     }
                 }
             };
+        });
+
+        services.ConfigureApplicationCookie(options =>
+        {
+            options.LoginPath = "/Account/Login";
+            options.AccessDeniedPath = "/Account/AccessDenied";
         });
     }
 }
