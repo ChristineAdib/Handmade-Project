@@ -1,8 +1,9 @@
-﻿using HandoraDomain.Models.AppUser;
+using HandoraDomain.Models.AppUser;
 using HandoraInfrastructure.Data;
 using HandoraInfrastructure.Seeders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HandoraApi.Extensions
 {
@@ -42,6 +43,24 @@ namespace HandoraApi.Extensions
 
                 logger.LogInformation("Seeding coupons...");
                 await CouponSeeder.SeedAsync(context);
+
+                // Run RAG indexing automatically so the vector store/fallback is pre-populated
+                try
+                {
+                    var productIndexer = services.GetService<HandoraApplication.AI.Interfaces.IProductIndexerService>();
+                    if (productIndexer != null)
+                    {
+                        logger.LogInformation("Automatically indexing products in RAG...");
+                        await productIndexer.IndexAllProductsAsync();
+                        logger.LogInformation("Automatically indexing artisans in RAG...");
+                        await productIndexer.IndexAllArtisansAsync();
+                        logger.LogInformation("RAG indexing completed successfully.");
+                    }
+                }
+                catch (Exception idxEx)
+                {
+                    logger.LogWarning(idxEx, "Failed to run automatic RAG indexing on startup.");
+                }
 
                 logger.LogInformation("Database seeding completed successfully.");
             }

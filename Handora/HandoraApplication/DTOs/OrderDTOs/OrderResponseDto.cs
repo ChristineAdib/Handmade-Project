@@ -26,6 +26,7 @@ public class OrderResponseDto
 
     public string? Notes { get; set; }
     public string? CouponCode { get; set; }
+    public string? PaymobOrderId { get; set; }
 
     public List<OrderItemResponseDto> Items { get; set; } = [];
 }

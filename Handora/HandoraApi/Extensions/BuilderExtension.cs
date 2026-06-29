@@ -13,6 +13,7 @@ public static class BuilderExtension
         app.UseMiddleware<ExceptionMiddleware>();
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseMiddleware<BanCheckMiddleware>(); 
         app.MapControllers();
         app.MapHub<NotificationHub>("/hubs/notifications");
         app.MapHub<ChatHub>("/hubs/chat");

@@ -505,6 +505,7 @@ public class OrderService(
             Total = order.SubTotal + (order.DeliveryMethod?.Cost ?? 0) - (order.DiscountAmount ?? 0),
             Notes = order.Notes,
             CouponCode = order.Coupon?.Code,
+            PaymobOrderId = order.PaymobOrderId,
             Items = order.Items.Select(i => new OrderItemResponseDto
             {
                 Id = i.Id,

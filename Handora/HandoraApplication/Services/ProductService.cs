@@ -210,6 +210,13 @@ public class ProductService(
             }
         }
 
+        // Handle AR / 3D model
+        if (dto.ArModel != null)
+        {
+            var modelUrl = await _fileService.UploadRawFileAsync(dto.ArModel, "products/models");
+            product.ArModelUrl = modelUrl;
+        }
+
         await _productRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
@@ -388,6 +395,23 @@ public class ProductService(
         if (dto.Status.HasValue) product.Status = dto.Status.Value;
 
         // 3. Your Logic from Feature
+        if (dto.RemoveArModel == true)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+                product.ArModelUrl = null;
+            }
+        }
+        if (dto.ArModel != null)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+            }
+            var modelUrl = await _fileService.UploadRawFileAsync(dto.ArModel, "products/models");
+            product.ArModelUrl = modelUrl;
+        }
      
 
         product.UpdatedAt = DateTime.UtcNow;
@@ -551,6 +575,29 @@ public class ProductService(
             }
             removeIds.AddRange(dto.RemoveImageIds);
             draft.RemoveImageIdsJson = JsonSerializer.Serialize(removeIds.Distinct().ToList());
+        }
+
+        // Handle AR model changes in draft
+        if (dto.RemoveArModel == true)
+        {
+            draft.RemoveArModel = true;
+            // Delete any draft uploaded URL if it existed
+            if (!string.IsNullOrEmpty(draft.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(draft.ArModelUrl);
+                draft.ArModelUrl = null;
+            }
+        }
+        if (dto.ArModel != null)
+        {
+            // If we already uploaded a new model in this draft, delete it from Cloudinary first
+            if (!string.IsNullOrEmpty(draft.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(draft.ArModelUrl);
+            }
+            var modelUrl = await _fileService.UploadRawFileAsync(dto.ArModel, "products/models");
+            draft.ArModelUrl = modelUrl;
+            draft.RemoveArModel = false;
         }
 
         draft!.UpdatedAt = DateTime.UtcNow;
@@ -770,6 +817,24 @@ public class ProductService(
                 _productRepository.AddProductImage(newImage);
                 hasRemainingImages = true;
             }
+        }
+
+        // Apply AR model changes from draft
+        if (draft.RemoveArModel == true)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+                product.ArModelUrl = null;
+            }
+        }
+        if (draft.ArModelUrl != null)
+        {
+            if (!string.IsNullOrEmpty(product.ArModelUrl))
+            {
+                await _fileService.DeleteFileAsync(product.ArModelUrl);
+            }
+            product.ArModelUrl = draft.ArModelUrl;
         }
 
         // Delete the draft

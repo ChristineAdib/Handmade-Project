@@ -17,6 +17,7 @@ namespace HandoraApplication.DTOs.ChatDTOs
         public string? SellerImage { get; init; }
         public MessageDto? LastMessage { get; init; }
         public int UnreadCount { get; init; }
+        public Guid? CustomRequestId { get; init; }
         public DateTime CreatedAt { get; init; }
     }
 }

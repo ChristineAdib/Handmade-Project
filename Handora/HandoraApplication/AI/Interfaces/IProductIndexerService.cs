@@ -5,5 +5,6 @@ namespace HandoraApplication.AI.Interfaces
     public interface IProductIndexerService
     {
         Task IndexAllProductsAsync();
+        Task IndexAllArtisansAsync();
     }
 }
