@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
 
 namespace HandoraApi.Extensions;
 
@@ -6,38 +8,49 @@ public static class CorsExtension
 {
     public static void ConfigureCors(this IServiceCollection services, IConfiguration configuration)
     {
-        var origins = configuration.GetSection("CorsOrigins").Get<string[]>() 
-                      ?? new[] { "http://localhost:4200", "http://127.0.0.1:4200", "http://localhost:5204" , "https://frontend-handmade-project-dpn3.vercel.app" };
+        var configuredOrigins = configuration.GetSection("CorsOrigins").Get<string[]>() 
+                                ?? Array.Empty<string>();
+
+        var allowedOrigins = new HashSet<string>(configuredOrigins, StringComparer.OrdinalIgnoreCase)
+        {
+            "http://localhost:4200",
+            "http://127.0.0.1:4200",
+            "https://frontend-handmade-project-dpn3.vercel.app"
+        };
+
+        var frontendUrl = configuration["FrontendUrl"];
+        if (!string.IsNullOrEmpty(frontendUrl))
+        {
+            allowedOrigins.Add(frontendUrl);
+        }
 
         services.AddCors(options =>
         {
-            options.AddDefaultPolicy(policy =>
+            var policyAction = new Action<Microsoft.AspNetCore.Cors.Infrastructure.CorsPolicyBuilder>(policy =>
             {
                 policy
-                    .WithOrigins(origins)
+                    .SetIsOriginAllowed(origin => 
+                    {
+                        if (allowedOrigins.Contains(origin))
+                            return true;
+
+                        // Allow Vercel preview deployment URLs (e.g., https://*.vercel.app)
+                        if (origin.StartsWith("https://", StringComparison.OrdinalIgnoreCase) && 
+                            origin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
+
+                        return false;
+                    })
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials();
             });
 
-            options.AddPolicy("development",
-                policy =>
-                {
-                    policy
-                        .WithOrigins(origins)
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials();
-                });
-            options.AddPolicy("production",
-                policy =>
-                {
-                    policy
-                        .WithOrigins(origins)
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials();
-                });
+            options.AddDefaultPolicy(policyAction);
+            options.AddPolicy("development", policyAction);
+            options.AddPolicy("production", policyAction);
         });
     }
 }

@@ -19,6 +19,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.ConfigureDbContext(builder.Configuration);
 builder.Services.ConfigureIdentity();
+builder.Services.AddHttpContextAccessor();
 builder.Services.ConfigureAuthentication(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration).AddReposetoriesServices();
 builder.Services.ConfigureCors(builder.Configuration);
@@ -43,7 +44,6 @@ var localizationOptions = new RequestLocalizationOptions()
     .AddSupportedUICultures(supportedCultures);
 app.UseRequestLocalization(localizationOptions);
 
-app.UseCors();
 app.UseCustomMiddlewares();
 
 app.Run();
