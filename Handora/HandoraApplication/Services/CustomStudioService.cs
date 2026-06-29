@@ -50,6 +50,7 @@ namespace HandoraApplication.Services
         private readonly ILogger<CustomStudioService> _logger;
         private readonly IRagService _ragService;
         private readonly IGeminiService _geminiService;
+        private readonly IGenerationQualityValidator _qualityValidator;
  
         public CustomStudioService(
             IUnitOfWork unitOfWork,
@@ -64,7 +65,8 @@ namespace HandoraApplication.Services
             IChatService chatService,
             ILogger<CustomStudioService> logger,
             IRagService ragService,
-            IGeminiService geminiService)
+            IGeminiService geminiService,
+            IGenerationQualityValidator qualityValidator)
         {
             _unitOfWork = unitOfWork;
             _createRequestValidator = createRequestValidator;
@@ -79,6 +81,7 @@ namespace HandoraApplication.Services
             _logger = logger;
             _ragService = ragService;
             _geminiService = geminiService;
+            _qualityValidator = qualityValidator;
         }
 
         #region Commands
@@ -256,18 +259,70 @@ namespace HandoraApplication.Services
             return await GetCustomRequestDetailsAsync(new GetCustomRequestDetailsQuery(request.Id), ct);
         }
 
-        private class GeminiFaceAnalysisResult
+        private class GeminiPersonPhotoAnalysisResult
         {
-            public string? Gender { get; set; }
-            public string? SkinTone { get; set; }
-            public string? HairStyle { get; set; }
-            public string? HairColor { get; set; }
-            public string? SmileType { get; set; }
-            public string? EyebrowStyle { get; set; }
-            public bool? HasFreckles { get; set; }
-            public bool? HasBlush { get; set; }
-            public bool? Glasses { get; set; }
-            public bool? Beard { get; set; }
+            public PersonIdentitySection? PersonIdentity { get; set; }
+            public HairOrHeadCoverageSection? HairOrHeadCoverage { get; set; }
+            public ClothingSection? Clothing { get; set; }
+            public AccessoriesSection? Accessories { get; set; }
+            public OtherVisualDetailsSection? OtherVisualDetails { get; set; }
+
+            public class PersonIdentitySection
+            {
+                public string? Gender { get; set; }
+                public string? EstimatedAgeRange { get; set; }
+                public string? FaceShape { get; set; }
+                public string? SkinTone { get; set; }
+                public string? FacialFeatures { get; set; }
+                public string? Expression { get; set; }
+                public string? Glasses { get; set; }
+                public string? GlassesDetails { get; set; }
+                public string? FacialHair { get; set; }
+                public string? FacialHairDetails { get; set; }
+                public string? FrecklesMolesDimples { get; set; }
+            }
+
+            public class HairOrHeadCoverageSection
+            {
+                public string? HairVisible { get; set; }
+                public string? HairStyle { get; set; }
+                public string? HairLength { get; set; }
+                public string? HairColor { get; set; }
+                public string? HeadCovered { get; set; }
+                public string? CoverType { get; set; }
+                public string? HijabOrScarfStyle { get; set; }
+                public string? HijabOrScarfColors { get; set; }
+                public string? HairlineVisible { get; set; }
+                public string? AnyHairShowing { get; set; }
+                public string? ModestyLevel { get; set; }
+            }
+
+            public class ClothingSection
+            {
+                public string? TopType { get; set; }
+                public string? TopColor { get; set; }
+                public string? PatternTexturePrint { get; set; }
+                public string? Outerwear { get; set; }
+                public string? BottomType { get; set; }
+                public string? BottomColor { get; set; }
+                public string? FullOutfitStyle { get; set; }
+            }
+
+            public class AccessoriesSection
+            {
+                public string? HeadAccessories { get; set; }
+                public string? Jewelry { get; set; }
+                public string? BagOrPurse { get; set; }
+                public string? Shoes { get; set; }
+                public string? OtherAccessories { get; set; }
+            }
+
+            public class OtherVisualDetailsSection
+            {
+                public string? DominantColors { get; set; }
+                public string? Background { get; set; }
+                public string? Lighting { get; set; }
+            }
         }
 
         public async Task<Result<CustomRequestDetailDto>> AnalyzePhotoForDollAsync(
@@ -306,23 +361,48 @@ namespace HandoraApplication.Services
                 // Fallback: use a sensible default so the user can still proceed
                 usedFallback = true;
                 geminiJson = @"{
-                    ""gender"": ""Girl"",
-                    ""skinTone"": ""Peach (Fair)"",
-                    ""hairStyle"": ""Long"",
+                  ""personIdentity"": {
+                    ""gender"": ""Female"",
+                    ""estimatedAgeRange"": ""20s"",
+                    ""faceShape"": ""Oval"",
+                    ""skinTone"": ""Fair"",
+                    ""facialFeatures"": ""Normal eyes and mouth"",
+                    ""expression"": ""Smile"",
+                    ""glasses"": ""No"",
+                    ""facialHair"": ""No""
+                  },
+                  ""hairOrHeadCoverage"": {
+                    ""hairVisible"": ""Yes"",
+                    ""hairStyle"": ""Straight"",
+                    ""hairLength"": ""Long"",
                     ""hairColor"": ""Chestnut Brown"",
-                    ""smileType"": ""Happy"",
-                    ""eyebrowStyle"": ""Normal"",
-                    ""hasFreckles"": false,
-                    ""hasBlush"": true,
-                    ""glasses"": false,
-                    ""beard"": false
+                    ""headCovered"": ""No""
+                  },
+                  ""clothing"": {
+                    ""topType"": ""Sweater"",
+                    ""topColor"": ""Pink"",
+                    ""bottomType"": ""Skirt"",
+                    ""bottomColor"": ""Brown"",
+                    ""fullOutfitStyle"": ""Casual""
+                  },
+                  ""accessories"": {
+                    ""headAccessories"": ""None"",
+                    ""jewelry"": ""None"",
+                    ""bagOrPurse"": ""No"",
+                    ""shoes"": ""Sneakers""
+                  },
+                  ""otherVisualDetails"": {
+                    ""dominantColors"": ""Pink, Brown"",
+                    ""background"": ""Indoor"",
+                    ""lighting"": ""Natural""
+                  }
                 }";
             }
 
             try
             {
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var parsed = JsonSerializer.Deserialize<GeminiFaceAnalysisResult>(geminiJson, options);
+                var parsed = JsonSerializer.Deserialize<GeminiPersonPhotoAnalysisResult>(geminiJson, options);
 
                 if (parsed == null)
                 {
@@ -331,37 +411,45 @@ namespace HandoraApplication.Services
 
                 // Map enums safely
                 Gender gender = Gender.Female;
-                if (parsed.Gender == "Boy") gender = Gender.Male;
-                else if (parsed.Gender == "Both") gender = Gender.NonBinary;
+                if (parsed.PersonIdentity?.Gender == "Male") gender = Gender.Male;
 
                 HairStyle hairStyle = HairStyle.Straight;
-                if (parsed.HairStyle == "Curly") hairStyle = HairStyle.Curly;
-                else if (parsed.HairStyle == "Wavy") hairStyle = HairStyle.Wavy;
-                else if (parsed.HairStyle == "Braids") hairStyle = HairStyle.Braids;
-                else if (parsed.HairStyle == "Ponytail") hairStyle = HairStyle.Ponytail;
-                else if (parsed.HairStyle == "Buns") hairStyle = HairStyle.Buns;
-                else if (parsed.HairStyle == "Afro") hairStyle = HairStyle.Afro;
-                else if (parsed.HairStyle == "Pixie") hairStyle = HairStyle.Pixie;
-                else if (parsed.HairStyle == "Bald") hairStyle = HairStyle.Bald;
+                if (parsed.HairOrHeadCoverage?.HairVisible == "No")
+                {
+                    hairStyle = HairStyle.Bald;
+                }
+                else
+                {
+                    var hs = parsed.HairOrHeadCoverage?.HairStyle;
+                    if (hs == "Curly") hairStyle = HairStyle.Curly;
+                    else if (hs == "Wavy") hairStyle = HairStyle.Wavy;
+                    else if (hs == "Braids") hairStyle = HairStyle.Braids;
+                    else if (hs == "Ponytail") hairStyle = HairStyle.Ponytail;
+                    else if (hs == "Buns") hairStyle = HairStyle.Buns;
+                    else if (hs == "Afro") hairStyle = HairStyle.Afro;
+                    else if (hs == "Pixie") hairStyle = HairStyle.Pixie;
+                    else if (hs == "Bald") hairStyle = HairStyle.Bald;
+                }
 
                 AccessoryType accessory = AccessoryType.None;
                 string accessoryDesc = "None";
-                if (parsed.Glasses == true)
+                if (parsed.PersonIdentity?.Glasses == "Yes")
                 {
                     accessory = AccessoryType.Glasses;
                     accessoryDesc = "Glasses";
                 }
 
-                string? notes = parsed.Beard == true ? "Preserved beard styling inspired by photo." : null;
+                // Store full JSON analysis inside AdditionalNotes with special prefix
+                string notes = $"[PHOTO_ANALYSIS]: {geminiJson}";
 
                 var configRecord = new CrochetDollConfiguration(
                     Gender: gender,
                     Size: "20 cm",
                     BodyType: BodyType.Standard,
-                    SkinTone: parsed.SkinTone ?? "Ivory (Very Fair)",
-                    Hair: new HairConfiguration(hairStyle, parsed.HairColor ?? "Chestnut Brown", "Medium"),
-                    Face: new FaceConfiguration(parsed.EyebrowStyle ?? "Normal", "Black", parsed.SmileType ?? "Happy", parsed.HasFreckles == true, parsed.HasBlush == true),
-                    Outfit: new OutfitConfiguration(OutfitType.Casual, "Casual outfit"),
+                    SkinTone: parsed.PersonIdentity?.SkinTone ?? "Fair",
+                    Hair: new HairConfiguration(hairStyle, parsed.HairOrHeadCoverage?.HairColor ?? "Chestnut Brown", parsed.HairOrHeadCoverage?.HairLength ?? "Medium"),
+                    Face: new FaceConfiguration("Normal", "Black", parsed.PersonIdentity?.Expression ?? "Smile", false, true),
+                    Outfit: new OutfitConfiguration(OutfitType.Casual, $"{parsed.Clothing?.TopColor ?? "Beige"} {parsed.Clothing?.TopType ?? "Sweater"}"),
                     Accessories: new AccessoryConfiguration(accessory, accessoryDesc),
                     Personalization: new PersonalizationConfiguration("", FontType.Classic),
                     ReferenceImageUrl: fileUrl,
@@ -603,11 +691,15 @@ namespace HandoraApplication.Services
                 request.OpenForNegotiation();
             }
 
-            // Automatically open chat conversation
+            // Automatically open chat conversation (exclude workspace chats)
+            var workspaceRepo = _unitOfWork.Repository<ProjectWorkspace, Guid>();
+            var workspaces = await workspaceRepo.GetAllAsNoTracking();
+
             var conversationRepo = _unitOfWork.Repository<Conversation, Guid>();
             var conversations = await conversationRepo.GetAllAsync();
             var conversation = await conversations
-                .Where(c => c.BuyerId == request.BuyerId && c.SellerId == sellerUserId)
+                .Where(c => c.BuyerId == request.BuyerId && c.SellerId == sellerUserId && 
+                            !workspaces.Any(w => w.ChatConversationId == c.Id))
                 .FirstOrDefaultAsync(ct);
 
             if (conversation == null)
@@ -622,6 +714,14 @@ namespace HandoraApplication.Services
                 await conversationRepo.AddAsync(conversation);
                 await _unitOfWork.SaveChangesAsync();
             }
+
+            // Always use the last generated design in this conversation (the newest unlocked design)
+            var newestUnlockedDesign = request.GeneratedDesigns
+                .Where(d => !d.IsLocked)
+                .OrderByDescending(d => d.CreatedAt)
+                .FirstOrDefault();
+
+            var designId = newestUnlockedDesign?.Id ?? request.SelectedDesignId;
 
             var offer = new CustomOffer
             {
@@ -638,7 +738,7 @@ namespace HandoraApplication.Services
                 ConversationId = conversation.Id,
                 BuyerId = request.BuyerId,
                 SellerId = sellerUserId,
-                DesignId = request.SelectedDesignId
+                DesignId = designId
             };
 
             var offerRepo = _unitOfWork.Repository<CustomOffer, Guid>();
@@ -720,11 +820,15 @@ namespace HandoraApplication.Services
                 return Result<CustomRequestDetailDto>.Failure("Custom Offer not found.");
             }
 
-            // Find or create Chat Conversation between Buyer and Seller Shop Owner
+            // Find or create Chat Conversation between Buyer and Seller Shop Owner (exclude workspace chats)
+            var workspaceRepo = _unitOfWork.Repository<ProjectWorkspace, Guid>();
+            var workspaces = await workspaceRepo.GetAllAsNoTracking();
+
             var conversationRepo = _unitOfWork.Repository<Conversation, Guid>();
             var conversations = await conversationRepo.GetAllAsync();
             var conversation = await conversations
-                .Where(c => c.BuyerId == request.BuyerId && c.SellerId == offer.Shop.OwnerId)
+                .Where(c => c.BuyerId == request.BuyerId && c.SellerId == offer.Shop.OwnerId && 
+                            !workspaces.Any(w => w.ChatConversationId == c.Id))
                 .FirstOrDefaultAsync(ct);
 
             if (conversation == null)
@@ -967,20 +1071,35 @@ namespace HandoraApplication.Services
                 }
             }
 
+            if (request.GenerationCount >= 2)
+            {
+                return Result<CustomRequestDetailDto>.Failure("Regeneration limit reached.");
+            }
+
             try
             {
-                request.StartGeneration(settings.MaxAiGenerations);
+                request.StartGeneration(2); // Limit to exactly 2 attempts
             }
             catch (Exception ex)
             {
                 return Result<CustomRequestDetailDto>.Failure(ex.Message);
             }
 
+            // Clear previous designs if this is a regeneration
+            if (request.GeneratedDesigns.Any())
+            {
+                var designRepo = _unitOfWork.Repository<GeneratedDesign, Guid>();
+                foreach (var oldDesign in request.GeneratedDesigns.ToList())
+                {
+                    await designRepo.HardDeleteAsync(oldDesign);
+                }
+                request.GeneratedDesigns.Clear();
+                request.SelectedDesignId = null;
+                request.SelectedDesign = null;
+            }
+
             try
             {
-                // 1. Build prompt
-                var promptResult = _promptBuilder.BuildPrompt(request.CustomConfiguration);
-
                 // Extract base reference photo URL if present
                 string? baseImageUrl = null;
                 try
@@ -991,121 +1110,87 @@ namespace HandoraApplication.Services
                 }
                 catch {}
 
-                // 2. Generate 3 design options
-                var req1 = new GenerateImageRequest
-                {
-                    Prompt = promptResult.PositivePrompt,
-                    NegativePrompt = promptResult.NegativePrompt,
-                    ImageCount = 1,
-                    UserId = buyerId,
-                    BypassCache = false,
-                    BaseImageUrl = baseImageUrl
-                };
-                var req2 = new GenerateImageRequest
-                {
-                    Prompt = promptResult.PositivePrompt,
-                    NegativePrompt = promptResult.NegativePrompt,
-                    ImageCount = 1,
-                    UserId = buyerId,
-                    BypassCache = true,
-                    BaseImageUrl = baseImageUrl
-                };
-                var req3 = new GenerateImageRequest
-                {
-                    Prompt = promptResult.PositivePrompt,
-                    NegativePrompt = promptResult.NegativePrompt,
-                    ImageCount = 1,
-                    UserId = buyerId,
-                    BypassCache = true,
-                    BaseImageUrl = baseImageUrl
-                };
-
-                var res1 = await _imageGenerator.GenerateImageAsync(req1, ct);
-                if (!res1.IsSuccess || res1.Images == null || res1.Images.Count == 0)
-                {
-                    return Result<CustomRequestDetailDto>.Failure(res1.ErrorMessage ?? "AI Image Generation Option 1 failed.");
-                }
-
-                await Task.Delay(500, ct);
-
-                var res2 = await _imageGenerator.GenerateImageAsync(req2, ct);
-                if (!res2.IsSuccess || res2.Images == null || res2.Images.Count == 0)
-                {
-                    return Result<CustomRequestDetailDto>.Failure(res2.ErrorMessage ?? "AI Image Generation Option 2 failed.");
-                }
-
-                await Task.Delay(500, ct);
-
-                var res3 = await _imageGenerator.GenerateImageAsync(req3, ct);
-                if (!res3.IsSuccess || res3.Images == null || res3.Images.Count == 0)
-                {
-                    return Result<CustomRequestDetailDto>.Failure(res3.ErrorMessage ?? "AI Image Generation Option 3 failed.");
-                }
-
-                var img1 = res1.Images[0];
-                var img2 = res2.Images[0];
-                var img3 = res3.Images[0];
-
+                // Generate exactly ONE design option
                 var designRepo = _unitOfWork.Repository<GeneratedDesign, Guid>();
                 var rnd = new Random();
-                
-                // Design 1
-                var score1 = Math.Round(90.0 + (rnd.NextDouble() * 8.5), 1);
-                var design1 = new GeneratedDesign
-                {
-                    Id = Guid.NewGuid(),
-                    CustomRequestId = request.Id,
-                    ImageUrl = img1.ImageUrl,
-                    Prompt = req1.Prompt,
-                    Provider = res1.Metadata.ProviderName,
-                    GenerationTimeMs = res1.Metadata.DurationMs,
-                    MatchingScore = score1,
-                    PatternStepsMarkdown = "Stitch details and amigurumi pattern code goes here.",
-                    DesignSummaryJson = BuildDesignSummaryJson(request.CustomConfiguration?.ConfigurationDataJson, img1.ImageUrl),
-                    CreatedAt = DateTime.UtcNow
-                };
-                await designRepo.AddAsync(design1);
-                request.CompleteGeneration(design1);
+                const int designCount = 1;
 
-                // Design 2
-                var score2 = Math.Round(90.0 + (rnd.NextDouble() * 8.5), 1);
-                var design2 = new GeneratedDesign
+                for (int i = 0; i < designCount; i++)
                 {
-                    Id = Guid.NewGuid(),
-                    CustomRequestId = request.Id,
-                    ImageUrl = img2.ImageUrl,
-                    Prompt = req2.Prompt,
-                    Provider = res2.Metadata.ProviderName,
-                    GenerationTimeMs = res2.Metadata.DurationMs,
-                    MatchingScore = score2,
-                    PatternStepsMarkdown = "Stitch details and amigurumi pattern code goes here.",
-                    DesignSummaryJson = BuildDesignSummaryJson(request.CustomConfiguration?.ConfigurationDataJson, img2.ImageUrl),
-                    CreatedAt = DateTime.UtcNow
-                };
-                await designRepo.AddAsync(design2);
-                request.CompleteGeneration(design2);
+                    var promptResult = _promptBuilder.BuildPromptWithVariation(request.CustomConfiguration, i);
 
-                // Design 3
-                var score3 = Math.Round(90.0 + (rnd.NextDouble() * 8.5), 1);
-                var design3 = new GeneratedDesign
-                {
-                    Id = Guid.NewGuid(),
-                    CustomRequestId = request.Id,
-                    ImageUrl = img3.ImageUrl,
-                    Prompt = req3.Prompt,
-                    Provider = res3.Metadata.ProviderName,
-                    GenerationTimeMs = res3.Metadata.DurationMs,
-                    MatchingScore = score3,
-                    PatternStepsMarkdown = "Stitch details and amigurumi pattern code goes here.",
-                    DesignSummaryJson = BuildDesignSummaryJson(request.CustomConfiguration?.ConfigurationDataJson, img3.ImageUrl),
-                    CreatedAt = DateTime.UtcNow
-                };
-                await designRepo.AddAsync(design3);
-                request.CompleteGeneration(design3);
+                    var imageRequest = new GenerateImageRequest
+                    {
+                        Prompt = promptResult.PositivePrompt,
+                        NegativePrompt = promptResult.NegativePrompt,
+                        ImageCount = 1,
+                        UserId = buyerId,
+                        BypassCache = true, // Bypass cache to get a fresh image on regeneration
+                        BaseImageUrl = baseImageUrl
+                    };
+
+                    var imageResponse = await _imageGenerator.GenerateImageAsync(imageRequest, ct);
+                    if (!imageResponse.IsSuccess || imageResponse.Images == null || imageResponse.Images.Count == 0)
+                    {
+                        return Result<CustomRequestDetailDto>.Failure(imageResponse.ErrorMessage ?? "AI Image Generation failed.");
+                    }
+
+                    var img = imageResponse.Images[0];
+
+                    // Store design with full metadata for reproducibility
+                    var score = Math.Round(90.0 + (rnd.NextDouble() * 8.5), 1);
+                    var design = new GeneratedDesign
+                    {
+                        Id = Guid.NewGuid(),
+                        CustomRequestId = request.Id,
+                        ImageUrl = img.ImageUrl,
+                        Prompt = imageRequest.Prompt,
+                        Provider = imageResponse.Metadata.ProviderName,
+                        GenerationTimeMs = imageResponse.Metadata.DurationMs,
+                        MatchingScore = score,
+                        PatternStepsMarkdown = "Stitch details and amigurumi pattern code goes here.",
+                        DesignSummaryJson = BuildDesignSummaryJson(request.CustomConfiguration?.ConfigurationDataJson, img.ImageUrl),
+                        CreatedAt = DateTime.UtcNow,
+                        // AI Generation Metadata for reproducibility
+                        ModelVersion = imageResponse.Metadata.ModelVersion,
+                        Seed = img.Seed,
+                        GeneratedAt = imageResponse.Metadata.Timestamp,
+                        NegativePrompt = imageRequest.NegativePrompt
+                    };
+                    await designRepo.AddAsync(design);
+                    request.CompleteGeneration(design);
+                    request.SelectDesign(design.Id); // Auto select the generated design
+                }
 
                 // Update request state
                 await requestRepo.UpdateAsync(request);
                 await _unitOfWork.SaveChangesAsync();
+
+                // If request is already linked to a conversation, update ActiveDesignRequestId and notify seller
+                if (request.ConversationId.HasValue)
+                {
+                    var conversationRepo = _unitOfWork.Repository<Conversation, Guid>();
+                    var conversation = await conversationRepo.GetByIdAsync(request.ConversationId.Value);
+                    if (conversation != null)
+                    {
+                        conversation.ActiveDesignRequestId = request.Id;
+                        await conversationRepo.UpdateAsync(conversation);
+                        await _unitOfWork.SaveChangesAsync();
+
+                        // Notify Seller via SignalR
+                        await _notificationService.SendAsync(new SendNotificationDto
+                        {
+                            UserId = conversation.SellerId,
+                            TitleEn = "Active Design Request Updated",
+                            TitleAr = "تم تحديث طلب التصميم النشط",
+                            MessageEn = "Buyer regenerated the custom doll design.",
+                            MessageAr = "قام المشتري بإعادة إنشاء تصميم الدمية المخصصة.",
+                            Type = NotificationType.System,
+                            ReferenceId = request.Id,
+                            ReferenceType = "CustomRequest"
+                        }, ct);
+                    }
+                }
 
                 return await GetCustomRequestDetailsAsync(new GetCustomRequestDetailsQuery(request.Id), ct);
             }
@@ -1123,6 +1208,7 @@ namespace HandoraApplication.Services
                 return Result<CustomRequestDetailDto>.Failure($"AI Generation failed: {ex.Message}");
             }
         }
+
 
         public async Task<Result<CustomOfferDto>> RequestChangesAsync(string buyerId, Guid offerId, string feedback, CancellationToken ct = default)
         {
@@ -1754,6 +1840,52 @@ namespace HandoraApplication.Services
             if (milestoneStep > 0 && request.Status == CustomRequestStatus.Paid)
             {
                 request.Status = CustomRequestStatus.InProgress;
+            }
+
+            // Sync with associated Order status
+            if (request.ProjectWorkspace.OrderId.HasValue)
+            {
+                var orderRepo = _unitOfWork.Repository<Order, Guid>();
+                var order = await orderRepo.GetByIdAsync(request.ProjectWorkspace.OrderId.Value);
+                if (order != null)
+                {
+                    if (milestoneStep == 6 && order.Status != OrderStatus.Shipped)
+                    {
+                        order.Status = OrderStatus.Shipped;
+                        await orderRepo.UpdateAsync(order);
+                        
+                        // Notify Buyer of order shipped
+                        await _notificationService.SendAsync(new SendNotificationDto
+                        {
+                            UserId = order.UserId,
+                            TitleEn = "Order Shipped",
+                            TitleAr = "تم شحن الطلب",
+                            MessageEn = $"Your custom doll order #{order.Id.ToString().Substring(0, 8).ToUpper()} has been shipped. Tracking: {trackingNumber ?? "N/A"}",
+                            MessageAr = $"تم شحن طلب دمية الاستوديو المخصصة الخاص بك #{order.Id.ToString().Substring(0, 8).ToUpper()}. التتبع: {trackingNumber ?? "لا يوجد"}",
+                            Type = NotificationType.OrderStatusChanged,
+                            ReferenceId = order.Id,
+                            ReferenceType = "Order"
+                        }, ct);
+                    }
+                    else if (milestoneStep == 7 && order.Status != OrderStatus.Delivered)
+                    {
+                        order.Status = OrderStatus.Delivered;
+                        await orderRepo.UpdateAsync(order);
+
+                        // Notify Buyer of order delivered
+                        await _notificationService.SendAsync(new SendNotificationDto
+                        {
+                            UserId = order.UserId,
+                            TitleEn = "Order Delivered & Completed",
+                            TitleAr = "تم تسليم واكتمال الطلب",
+                            MessageEn = $"Your custom doll order #{order.Id.ToString().Substring(0, 8).ToUpper()} has been delivered successfully.",
+                            MessageAr = $"تم تسليم واكتمال طلب دمية الاستوديو المخصصة الخاص بك #{order.Id.ToString().Substring(0, 8).ToUpper()}.",
+                            Type = NotificationType.OrderStatusChanged,
+                            ReferenceId = order.Id,
+                            ReferenceType = "Order"
+                        }, ct);
+                    }
+                }
             }
 
             request.ProjectWorkspace.UpdatedAt = DateTime.UtcNow;
@@ -2610,10 +2742,14 @@ namespace HandoraApplication.Services
                 return Result<ConversationDto>.Failure("Shop not found.");
             }
 
+            var workspaceRepo = _unitOfWork.Repository<ProjectWorkspace, Guid>();
+            var workspaces = await workspaceRepo.GetAllAsNoTracking();
+
             var conversationRepo = _unitOfWork.Repository<Conversation, Guid>();
             var conversations = await conversationRepo.GetAllAsync();
             var conversation = await conversations
-                .Where(c => c.BuyerId == buyerId && c.SellerId == shop.OwnerId)
+                .Where(c => c.BuyerId == buyerId && c.SellerId == shop.OwnerId && 
+                            !workspaces.Any(w => w.ChatConversationId == c.Id))
                 .FirstOrDefaultAsync(ct);
 
             if (conversation == null)
@@ -2632,64 +2768,123 @@ namespace HandoraApplication.Services
             if (request != null)
             {
                 request.SelectedSellerId = shopId;
-                if (request.Status == CustomRequestStatus.SellerMatched || request.Status == CustomRequestStatus.DesignSelected)
+                request.ConversationId = conversation.Id;
+                if (request.Status == CustomRequestStatus.SellerMatched || request.Status == CustomRequestStatus.DesignSelected || request.Status == CustomRequestStatus.Draft)
                 {
                     request.Status = CustomRequestStatus.Negotiation;
                 }
                 request.UpdatedAt = DateTime.UtcNow;
                 await requestRepo.UpdateAsync(request);
+
+                conversation.ActiveDesignRequestId = request.Id;
+                await conversationRepo.UpdateAsync(conversation);
+
                 await _unitOfWork.SaveChangesAsync();
             }
 
-            // Send automatic reference details in chat
-            string configSummary = "No configuration details provided.";
-            if (request?.CustomConfiguration != null)
+            // Send ONE AI design card message in the original conversation
+            if (request?.SelectedDesign != null)
             {
-                var summaryObj = BuildDesignSummaryJson(request.CustomConfiguration.ConfigurationDataJson, request.SelectedDesign?.ImageUrl);
+                var summaryObj = BuildDesignSummaryJson(request.CustomConfiguration?.ConfigurationDataJson, request.SelectedDesign?.ImageUrl);
+                string gender = "Not specified";
+                string size = "Not specified";
+                string hair = "Not specified";
+                string skin = "Not specified";
+                string outfit = "Not specified";
+                string accessories = "Not specified";
+                string personalization = "Not specified";
+                string face = "Normal";
+
                 try
                 {
                     using var doc = JsonDocument.Parse(summaryObj);
                     var r = doc.RootElement;
-                    var attrs = new List<string>
-                    {
-                        $"Gender: {r.GetProperty("gender").GetString()}",
-                        $"Size: {r.GetProperty("height").GetString()}",
-                        $"Skin Tone: {r.GetProperty("skinTone").GetString()}",
-                        $"Hair Style: {r.GetProperty("hairStyle").GetString()}",
-                        $"Hair Color: {r.GetProperty("hairColor").GetString()}",
-                        $"Outfit: {r.GetProperty("outfit").GetString()}",
-                        $"Accessories: {r.GetProperty("accessories").GetString()}",
-                        $"Personalization Label: {r.GetProperty("personalization").GetString()}"
-                    };
-                    configSummary = string.Join(", ", attrs);
+                    gender = r.GetProperty("gender").GetString() ?? "Not specified";
+                    size = r.GetProperty("height").GetString() ?? "Not specified";
+                    skin = r.GetProperty("skinTone").GetString() ?? "Not specified";
+                    hair = $"{r.GetProperty("hairStyle").GetString() ?? "Not specified"} ({r.GetProperty("hairColor").GetString() ?? "Not specified"})";
+                    outfit = r.GetProperty("outfit").GetString() ?? "Not specified";
+                    accessories = r.GetProperty("accessories").GetString() ?? "Not specified";
+                    personalization = r.GetProperty("personalization").GetString() ?? "Not specified";
                 }
-                catch
-                {
-                    configSummary = summaryObj;
-                }
-            }
+                catch {}
 
-            if (request?.SelectedDesign != null)
-            {
+                if (request.CustomConfiguration?.ConfigurationDataJson != null)
+                {
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(request.CustomConfiguration.ConfigurationDataJson);
+                        if (doc.RootElement.TryGetProperty("AdditionalNotes", out var notesProp))
+                        {
+                            var notesStr = notesProp.GetString();
+                            if (notesStr != null && notesStr.StartsWith("[PHOTO_ANALYSIS]: "))
+                            {
+                                using var photoDoc = JsonDocument.Parse(notesStr.Substring("[PHOTO_ANALYSIS]: ".Length));
+                                if (photoDoc.RootElement.TryGetProperty("personIdentity", out var identity))
+                                {
+                                    if (identity.TryGetProperty("expression", out var expr))
+                                    {
+                                        face = expr.GetString() ?? "Normal";
+                                    }
+                                    else if (identity.TryGetProperty("faceShape", out var shape))
+                                    {
+                                        face = shape.GetString() ?? "Normal";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch {}
+                }
+
+                string? referenceImageUrl = null;
+                if (request.CustomConfiguration?.ConfigurationDataJson != null)
+                {
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(request.CustomConfiguration.ConfigurationDataJson);
+                        if (doc.RootElement.TryGetProperty("referenceImageUrl", out var prop))
+                        {
+                            referenceImageUrl = prop.GetString();
+                        }
+                        else if (doc.RootElement.TryGetProperty("ReferenceImageUrl", out var propCamel))
+                        {
+                            referenceImageUrl = propCamel.GetString();
+                        }
+                    }
+                    catch {}
+                }
+
+                var aiDesignCard = new
+                {
+                    imageUrl = request.SelectedDesign.ImageUrl,
+                    designId = request.SelectedDesign.Id.ToString(),
+                    generationTime = request.SelectedDesign.GenerationTimeMs.ToString() + " ms",
+                    specifications = new
+                    {
+                        gender = gender,
+                        size = size,
+                        hair = hair,
+                        face = face,
+                        skin = skin,
+                        accessories = accessories,
+                        outfit = outfit,
+                        personalization = personalization,
+                        referencePhoto = referenceImageUrl
+                    }
+                };
+
+                var serializedCard = "[AI_DESIGN_CARD]: " + JsonSerializer.Serialize(aiDesignCard);
+
                 await SendChatMessageAsync(
                     conversation.Id,
                     buyerId,
-                    request.Buyer?.Name ?? "Buyer",
+                    "AI Assistant",
                     shop.OwnerId,
-                    "Reference design chosen by Buyer",
-                    MessageType.Image,
-                    request.SelectedDesign.ImageUrl
+                    serializedCard,
+                    MessageType.Text
                 );
             }
-
-            await SendChatMessageAsync(
-                conversation.Id,
-                buyerId,
-                request?.Buyer?.Name ?? "Buyer",
-                shop.OwnerId,
-                $"Negotiation started for Custom request ({request?.ProductType}). Specifications: {configSummary}",
-                MessageType.Text
-            );
 
             return Result<ConversationDto>.Success(conversation.Adapt<ConversationDto>());
         }
@@ -2828,7 +3023,8 @@ namespace HandoraApplication.Services
                 ["accessories"] = "Not specified",
                 ["personalization"] = "Not specified",
                 ["referenceImage"] = null,
-                ["designImage"] = designImageUrl
+                ["designImage"] = designImageUrl,
+                ["face"] = "Normal"
             };
 
             if (string.IsNullOrWhiteSpace(configurationJson))
@@ -2872,10 +3068,35 @@ namespace HandoraApplication.Services
                 var notes = ReadValue(root, "AdditionalNotes");
                 if (!string.IsNullOrWhiteSpace(notes))
                 {
+                    string displayNotes = notes;
+                    if (notes.StartsWith("[PHOTO_ANALYSIS]: "))
+                    {
+                        var geminiJson = notes.Substring("[PHOTO_ANALYSIS]: ".Length);
+                        displayNotes = FormatPhotoAnalysisForSummary(geminiJson);
+
+                        // Try extracting face shape/expression
+                        try
+                        {
+                            using var photoDoc = JsonDocument.Parse(geminiJson);
+                            if (photoDoc.RootElement.TryGetProperty("personIdentity", out var identity))
+                            {
+                                if (identity.TryGetProperty("expression", out var expr))
+                                {
+                                    summary["face"] = expr.GetString() ?? "Normal";
+                                }
+                                else if (identity.TryGetProperty("faceShape", out var shape))
+                                {
+                                    summary["face"] = shape.GetString() ?? "Normal";
+                                }
+                            }
+                        }
+                        catch {}
+                    }
+
                     var currentPers = summary["personalization"] as string;
                     summary["personalization"] = string.IsNullOrWhiteSpace(currentPers) || currentPers == "Not specified"
-                        ? notes
-                        : $"{currentPers} (Notes: {notes})";
+                        ? displayNotes
+                        : $"{currentPers} (Notes: {displayNotes})";
                 }
             }
             catch
@@ -2928,5 +3149,57 @@ namespace HandoraApplication.Services
             };
         }
 
+        private static string FormatPhotoAnalysisForSummary(string geminiJson)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(geminiJson);
+                var root = doc.RootElement;
+                var details = new List<string>();
+
+                if (root.TryGetProperty("personIdentity", out var identity))
+                {
+                    if (identity.TryGetProperty("gender", out var gender) && gender.ValueKind == JsonValueKind.String)
+                        details.Add(gender.GetString()!);
+                    if (identity.TryGetProperty("estimatedAgeRange", out var age) && age.ValueKind == JsonValueKind.String)
+                        details.Add(age.GetString()!);
+                    if (identity.TryGetProperty("expression", out var expression) && expression.ValueKind == JsonValueKind.String && expression.GetString() != "Normal")
+                        details.Add($"{expression.GetString()!.ToLower()}ing");
+                }
+
+                if (root.TryGetProperty("hairOrHeadCoverage", out var headCov))
+                {
+                    if (headCov.TryGetProperty("headCovered", out var headCovered) && headCovered.ValueKind == JsonValueKind.String && headCovered.GetString() == "Yes")
+                    {
+                        var coverType = headCov.TryGetProperty("coverType", out var ct) && ct.ValueKind == JsonValueKind.String ? ct.GetString() : "hijab";
+                        var coverColors = headCov.TryGetProperty("hijabOrScarfColors", out var cc) && cc.ValueKind == JsonValueKind.String ? cc.GetString() : "";
+                        details.Add($"wearing {coverColors} {coverType}".Trim());
+                    }
+                    else if (headCov.TryGetProperty("hairVisible", out var hairVisible) && hairVisible.ValueKind == JsonValueKind.String && hairVisible.GetString() == "Yes")
+                    {
+                        var hairColor = headCov.TryGetProperty("hairColor", out var hc) && hc.ValueKind == JsonValueKind.String ? hc.GetString() : "";
+                        var hairStyle = headCov.TryGetProperty("hairStyle", out var hs) && hs.ValueKind == JsonValueKind.String ? hs.GetString() : "";
+                        details.Add($"with {hairColor} {hairStyle} hair".Trim());
+                    }
+                }
+
+                if (root.TryGetProperty("clothing", out var clothing))
+                {
+                    var topColor = clothing.TryGetProperty("topColor", out var tc) && tc.ValueKind == JsonValueKind.String ? tc.GetString() : "";
+                    var topType = clothing.TryGetProperty("topType", out var tt) && tt.ValueKind == JsonValueKind.String ? tt.GetString() : "";
+                    if (!string.IsNullOrEmpty(topType))
+                    {
+                        details.Add($"dressed in a {topColor} {topType}".Trim());
+                    }
+                }
+
+                if (details.Count > 0)
+                {
+                    return "Inspired by photo (" + string.Join(", ", details) + ")";
+                }
+            }
+            catch {}
+            return "Inspired by reference photo";
+        }
     }
 }

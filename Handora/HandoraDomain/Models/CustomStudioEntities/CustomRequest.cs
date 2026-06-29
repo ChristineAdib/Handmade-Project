@@ -31,6 +31,9 @@ namespace HandoraDomain.Models.CustomStudioEntities
         public User Buyer { get; set; } = null!;
 
         // Navigation Properties
+        public Guid? ConversationId { get; set; }
+        public Conversation? Conversation { get; set; }
+
         public CustomConfiguration? CustomConfiguration { get; set; }
         public ICollection<GeneratedDesign> GeneratedDesigns { get; set; } = new List<GeneratedDesign>();
         public ICollection<SellerRecommendation> SellerRecommendations { get; set; } = new List<SellerRecommendation>();
@@ -199,6 +202,19 @@ namespace HandoraDomain.Models.CustomStudioEntities
 
             offer.Status = OfferStatus.Accepted;
             offer.AcceptedAt = DateTime.UtcNow;
+
+            // Automatically reject all other pending/draft/sent offers for this custom request
+            foreach (var otherOffer in CustomOffers)
+            {
+                if (otherOffer.Id != offerId && 
+                    (otherOffer.Status == OfferStatus.Pending || 
+                     otherOffer.Status == OfferStatus.Sent || 
+                     otherOffer.Status == OfferStatus.Draft))
+                {
+                    otherOffer.Status = OfferStatus.Rejected;
+                    otherOffer.RejectedAt = DateTime.UtcNow;
+                }
+            }
 
             SelectedSellerId = offer.ShopId;
             Status = CustomRequestStatus.OfferAccepted;

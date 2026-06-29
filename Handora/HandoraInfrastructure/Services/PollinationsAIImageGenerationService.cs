@@ -9,8 +9,10 @@ using HandoraApplication.AI.DTOs;
 using HandoraApplication.AI.Exceptions;
 using HandoraApplication.AI.Interfaces;
 using HandoraApplication.IServices;
+using HandoraInfrastructure.Settings;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace HandoraInfrastructure.Services
 {
@@ -18,6 +20,8 @@ namespace HandoraInfrastructure.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IFileService _fileService;
+        private readonly AiImageGeneratorSettings _settings;
+        private readonly IGenerationQualityValidator _qualityValidator;
         private readonly ILogger<PollinationsAIImageGenerationService> _logger;
         private static readonly Random _random = new Random();
 
@@ -26,10 +30,14 @@ namespace HandoraInfrastructure.Services
         public PollinationsAIImageGenerationService(
             HttpClient httpClient,
             IFileService fileService,
+            IOptions<AiImageGeneratorSettings> settings,
+            IGenerationQualityValidator qualityValidator,
             ILogger<PollinationsAIImageGenerationService> logger)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
+            _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
+            _qualityValidator = qualityValidator ?? throw new ArgumentNullException(nameof(qualityValidator));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -53,27 +61,61 @@ namespace HandoraInfrastructure.Services
 
                 for (int i = 0; i < request.ImageCount; i++)
                 {
-                    // Generate a random seed if none is specified or if we are generating multiple variations
-                    int seed = _random.Next(1, 100000000);
-                    var encodedPrompt = Uri.EscapeDataString(request.Prompt);
-                    
-                    // Build base URL
-                    var url = $"https://image.pollinations.ai/prompt/{encodedPrompt}?model=flux&width=1024&height=1280&seed={seed}&nologo=true";
+                    byte[] imgData = Array.Empty<byte>();
+                    int seed = 0;
+                    bool imageIsValid = false;
+                    const int maxRetries = 2; // initial try + 1 retry
 
-                    // Append image if we are doing img2img/refinement
-                    if (!string.IsNullOrEmpty(request.BaseImageUrl))
+                    for (int attempt = 1; attempt <= maxRetries && !imageIsValid; attempt++)
                     {
-                        url += $"&image={Uri.EscapeDataString(request.BaseImageUrl)}";
+                        // Generate a random seed if none is specified or if we are generating multiple variations
+                        seed = _random.Next(1, 100000000);
+                        var encodedPrompt = Uri.EscapeDataString(request.Prompt);
+                        
+                        // Read settings from PollinationsSettings configuration
+                        var baseUrl = _settings.Pollinations?.BaseUrl?.TrimEnd('/') ?? "https://image.pollinations.ai";
+                        var model = _settings.Pollinations?.Model ?? "flux";
+
+                        // Build URL with model, dimensions, seed, and no logo
+                        var url = $"{baseUrl}/prompt/{encodedPrompt}?model={model}&width=1024&height=1280&seed={seed}&nologo=true";
+
+                        // Append negative prompt if present
+                        if (!string.IsNullOrWhiteSpace(request.NegativePrompt))
+                        {
+                            url += $"&negative={Uri.EscapeDataString(request.NegativePrompt)}";
+                        }
+
+                        // Append image if we are doing img2img/refinement
+                        if (!string.IsNullOrEmpty(request.BaseImageUrl))
+                        {
+                            url += $"&image={Uri.EscapeDataString(request.BaseImageUrl)}";
+                        }
+
+                        _logger.LogInformation("Calling Pollinations.ai API (Attempt {Attempt}): {Url}", attempt, url);
+
+                        // Fetch image bytes
+                        imgData = await _httpClient.GetByteArrayAsync(url, ct);
+
+                        if (imgData == null || imgData.Length == 0)
+                        {
+                            _logger.LogWarning("Pollinations.ai returned empty image bytes on attempt {Attempt}.", attempt);
+                            continue;
+                        }
+
+                        var validationResult = await _qualityValidator.ValidateAsync(imgData, request.Prompt, ct);
+                        if (validationResult.IsAcceptable)
+                        {
+                            imageIsValid = true;
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Pollinations quality validation failed on attempt {Attempt}: {Reason}", attempt, validationResult.RejectionReason);
+                        }
                     }
-
-                    _logger.LogInformation("Calling Pollinations.ai API: {Url}", url);
-
-                    // Fetch image bytes
-                    var imgData = await _httpClient.GetByteArrayAsync(url, ct);
 
                     if (imgData == null || imgData.Length == 0)
                     {
-                        throw new AINetworkException("Pollinations.ai returned empty image bytes.");
+                        throw new AINetworkException("Pollinations.ai returned empty image bytes after all retries.");
                     }
 
                     // Upload to Cloudinary using FileService
@@ -90,7 +132,8 @@ namespace HandoraInfrastructure.Services
                     var generatedImage = new GeneratedImage
                     {
                         ImageUrl = imageUrl,
-                        RevisedPrompt = request.Prompt
+                        RevisedPrompt = request.Prompt,
+                        Seed = seed
                     };
 
                     if (!string.IsNullOrEmpty(request.BaseImageUrl))
@@ -115,7 +158,8 @@ namespace HandoraInfrastructure.Services
                     Metadata = new GenerationMetadata
                     {
                         ProviderName = ProviderName,
-                        ModelName = "flux",
+                        ModelName = _settings.Pollinations?.Model ?? "flux",
+                        ModelVersion = _settings.Pollinations?.Model ?? "flux",
                         DurationMs = stopwatch.ElapsedMilliseconds,
                         Timestamp = DateTime.UtcNow
                     }
@@ -133,7 +177,8 @@ namespace HandoraInfrastructure.Services
                     Metadata = new GenerationMetadata
                     {
                         ProviderName = ProviderName,
-                        ModelName = "flux",
+                        ModelName = _settings.Pollinations?.Model ?? "flux",
+                        ModelVersion = _settings.Pollinations?.Model ?? "flux",
                         DurationMs = stopwatch.ElapsedMilliseconds,
                         Timestamp = DateTime.UtcNow
                     }

@@ -44,6 +44,9 @@ public static class ModuleInfrastructureDependences
         // Prompt Builder
         service.AddScoped<IAIPromptBuilder, GoogleCrochetPromptBuilder>();
 
+        // Quality Validator
+        service.AddScoped<IGenerationQualityValidator, GenerationQualityValidator>();
+
         // Dynamic AI Image Generator registration based on ActiveProvider
         var activeProvider = configuration["AIProvider"] ?? configuration["AiImageGenerator:ActiveProvider"] ?? "Google";
         if (string.Equals(activeProvider, "Mock", StringComparison.OrdinalIgnoreCase) ||
@@ -83,7 +86,7 @@ public static class ModuleInfrastructureDependences
         }
         else
         {
-            // Register IAIImageGenerationService wrapped with cache decorator
+            // Default: Google Imagen (accepts "Google", "GoogleImagen", "GoogleAIStudio", etc.)
             service.AddHttpClient<GoogleAIImageGenerationService>(client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(60);

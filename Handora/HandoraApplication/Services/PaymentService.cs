@@ -286,7 +286,7 @@ public class PaymentService : IPaymentService
                                 CreatedAt = DateTime.UtcNow
                             };
 
-                            var acceptedOffer = requestWithWorkspace.CustomOffers.FirstOrDefault(o => o.Status == OfferStatus.Accepted || o.Status == OfferStatus.Pending);
+                            var acceptedOffer = requestWithWorkspace.CustomOffers.FirstOrDefault(o => o.Status == OfferStatus.Accepted);
                             if (acceptedOffer != null)
                             {
                                 workspace.SelectedOfferId = acceptedOffer.Id;
@@ -294,6 +294,17 @@ public class PaymentService : IPaymentService
                                 acceptedOffer.PaidAt = DateTime.UtcNow;
                                 acceptedOffer.WorkspaceId = workspace.Id;
                                 await _unitOfWork.Repository<CustomOffer, Guid>().UpdateAsync(acceptedOffer);
+
+                                if (acceptedOffer.DesignId.HasValue)
+                                {
+                                    var designRepo = _unitOfWork.Repository<GeneratedDesign, Guid>();
+                                    var design = await designRepo.GetByIdAsync(acceptedOffer.DesignId.Value);
+                                    if (design != null)
+                                    {
+                                        design.IsLocked = true;
+                                        await designRepo.UpdateAsync(design);
+                                    }
+                                }
                             }
 
                             var serviceRepo = _unitOfWork.Repository<CustomService, Guid>();

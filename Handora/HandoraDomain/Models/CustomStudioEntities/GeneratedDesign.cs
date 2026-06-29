@@ -18,6 +18,12 @@ namespace HandoraDomain.Models.CustomStudioEntities
         public string PatternStepsMarkdown { get; set; } = string.Empty;
         public string DesignSummaryJson { get; set; } = string.Empty;
 
+        // AI Generation Metadata for reproducibility
+        public string? ModelVersion { get; set; }
+        public int? Seed { get; set; }
+        public DateTime? GeneratedAt { get; set; }
+        public string? NegativePrompt { get; set; }
+
         // Relationship
         public Guid CustomRequestId { get; set; }
         public CustomRequest CustomRequest { get; set; } = null!;

@@ -27,12 +27,14 @@ namespace HandoraApplication.AI.DTOs
         public string ImageUrl { get; set; } = string.Empty;
         public string? RevisedPrompt { get; set; }
         public ImageVariation? BaseImageVariation { get; set; }
+        public int? Seed { get; set; }
     }
 
     public class GenerationMetadata
     {
         public string ProviderName { get; set; } = string.Empty;
         public string ModelName { get; set; } = string.Empty;
+        public string ModelVersion { get; set; } = string.Empty;
         public long DurationMs { get; set; }
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
@@ -56,5 +58,12 @@ namespace HandoraApplication.AI.DTOs
         public string ModelName { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public string Details { get; set; } = string.Empty;
+    }
+
+    public class QualityValidationResult
+    {
+        public bool IsAcceptable { get; set; }
+        public string? RejectionReason { get; set; }
+        public double QualityScore { get; set; }
     }
 }

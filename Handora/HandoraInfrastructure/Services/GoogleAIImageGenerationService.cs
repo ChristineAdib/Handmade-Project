@@ -25,21 +25,25 @@ namespace HandoraInfrastructure.Services
         private readonly IFileService _fileService;
         private readonly AiImageGeneratorSettings _settings;
         private readonly GeminiOptions _geminiOptions;
+        private readonly IGenerationQualityValidator _qualityValidator;
         private readonly ILogger<GoogleAIImageGenerationService> _logger;
 
-        public string ProviderName => "GoogleAIStudio";
+        public string ProviderName => "GoogleImagen";
+        private static readonly Random _random = new Random();
 
         public GoogleAIImageGenerationService(
             HttpClient httpClient,
             IFileService fileService,
             IOptions<AiImageGeneratorSettings> settings,
             IOptions<GeminiOptions> geminiOptions,
+            IGenerationQualityValidator qualityValidator,
             ILogger<GoogleAIImageGenerationService> logger)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
             _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
             _geminiOptions = geminiOptions?.Value ?? throw new ArgumentNullException(nameof(geminiOptions));
+            _qualityValidator = qualityValidator ?? throw new ArgumentNullException(nameof(qualityValidator));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -60,8 +64,8 @@ namespace HandoraInfrastructure.Services
             try
             {
                 var apiKey = !string.IsNullOrWhiteSpace(_settings.GoogleAIStudio.ApiKey)
-                    ? _settings.GoogleAIStudio.ApiKey
-                    : _geminiOptions.ApiKey;
+                     ? _settings.GoogleAIStudio.ApiKey
+                     : _geminiOptions.ApiKey;
 
                 if (string.IsNullOrWhiteSpace(apiKey) || apiKey.StartsWith("YOUR_") || apiKey.Contains("YOUR_GEMINI_API_KEY"))
                 {
@@ -71,72 +75,147 @@ namespace HandoraInfrastructure.Services
 
                 var baseUrl = _settings.GoogleAIStudio.BaseUrl.TrimEnd('/');
                 var model = _settings.GoogleAIStudio.ModelName;
-
-                if (model == "imagen-3.0-generate-002")
-                {
-                    model = "imagen-4.0-generate-001";
-                }
-
                 var method = model.Contains("imagen-4") ? "predict" : "generateImages";
                 var url = $"{baseUrl}/v1beta/models/{model}:{method}?key={apiKey}";
 
-                var requestBody = new
+                // Build request body with negative prompt support
+                object requestBody;
+                if (!string.IsNullOrWhiteSpace(request.NegativePrompt))
                 {
-                    instances = new[]
+                    requestBody = new
                     {
-                        new { prompt = request.Prompt }
-                    },
-                    parameters = new
+                        instances = new[]
+                        {
+                            new { prompt = request.Prompt }
+                        },
+                        parameters = new
+                        {
+                            sampleCount = request.ImageCount,
+                            aspectRatio = "1:1",
+                            negativePrompt = request.NegativePrompt
+                        }
+                    };
+                }
+                else
+                {
+                    requestBody = new
                     {
-                        sampleCount = request.ImageCount,
-                        aspectRatio = "1:1"
-                    }
-                };
+                        instances = new[]
+                        {
+                            new { prompt = request.Prompt }
+                        },
+                        parameters = new
+                        {
+                            sampleCount = request.ImageCount,
+                            aspectRatio = "1:1"
+                        }
+                    };
+                }
 
                 var jsonContent = JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await SendRequestWithRetryAsync(async () =>
+                var generatedImages = new List<GeneratedImage>();
+                bool allImagesValid = false;
+                const int maxGenerationRetries = 2; // initial try + 1 retry
+
+                for (int attempt = 1; attempt <= maxGenerationRetries && !allImagesValid; attempt++)
                 {
-                    return await _httpClient.PostAsync(url, content, ct);
-                }, ct);
+                    generatedImages.Clear();
+
+                    HttpResponseMessage response = await SendRequestWithRetryAsync(async () =>
+                    {
+                        return await _httpClient.PostAsync(url, content, ct);
+                    }, ct);
+
+                    if (response == null)
+                    {
+                        throw new AINetworkException("Failed to receive a response from Google AI Studio.");
+                    }
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var errorContent = await response.Content.ReadAsStringAsync(ct);
+                        if (errorContent.Contains("paid plan", StringComparison.OrdinalIgnoreCase) || 
+                            errorContent.Contains("upgrade your account", StringComparison.OrdinalIgnoreCase) ||
+                            errorContent.Contains("billing", StringComparison.OrdinalIgnoreCase) ||
+                            response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                        {
+                            _logger.LogWarning("Google AI Studio account has a free plan constraint or failed. Falling back to Pollinations.ai for generation.");
+                            return await GenerateUsingPollinationsFallbackAsync(request, ct);
+                        }
+                        
+                        await HandleErrorResponseAsync(response, ct);
+                    }
+
+                    var responseString = await response.Content.ReadAsStringAsync(ct);
+                    var imagesList = ParseImagesFromResponse(responseString, request.Prompt);
+
+                    allImagesValid = true;
+                    var tempImages = new List<(byte[] Data, int Seed)>();
+
+                    foreach (var imgData in imagesList)
+                    {
+                        var validationResult = await _qualityValidator.ValidateAsync(imgData, request.Prompt, ct);
+                        if (!validationResult.IsAcceptable)
+                        {
+                            _logger.LogWarning("Quality validation failed: {Reason}. Attempt {Attempt} failed.", validationResult.RejectionReason, attempt);
+                            allImagesValid = false;
+                            break;
+                        }
+                        
+                        var seed = _random.Next(1, 100000000);
+                        tempImages.Add((imgData, seed));
+                    }
+
+                    if (allImagesValid)
+                    {
+                        // Upload validated images
+                        foreach (var tempImg in tempImages)
+                        {
+                            using var ms = new MemoryStream(tempImg.Data);
+                            var formFile = new FormFile(ms, 0, tempImg.Data.Length, "file", $"generated_{Guid.NewGuid():N}.jpg")
+                            {
+                                Headers = new HeaderDictionary(),
+                                ContentType = "image/jpeg"
+                            };
+
+                            _logger.LogInformation("Uploading generated image to storage...");
+                            var imageUrl = await _fileService.UploadFileAsync(formFile, "custom_designs");
+
+                            generatedImages.Add(new GeneratedImage
+                            {
+                                ImageUrl = imageUrl,
+                                RevisedPrompt = request.Prompt,
+                                Seed = tempImg.Seed
+                            });
+                        }
+                    }
+                    else if (attempt == maxGenerationRetries)
+                    {
+                        // If it's the last attempt and still invalid, upload the images anyway to avoid complete failure
+                        _logger.LogError("Quality validation failed after all retries. Uploading the generated image as fallback.");
+                        foreach (var imgData in imagesList)
+                        {
+                            using var ms = new MemoryStream(imgData);
+                            var formFile = new FormFile(ms, 0, imgData.Length, "file", $"generated_{Guid.NewGuid():N}.jpg")
+                            {
+                                Headers = new HeaderDictionary(),
+                                ContentType = "image/jpeg"
+                            };
+
+                            var imageUrl = await _fileService.UploadFileAsync(formFile, "custom_designs");
+                            generatedImages.Add(new GeneratedImage
+                            {
+                                ImageUrl = imageUrl,
+                                RevisedPrompt = request.Prompt,
+                                Seed = _random.Next(1, 100000000)
+                            });
+                        }
+                    }
+                }
 
                 stopwatch.Stop();
-
-                if (response == null)
-                {
-                    throw new AINetworkException("Failed to receive a response from Google AI Studio.");
-                }
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    await HandleErrorResponseAsync(response, ct);
-                }
-
-                var responseString = await response.Content.ReadAsStringAsync(ct);
-                var imagesList = ParseImagesFromResponse(responseString, request.Prompt);
-
-                var generatedImages = new List<GeneratedImage>();
-                foreach (var imgData in imagesList)
-                {
-                    // Upload to Cloudinary
-                    using var ms = new MemoryStream(imgData);
-                    var formFile = new FormFile(ms, 0, imgData.Length, "file", $"generated_{Guid.NewGuid():N}.jpg")
-                    {
-                        Headers = new HeaderDictionary(),
-                        ContentType = "image/jpeg"
-                    };
-
-                    _logger.LogInformation("Uploading generated image to storage...");
-                    var imageUrl = await _fileService.UploadFileAsync(formFile, "custom_designs");
-
-                    generatedImages.Add(new GeneratedImage
-                    {
-                        ImageUrl = imageUrl,
-                        RevisedPrompt = request.Prompt
-                    });
-                }
-
                 _logger.LogInformation("AI Generation success. DurationMs={DurationMs}, Provider={Provider}", stopwatch.ElapsedMilliseconds, ProviderName);
 
                 return new GenerateImageResponse
@@ -147,7 +226,9 @@ namespace HandoraInfrastructure.Services
                     {
                         ProviderName = ProviderName,
                         ModelName = model,
-                        DurationMs = stopwatch.ElapsedMilliseconds
+                        ModelVersion = model,
+                        DurationMs = stopwatch.ElapsedMilliseconds,
+                        Timestamp = DateTime.UtcNow
                     }
                 };
             }
@@ -416,6 +497,72 @@ namespace HandoraInfrastructure.Services
             }
 
             return imagesList;
+        }
+
+        private async Task<GenerateImageResponse> GenerateUsingPollinationsFallbackAsync(GenerateImageRequest request, CancellationToken ct)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                var generatedImages = new List<GeneratedImage>();
+                var baseUrl = _settings.Pollinations?.BaseUrl?.TrimEnd('/') ?? "https://image.pollinations.ai";
+                var model = _settings.Pollinations?.Model ?? "flux";
+
+                for (int i = 0; i < request.ImageCount; i++)
+                {
+                    int seed = _random.Next(1, 100000000);
+                    var encodedPrompt = Uri.EscapeDataString(request.Prompt);
+                    var url = $"{baseUrl}/prompt/{encodedPrompt}?model={model}&width=1024&height=1280&seed={seed}&nologo=true";
+
+                    if (!string.IsNullOrWhiteSpace(request.NegativePrompt))
+                    {
+                        url += $"&negative={Uri.EscapeDataString(request.NegativePrompt)}";
+                    }
+                    if (!string.IsNullOrEmpty(request.BaseImageUrl))
+                    {
+                        url += $"&image={Uri.EscapeDataString(request.BaseImageUrl)}";
+                    }
+
+                    _logger.LogInformation("Calling Pollinations.ai fallback API: {Url}", url);
+                    var imgData = await _httpClient.GetByteArrayAsync(url, ct);
+
+                    using var ms = new MemoryStream(imgData);
+                    var formFile = new FormFile(ms, 0, imgData.Length, "file", $"generated_{Guid.NewGuid():N}.jpg")
+                    {
+                        Headers = new HeaderDictionary(),
+                        ContentType = "image/jpeg"
+                    };
+
+                    var imageUrl = await _fileService.UploadFileAsync(formFile, "custom_designs");
+                    generatedImages.Add(new GeneratedImage
+                    {
+                        ImageUrl = imageUrl,
+                        RevisedPrompt = request.Prompt,
+                        Seed = seed
+                    });
+                }
+
+                stopwatch.Stop();
+                return new GenerateImageResponse
+                {
+                    Images = generatedImages,
+                    IsSuccess = true,
+                    Metadata = new GenerationMetadata
+                    {
+                        ProviderName = "GoogleImagen (Fallback to Pollinations)",
+                        ModelName = "flux",
+                        ModelVersion = "flux",
+                        DurationMs = stopwatch.ElapsedMilliseconds,
+                        Timestamp = DateTime.UtcNow
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                _logger.LogError(ex, "Failed to run Pollinations fallback generation.");
+                throw new AIException("Google Imagen and fallback generation both failed.", ex);
+            }
         }
     }
 }

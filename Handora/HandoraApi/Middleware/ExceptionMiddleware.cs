@@ -65,6 +65,16 @@ namespace HandoraApi.Middleware
                 _logger.LogError(ex, "General AI Provider exception: {Message}", ex.Message);
                 await WriteResponseAsync(context, StatusCodes.Status400BadRequest, ex.Message);
             }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogInformation("Request was canceled by the client: {Message}", ex.Message);
+                if (!context.Response.HasStarted)
+                {
+                    context.Response.StatusCode = 499; // Client Closed Request
+                    context.Response.ContentType = "application/json";
+                    await context.Response.WriteAsJsonAsync(ApiResponse<object>.Fail("Request was canceled by the client."));
+                }
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled exception.");

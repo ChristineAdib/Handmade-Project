@@ -200,27 +200,7 @@ namespace HandoraApplication.Services
             var lastMessage = c.Messages.OrderByDescending(m => m.CreatedAt).FirstOrDefault();
             var unreadCount = await _chatRepo.GetUnreadCountAsync(c.Id, currentUserId, ct);
 
-            Guid? customRequestId = null;
-            try
-            {
-                var requestRepo = _unitOfWork.Repository<CustomRequest, Guid>();
-                var requests = await requestRepo.GetAllAsNoTracking();
-                var latestRequest = await requests
-                    .Where(r => r.BuyerId == c.BuyerId && 
-                               ((r.SelectedSellerId != null && r.SelectedSeller.OwnerId == c.SellerId) || 
-                                r.CustomOffers.Any(o => o.Shop.OwnerId == c.SellerId)))
-                    .OrderByDescending(r => r.CreatedAt)
-                    .FirstOrDefaultAsync(ct);
-
-                if (latestRequest != null)
-                {
-                    customRequestId = latestRequest.Id;
-                }
-            }
-            catch (Exception)
-            {
-                // Ignore fallback
-            }
+            Guid? customRequestId = c.ActiveDesignRequestId;
 
             var buyerName = c.Buyer.Name;
             var sellerName = c.Seller.Name;

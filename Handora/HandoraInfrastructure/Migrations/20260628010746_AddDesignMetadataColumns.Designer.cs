@@ -4,6 +4,7 @@ using HandoraInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HandoraInfrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260628010746_AddDesignMetadataColumns")]
+    partial class AddDesignMetadataColumns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -199,9 +202,6 @@ namespace HandoraInfrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ActiveDesignRequestId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("BuyerId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -229,8 +229,6 @@ namespace HandoraInfrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ActiveDesignRequestId");
 
                     b.HasIndex("BuyerId");
 
@@ -523,9 +521,6 @@ namespace HandoraInfrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid?>("ConversationId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -572,8 +567,6 @@ namespace HandoraInfrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BuyerId");
-
-                    b.HasIndex("ConversationId");
 
                     b.HasIndex("CreatedAt");
 
@@ -2489,11 +2482,6 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("HandoraDomain.Models.ChatEntities.Conversation", b =>
                 {
-                    b.HasOne("HandoraDomain.Models.CustomStudioEntities.CustomRequest", "ActiveDesignRequest")
-                        .WithMany()
-                        .HasForeignKey("ActiveDesignRequestId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("HandoraDomain.Models.AppUser.User", "Buyer")
                         .WithMany()
                         .HasForeignKey("BuyerId")
@@ -2505,8 +2493,6 @@ namespace HandoraInfrastructure.Migrations
                         .HasForeignKey("SellerId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
-
-                    b.Navigation("ActiveDesignRequest");
 
                     b.Navigation("Buyer");
 
@@ -2612,11 +2598,6 @@ namespace HandoraInfrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("HandoraDomain.Models.ChatEntities.Conversation", "Conversation")
-                        .WithMany("DesignRequests")
-                        .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("HandoraDomain.Models.CustomStudioEntities.GeneratedDesign", "SelectedDesign")
                         .WithMany()
                         .HasForeignKey("SelectedDesignId")
@@ -2628,8 +2609,6 @@ namespace HandoraInfrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Buyer");
-
-                    b.Navigation("Conversation");
 
                     b.Navigation("SelectedDesign");
 
@@ -3199,8 +3178,6 @@ namespace HandoraInfrastructure.Migrations
 
             modelBuilder.Entity("HandoraDomain.Models.ChatEntities.Conversation", b =>
                 {
-                    b.Navigation("DesignRequests");
-
                     b.Navigation("Messages");
                 });
 
