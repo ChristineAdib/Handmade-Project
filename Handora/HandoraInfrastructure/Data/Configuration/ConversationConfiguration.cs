@@ -1,4 +1,5 @@
-﻿using HandoraDomain.Models.ChatEntities;
+using HandoraDomain.Models.ChatEntities;
+using HandoraDomain.Models.CustomStudioEntities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -25,6 +26,16 @@ namespace HandoraInfrastructure.Data.Configuration
                 .WithMany()
                 .HasForeignKey(c => c.SellerId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasOne(c => c.ActiveDesignRequest)
+                .WithMany()
+                .HasForeignKey(c => c.ActiveDesignRequestId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasMany(c => c.DesignRequests)
+                .WithOne(r => r.Conversation)
+                .HasForeignKey(r => r.ConversationId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasMany(c => c.Messages)
                 .WithOne(m => m.Conversation)

@@ -1,6 +1,7 @@
-﻿using HandoraDomain.Models.AppUser;
+using HandoraDomain.Models.AppUser;
 using HandoraDomain.Models.CouponEntities;
 using HandoraDomain.Models.PaymentEntities;
+using HandoraDomain.Models.CustomStudioEntities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,5 +66,8 @@ namespace HandoraDomain.Models.OrderEntity
 
         public Payment? Payment { get; set; }
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
+
+        public Guid? CustomOfferId { get; set; }
+        public CustomOffer? CustomOffer { get; set; }
     }
 }

@@ -1,0 +1,174 @@
+@model HandoraApplication.IServices.PagedList<HandoraApplication.IServices.AdminOfferDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Seller Offers Management";
+
+    var search = ViewData["Search"] as string;
+    var status = ViewData["Status"] as int?;
+    var metrics = ViewData["Metrics"] as HandoraApplication.IServices.AdminOfferMetricsDto;
+}
+
+<style>
+    :root {
+        --br: #3d2010;
+        --border: #e8e0d8;
+        --text: #1b1c1c;
+        --muted: #888;
+        --green: #3b6d11;
+        --green-bg: #eaf3de;
+        --red: #a32d2d;
+        --red-bg: #fcebeb;
+        --lt: #c4956a;
+    }
+
+    .offers-container {
+        animation: fadeUp 0.4s ease both;
+    }
+
+    .kpi-mini-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .kpi-mini-card {
+        background: #fff;
+        border: 0.5px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(61,32,16,0.01);
+    }
+
+    .kpi-mini-lbl {
+        font-size: 10px;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .kpi-mini-val {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--br);
+    }
+</style>
+
+<div class="offers-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="font-size: 20px; font-weight: 600; color: var(--br);">Custom Studio Offers & Bidding</h2>
+        <a asp-action="ExportOffers" class="ptab"><i class="ti ti-download"></i> Export Bids</a>
+    </div>
+
+    <!-- Metrics Header -->
+    @if (metrics != null)
+    {
+        <div class="kpi-mini-grid">
+            <div class="kpi-mini-card">
+                <span class="kpi-mini-lbl">Average Offer Price</span>
+                <span class="kpi-mini-val">@metrics.AvgOfferPrice.ToString("C")</span>
+            </div>
+            <div class="kpi-mini-card">
+                <span class="kpi-mini-lbl">Avg Negotiation Time</span>
+                <span class="kpi-mini-val">@metrics.AvgNegotiationTimeHours Hours</span>
+            </div>
+            <div class="kpi-mini-card">
+                <span class="kpi-mini-lbl">Pending Bids</span>
+                <span class="kpi-mini-val" style="color: var(--lt);">@metrics.PendingOffers</span>
+            </div>
+            <div class="kpi-mini-card">
+                <span class="kpi-mini-lbl">Accepted Bids</span>
+                <span class="kpi-mini-val" style="color: var(--green);">@metrics.AcceptedOffers</span>
+            </div>
+            <div class="kpi-mini-card">
+                <span class="kpi-mini-lbl">Rejected Bids</span>
+                <span class="kpi-mini-val" style="color: var(--red);">@metrics.RejectedOffers</span>
+            </div>
+        </div>
+    }
+
+    <!-- Filters Form -->
+    <form method="get" class="filter-bar" style="background:#fff; padding:16px; border-radius:12px; border:0.5px solid var(--border); display:flex; gap:12px; margin-bottom:20px;">
+        <input type="text" name="search" value="@search" placeholder="Search Shop Name, Request ID..." class="filter-input" style="flex:1;" />
+        <select name="status" class="filter-input">
+            <option value="">-- All Offer Statuses --</option>
+            <option value="1" selected="@(status == 1)">Pending</option>
+            <option value="2" selected="@(status == 2)">Accepted</option>
+            <option value="3" selected="@(status == 3)">Rejected</option>
+            <option value="4" selected="@(status == 4)">Withdrawn / Expired</option>
+        </select>
+        <button type="submit" class="btn-search">Filter Bids</button>
+        <a asp-action="Offers" class="ptab" style="text-decoration:none;">Clear</a>
+    </form>
+
+    <!-- Table -->
+    <div class="an-card" style="padding:0; overflow:hidden;">
+        <table class="an-table">
+            <thead>
+                <tr>
+                    <th>Offer ID</th>
+                    <th>Request ID</th>
+                    <th>Seller Shop</th>
+                    <th>Proposed Price</th>
+                    <th>Delivery Estimate</th>
+                    <th>Revisions Allowed</th>
+                    <th>Status</th>
+                    <th>Created Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="8" style="text-align:center; padding: 24px; color: var(--muted);">No custom offers found.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var o in Model.Items)
+                    {
+                        <tr>
+                            <td style="font-family: monospace; font-size:11px; font-weight:600; color: var(--md);">
+                                @o.OfferId.ToString().Substring(0, 8)...
+                            </td>
+                            <td style="font-family: monospace; font-size:11px; color: var(--muted);">
+                                <a href="/AdminCustomStudio/Details/@o.RequestId" style="color: var(--lt); text-decoration:none;">
+                                    @o.RequestId.ToString().Substring(0, 8)...
+                                </a>
+                            </td>
+                            <td>@o.ShopName</td>
+                            <td style="font-weight: 700; color: var(--green);">@o.Price.ToString("C")</td>
+                            <td>@o.DeliveryTimeDays Days</td>
+                            <td>@o.RevisionsAllowed Revisions</td>
+                            <td>
+                                @{
+                                    string bg = "#faf0e6";
+                                    string fg = "var(--br)";
+                                    if (o.Status == 2) { bg = "var(--green-bg)"; fg = "var(--green)"; }
+                                    else if (o.Status == 3 || o.Status == 4) { bg = "var(--red-bg)"; fg = "var(--red)"; }
+                                }
+                                <span class="badge" style="background: @bg; color: @fg; padding: 4px 8px; border-radius:6px; font-size:11px; font-weight:600;">
+                                    @o.StatusName
+                                </span>
+                            </td>
+                            <td>@o.CreatedAt.ToString("g")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        <span>Showing Page @Model.PageNumber of @Model.TotalPages (Total @Model.TotalCount Offers)</span>
+        <div style="display: flex; gap: 8px;">
+            <a href="@Url.Action("Offers", new { search, status, pageNumber = Model.PageNumber - 1 })" 
+               class="btn-page @(Model.HasPreviousPage ? "" : "disabled")">Previous</a>
+            <a href="@Url.Action("Offers", new { search, status, pageNumber = Model.PageNumber + 1 })" 
+               class="btn-page @(Model.HasNextPage ? "" : "disabled")">Next</a>
+        </div>
+    </div>
+</div>

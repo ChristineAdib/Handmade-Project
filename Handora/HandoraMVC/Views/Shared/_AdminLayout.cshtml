@@ -93,6 +93,44 @@
                     <i class="ti ti-store" aria-hidden="true"></i> Shops
                 </a>
 
+                <div class="nav-label" style="margin-top: 16px;">Custom Studio</div>
+                <a asp-controller="AdminCustomStudio" asp-action="Dashboard"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Requests"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Requests" ? "active" : "")">
+                    <i class="ti ti-git-pull-request" aria-hidden="true"></i> Custom Requests
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="AiGenerations"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "AiGenerations" ? "active" : "")">
+                    <i class="ti ti-cpu" aria-hidden="true"></i> AI Generations
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Artisans"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Artisans" ? "active" : "")">
+                    <i class="ti ti-palette" aria-hidden="true"></i> Artisans
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Offers"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Offers" ? "active" : "")">
+                    <i class="ti ti-coin" aria-hidden="true"></i> Offers
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Projects"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Projects" ? "active" : "")">
+                    <i class="ti ti-hammer" aria-hidden="true"></i> Projects
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Analytics"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Analytics" ? "active" : "")">
+                    <i class="ti ti-chart-bar" aria-hidden="true"></i> Analytics
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="AuditLogs"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "AuditLogs" ? "active" : "")">
+                    <i class="ti ti-history" aria-hidden="true"></i> Audit Logs
+                </a>
+                <a asp-controller="AdminCustomStudio" asp-action="Settings"
+                   class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCustomStudio" && ViewContext.RouteData.Values["action"]?.ToString() == "Settings" ? "active" : "")">
+                    <i class="ti ti-settings" aria-hidden="true"></i> Settings
+                </a>
+
              
             </nav>
             <div class="nav-bottom">

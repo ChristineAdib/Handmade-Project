@@ -1,0 +1,146 @@
+@model HandoraDomain.Models.CustomStudioEntities.CustomStudioSetting
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Custom Studio Settings";
+}
+
+<style>
+    :root {
+        --br: #3d2010;
+        --border: #e8e0d8;
+        --text: #1b1c1c;
+        --muted: #888;
+        --green: #3b6d11;
+        --green-bg: #eaf3de;
+        --red: #a32d2d;
+        --red-bg: #fcebeb;
+    }
+
+    .settings-container {
+        animation: fadeUp 0.4s ease both;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--br);
+    }
+
+    .form-control {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 0.5px solid var(--border);
+        font-size: 13px;
+        color: var(--text);
+        font-family: inherit;
+        background: #fff;
+    }
+
+    .form-control:focus {
+        border-color: var(--br);
+        outline: none;
+    }
+
+    .btn-save {
+        background: var(--br);
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+
+    .btn-save:hover {
+        background: var(--md);
+    }
+</style>
+
+<div class="settings-container">
+    <h2 style="font-size: 20px; font-weight: 600; color: var(--br); margin-bottom: 20px;">Custom Studio Administration Settings</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div style="background: var(--green-bg); color: var(--green); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size:13px; font-weight:600;">
+            @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div style="background: var(--red-bg); color: var(--red); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size:13px; font-weight:600;">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="an-card" style="max-width: 600px;">
+        <form asp-action="Settings" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <!-- Feature Toggle -->
+            <div class="form-group" style="flex-direction:row; align-items:center; gap:10px; margin-bottom:24px;">
+                <input type="checkbox" asp-for="IsFeatureEnabled" style="width:18px; height:18px; cursor:pointer;" />
+                <label asp-for="IsFeatureEnabled" class="form-label" style="cursor:pointer; margin:0;">Enable Handora Custom Studio Feature</label>
+            </div>
+
+            <!-- Max AI Generations -->
+            <div class="form-group">
+                <label asp-for="MaxAiGenerations" class="form-label">Maximum AI Generations Allowed Per Custom Request</label>
+                <input type="number" asp-for="MaxAiGenerations" class="form-control" min="1" max="10" required />
+            </div>
+
+            <!-- Max Reference Image Size -->
+            <div class="form-group">
+                <label asp-for="MaxReferenceImageSizeMb" class="form-label">Maximum Reference Image Size (MB)</label>
+                <input type="number" asp-for="MaxReferenceImageSizeMb" class="form-control" min="1" max="25" required />
+            </div>
+
+            <!-- Allowed Image Types -->
+            <div class="form-group">
+                <label asp-for="AllowedImageTypes" class="form-label">Allowed Reference Image Extensions (comma separated)</label>
+                <input type="text" asp-for="AllowedImageTypes" class="form-control" placeholder="e.g. .jpg,.jpeg,.png" required />
+            </div>
+
+            <!-- Default Delivery Time -->
+            <div class="form-group">
+                <label asp-for="DefaultDeliveryTimeDays" class="form-label">Default Custom Delivery Duration (Days)</label>
+                <input type="number" asp-for="DefaultDeliveryTimeDays" class="form-control" min="1" max="90" required />
+            </div>
+
+            <!-- Default Revision Count -->
+            <div class="form-group">
+                <label asp-for="DefaultRevisionCount" class="form-label">Default Revisions Allowed Per Offer</label>
+                <input type="number" asp-for="DefaultRevisionCount" class="form-control" min="0" max="20" required />
+            </div>
+
+            <!-- Active AI Provider -->
+            <div class="form-group">
+                <label asp-for="ActiveAiProvider" class="form-label">Active Image Generation AI Provider</label>
+                <select asp-for="ActiveAiProvider" class="form-control">
+                    <option value="GoogleAIStudio">Google AI Studio (Imagen 3)</option>
+                    <option value="OpenAI">OpenAI (DALL-E 3)</option>
+                    <option value="MockProvider">Mock Provider (Fast Testing)</option>
+                </select>
+            </div>
+
+            <!-- Prompt Builder Settings -->
+            <div class="form-group">
+                <label asp-for="PromptBuilderInstructions" class="form-label">AI System Prompt Styling Prefix Instructions</label>
+                <textarea asp-for="PromptBuilderInstructions" class="form-control" style="height:80px; resize:vertical;" required></textarea>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <button type="submit" class="btn-save">Save Configuration Changes</button>
+            </div>
+        </form>
+    </div>
+</div>

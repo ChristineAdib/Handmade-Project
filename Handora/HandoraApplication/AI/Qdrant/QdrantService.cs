@@ -19,25 +19,106 @@ namespace HandoraInfrastructure.AI.Qdrant
 {
     public class QdrantService : IVectorStoreService
     {
-        private readonly QdrantClient _client;
+        private readonly QdrantClient? _client;
+        private readonly bool _useInMemoryMode;
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, List<InMemoryPoint>> InMemoryCollections = new();
+        private static readonly string DbFilePath = Path.Combine(AppContext.BaseDirectory, "vector_store_db.json");
+        private static readonly object FileLock = new object();
+
+        private class InMemoryPoint
+        {
+            public string Id { get; set; } = string.Empty;
+            public float[] Embedding { get; set; } = Array.Empty<float>();
+            public string Text { get; set; } = string.Empty;
+            public Dictionary<string, object> Metadata { get; set; } = new();
+        }
 
         public QdrantService(IOptions<QdrantOptions> options)
         {
             var config = options.Value;
 
-            var uriBuilder = new UriBuilder(config.Url);
-            if (uriBuilder.Port == -1 || uriBuilder.Port == 80 || uriBuilder.Port == 443)
+            if (string.IsNullOrWhiteSpace(config.Url) || 
+                config.Url.Contains("YOUR-CLUSTER-URL") || 
+                config.Url.Contains("YOUR_") ||
+                string.IsNullOrWhiteSpace(config.ApiKey) ||
+                config.ApiKey.Contains("YOUR-API-KEY"))
             {
-                uriBuilder.Port = 6334;
+                _useInMemoryMode = true;
+                LoadInMemoryDb();
+                return;
             }
 
-            _client = new QdrantClient(
-                uriBuilder.Uri,
-                apiKey: config.ApiKey);
+            try
+            {
+                var uriBuilder = new UriBuilder(config.Url);
+                if (uriBuilder.Port == -1 || uriBuilder.Port == 80 || uriBuilder.Port == 443)
+                {
+                    uriBuilder.Port = 6334;
+                }
+
+                _client = new QdrantClient(
+                    uriBuilder.Uri,
+                    apiKey: config.ApiKey);
+            }
+            catch
+            {
+                _useInMemoryMode = true;
+                LoadInMemoryDb();
+            }
+        }
+
+        private void LoadInMemoryDb()
+        {
+            lock (FileLock)
+            {
+                try
+                {
+                    if (File.Exists(DbFilePath))
+                    {
+                        var json = File.ReadAllText(DbFilePath);
+                        var data = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, List<InMemoryPoint>>>(json);
+                        if (data != null)
+                        {
+                            foreach (var kvp in data)
+                            {
+                                InMemoryCollections[kvp.Key] = kvp.Value;
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // Fallback to empty if reading fails
+                }
+            }
+        }
+
+        private void SaveInMemoryDb()
+        {
+            lock (FileLock)
+            {
+                try
+                {
+                    var json = System.Text.Json.JsonSerializer.Serialize(InMemoryCollections);
+                    File.WriteAllText(DbFilePath, json);
+                }
+                catch
+                {
+                    // Ignore saving failures in dev environment
+                }
+            }
         }
 
         public async Task EnsureCollectionExistsAsync(string collectionName, ulong vectorSize)
         {
+            if (_useInMemoryMode)
+            {
+                InMemoryCollections.GetOrAdd(collectionName, _ => new List<InMemoryPoint>());
+                return;
+            }
+
+            if (_client == null) throw new InvalidOperationException("Qdrant client is not initialized.");
+
             var collections = await _client.ListCollectionsAsync();
             bool exists = collections.Contains(collectionName);
 
@@ -60,6 +141,26 @@ namespace HandoraInfrastructure.AI.Qdrant
             string text,
             Dictionary<string, object>? metadata = null)
         {
+            if (_useInMemoryMode)
+            {
+                var collection = InMemoryCollections.GetOrAdd(collectionName, _ => new List<InMemoryPoint>());
+                lock (collection)
+                {
+                    collection.RemoveAll(p => p.Id == id);
+                    collection.Add(new InMemoryPoint
+                    {
+                        Id = id,
+                        Embedding = embedding,
+                        Text = text,
+                        Metadata = metadata != null ? new Dictionary<string, object>(metadata) : new Dictionary<string, object>()
+                    });
+                }
+                SaveInMemoryDb();
+                return;
+            }
+
+            if (_client == null) throw new InvalidOperationException("Qdrant client is not initialized.");
+
             var pointId = ToPointId(id);
 
             var point = new PointStruct
@@ -92,6 +193,78 @@ namespace HandoraInfrastructure.AI.Qdrant
             int topK,
             Dictionary<string, object>? filter = null)
         {
+            if (_useInMemoryMode)
+            {
+                var collection = InMemoryCollections.GetOrAdd(collectionName, _ => new List<InMemoryPoint>());
+                List<InMemoryPoint> candidates;
+                lock (collection)
+                {
+                    candidates = collection.ToList();
+                }
+
+                // Apply dynamic filters
+                if (filter != null && filter.Count > 0)
+                {
+                    candidates = candidates.Where(p =>
+                    {
+                        foreach (var kvp in filter)
+                        {
+                            if (!p.Metadata.TryGetValue(kvp.Key, out var val))
+                            {
+                                return false;
+                            }
+                            
+                            // Handle list of strings (e.g. tags contain keyword)
+                            if (kvp.Value is IEnumerable<string> strList)
+                            {
+                                var storedStr = val.ToString() ?? string.Empty;
+                                if (val is System.Text.Json.JsonElement elem && elem.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                {
+                                    var storedList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(elem.GetRawText()) ?? new List<string>();
+                                    if (!strList.Any(s => storedList.Contains(s, StringComparer.OrdinalIgnoreCase)))
+                                    {
+                                        return false;
+                                    }
+                                }
+                                else if (!strList.Any(s => storedStr.Equals(s, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                var filterValStr = kvp.Value?.ToString() ?? string.Empty;
+                                var valStr = val?.ToString() ?? string.Empty;
+                                if (!valStr.Equals(filterValStr, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    return false;
+                                }
+                            }
+                        }
+                        return true;
+                    }).ToList();
+                }
+
+                var results = candidates.Select(p =>
+                {
+                    double score = ComputeCosineSimilarity(embedding, p.Embedding);
+                    return new RagSearchResultDto
+                    {
+                        Id = p.Id,
+                        Text = p.Text,
+                        Score = (float)score,
+                        Metadata = p.Metadata.Count > 0 ? p.Metadata : null
+                    };
+                })
+                .OrderByDescending(r => r.Score)
+                .Take(topK)
+                .ToList();
+
+                return results;
+            }
+
+            if (_client == null) throw new InvalidOperationException("Qdrant client is not initialized.");
+
             Filter? qdrantFilter = null;
 
             if (filter != null && filter.Count > 0)
@@ -107,7 +280,7 @@ namespace HandoraInfrastructure.AI.Qdrant
                 }
             }
 
-            var results = await _client.SearchAsync(
+            var searchResults = await _client.SearchAsync(
                 collectionName: collectionName,
                 vector: embedding,
                 filter: qdrantFilter,
@@ -115,7 +288,7 @@ namespace HandoraInfrastructure.AI.Qdrant
 
             var list = new List<RagSearchResultDto>();
 
-            foreach (var hit in results)
+            foreach (var hit in searchResults)
             {
                 string text = string.Empty;
                 if (hit.Payload.TryGetValue("text", out var textValue) && textValue.KindCase == Value.KindOneofCase.StringValue)
@@ -149,8 +322,47 @@ namespace HandoraInfrastructure.AI.Qdrant
             return list;
         }
 
+        private double ComputeCosineSimilarity(float[] vectorA, float[] vectorB)
+        {
+            if (vectorA == null || vectorB == null || vectorA.Length != vectorB.Length || vectorA.Length == 0)
+            {
+                return 0.0;
+            }
+
+            double dotProduct = 0.0;
+            double normA = 0.0;
+            double normB = 0.0;
+
+            for (int i = 0; i < vectorA.Length; i++)
+            {
+                dotProduct += vectorA[i] * vectorB[i];
+                normA += vectorA[i] * vectorA[i];
+                normB += vectorB[i] * vectorB[i];
+            }
+
+            if (normA == 0.0 || normB == 0.0)
+            {
+                return 0.0;
+            }
+
+            return dotProduct / (Math.Sqrt(normA) * Math.Sqrt(normB));
+        }
+
         public async Task DeleteAsync(string collectionName, string id)
         {
+            if (_useInMemoryMode)
+            {
+                var collection = InMemoryCollections.GetOrAdd(collectionName, _ => new List<InMemoryPoint>());
+                lock (collection)
+                {
+                    collection.RemoveAll(p => p.Id == id);
+                }
+                SaveInMemoryDb();
+                return;
+            }
+
+            if (_client == null) throw new InvalidOperationException("Qdrant client is not initialized.");
+
             var qdrantFilter = new Filter();
             if (Guid.TryParse(id, out var guid))
             {
@@ -179,6 +391,35 @@ namespace HandoraInfrastructure.AI.Qdrant
             {
                 throw new ArgumentException("Filter cannot be null or empty for deletion.", nameof(filter));
             }
+
+            if (_useInMemoryMode)
+            {
+                var collection = InMemoryCollections.GetOrAdd(collectionName, _ => new List<InMemoryPoint>());
+                lock (collection)
+                {
+                    collection.RemoveAll(p =>
+                    {
+                        foreach (var kvp in filter)
+                        {
+                            if (!p.Metadata.TryGetValue(kvp.Key, out var val))
+                            {
+                                return false;
+                            }
+                            var filterValStr = kvp.Value?.ToString() ?? string.Empty;
+                            var valStr = val?.ToString() ?? string.Empty;
+                            if (!valStr.Equals(filterValStr, StringComparison.OrdinalIgnoreCase))
+                            {
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+                }
+                SaveInMemoryDb();
+                return;
+            }
+
+            if (_client == null) throw new InvalidOperationException("Qdrant client is not initialized.");
 
             var qdrantFilter = new Filter();
             foreach (var kvp in filter)
@@ -374,6 +615,9 @@ namespace HandoraInfrastructure.AI.Qdrant
 
         private async Task EnsurePayloadIndexExistsAsync(string collectionName, string fieldName, object value)
         {
+            if (_useInMemoryMode) return;
+            if (_client == null) return;
+
             var key = (collectionName, fieldName);
             if (CreatedIndexes.ContainsKey(key))
             {
@@ -409,7 +653,6 @@ namespace HandoraInfrastructure.AI.Qdrant
             }
             catch (Exception)
             {
-                // Suppress if already exists or concurrent creation occurs
                 CreatedIndexes.TryAdd(key, true);
             }
         }

@@ -2,6 +2,7 @@ using HandoraApplication.AI.DTOs;
 using HandoraApplication.AI.Interfaces;
 using HandoraInfrastructure.AI.Options;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,15 +18,17 @@ namespace HandoraApplication.AI.Services
     {
         private readonly HttpClient _httpClient;
         private readonly GeminiOptions _options;
+        private readonly ILogger<GeminiService> _logger;
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             PropertyNameCaseInsensitive = true
         };
 
-        public GeminiService(HttpClient httpClient, IOptions<GeminiOptions> options)
+        public GeminiService(HttpClient httpClient, IOptions<GeminiOptions> options, ILogger<GeminiService> logger)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         private bool IsMockMode()
@@ -389,35 +392,231 @@ Retrieved Candidate Products Catalog:
 
         #endregion
 
+        public async Task<string> AnalyzeCrochetDollPhotoAsync(string base64Image, string mimeType, CancellationToken ct = default)
+        {
+            if (IsMockMode())
+            {
+                return @"{
+                  ""personIdentity"": {
+                    ""gender"": ""Female"",
+                    ""estimatedAgeRange"": ""20s"",
+                    ""faceShape"": ""Oval"",
+                    ""skinTone"": ""Fair"",
+                    ""facialFeatures"": ""Brown eyes, natural lips"",
+                    ""expression"": ""Smile"",
+                    ""glasses"": ""No"",
+                    ""glassesDetails"": ""None"",
+                    ""facialHair"": ""No"",
+                    ""facialHairDetails"": ""None"",
+                    ""frecklesMolesDimples"": ""No""
+                  },
+                  ""hairOrHeadCoverage"": {
+                    ""hairVisible"": ""Yes"",
+                    ""hairStyle"": ""Straight"",
+                    ""hairLength"": ""Long"",
+                    ""hairColor"": ""Chestnut Brown"",
+                    ""headCovered"": ""No"",
+                    ""coverType"": ""None"",
+                    ""hijabOrScarfStyle"": ""None"",
+                    ""hijabOrScarfColors"": ""None"",
+                    ""hairlineVisible"": ""Yes"",
+                    ""anyHairShowing"": ""Yes"",
+                    ""modestyLevel"": ""Medium""
+                  },
+                  ""clothing"": {
+                    ""topType"": ""Sweater"",
+                    ""topColor"": ""Beige"",
+                    ""patternTexturePrint"": ""No"",
+                    ""outerwear"": ""No"",
+                    ""bottomType"": ""Skirt"",
+                    ""bottomColor"": ""Brown"",
+                    ""fullOutfitStyle"": ""Casual""
+                  },
+                  ""accessories"": {
+                    ""headAccessories"": ""None"",
+                    ""jewelry"": ""None"",
+                    ""bagOrPurse"": ""No"",
+                    ""shoes"": ""Flats"",
+                    ""otherAccessories"": ""None""
+                  },
+                  ""otherVisualDetails"": {
+                    ""dominantColors"": ""Beige, Brown"",
+                    ""background"": ""Indoor"",
+                    ""lighting"": ""Natural""
+                  }
+                }";
+            }
+
+            var promptText = @"Analyze the uploaded photo of a person. You must extract and describe their appearance details with extreme accuracy before generating a crochet doll.
+Do NOT guess. Do NOT invent. Do NOT change religious, cultural, or personal attributes. Preserve every visual detail exactly as seen in the photo.
+
+Output your response as a JSON object matching this schema:
+{
+  ""personIdentity"": {
+    ""gender"": ""Male"" or ""Female"",
+    ""estimatedAgeRange"": ""Teen"" or ""20s"" or ""30s"" or ""40s"" or ""50s+"",
+    ""faceShape"": ""Oval"" or ""Round"" or ""Square"" or ""Heart"" or ""Long"",
+    ""skinTone"": ""Very Fair"" or ""Fair"" or ""Light"" or ""Medium"" or ""Tan"" or ""Deep"",
+    ""facialFeatures"": ""Detailed description of eyes, eyebrows, nose, lips, cheeks, chin"",
+    ""expression"": ""Neutral"" or ""Smile"" or ""Big Smile"" or ""Serious"",
+    ""glasses"": ""Yes"" or ""No"",
+    ""glassesDetails"": ""Type and frame color if glasses are worn"",
+    ""facialHair"": ""Yes"" or ""No"",
+    ""facialHairDetails"": ""Type, style, and color if facial hair is present"",
+    ""frecklesMolesDimples"": ""Yes/No + Type + Location if present""
+  },
+  ""hairOrHeadCoverage"": {
+    ""hairVisible"": ""Yes"" or ""No"",
+    ""hairStyle"": ""Style description if hair is visible"",
+    ""hairLength"": ""Length description if hair is visible"",
+    ""hairColor"": ""Color description if hair is visible"",
+    ""headCovered"": ""Yes"" or ""No"",
+    ""coverType"": ""Hijab"" or ""Scarf"" or ""Cap"" or ""Other"" or ""None"",
+    ""hijabOrScarfStyle"": ""Wrapped"" or ""Turban"" or ""Shawl"" or ""Other"" or ""None"",
+    ""hijabOrScarfColors"": ""Colors if head is covered"",
+    ""hairlineVisible"": ""Yes"" or ""No"",
+    ""anyHairShowing"": ""Yes"" or ""No"",
+    ""modestyLevel"": ""High"" or ""Medium"" or ""Low""
+  },
+  ""clothing"": {
+    ""topType"": ""Dress"" or ""Shirt"" or ""Hoodie"" or ""Sweater"" or ""Blazer"" or ""Abaya"" or ""Other"",
+    ""topColor"": ""Colors"",
+    ""patternTexturePrint"": ""Yes/No + Description"",
+    ""outerwear"": ""Yes/No + Type + Color"",
+    ""bottomType"": ""Pants"" or ""Skirt"" or ""Jeans"" or ""Other"",
+    ""bottomColor"": ""Color"",
+    ""fullOutfitStyle"": ""Casual"" or ""Formal"" or ""Sporty"" or ""Modest"" or ""Streetwear"" or ""Vintage"" or ""Other""
+  },
+  ""accessories"": {
+    ""headAccessories"": ""Glasses / Hat / Cap / Hijab Pin / Headband / Other / None"",
+    ""jewelry"": ""Earrings / Necklace / Rings / Bracelet / Watch / None"",
+    ""bagOrPurse"": ""Yes/No + Type + Color"",
+    ""shoes"": ""Sneakers / Boots / Heels / Flats / Other + Color"",
+    ""otherAccessories"": ""Phone / Book / Flowers / None""
+  },
+  ""otherVisualDetails"": {
+    ""dominantColors"": ""Dominant colors in the photo"",
+    ""background"": ""Indoor / Outdoor / Plain / Location"",
+    ""lighting"": ""Natural / Warm / Cool / Studio""
+  }
+}
+
+Rules to follow:
+1. If the person is wearing a hijab/scarf -> The coverType must be 'Hijab' or 'Scarf', and the hairVisible must be 'No'.
+2. If glasses are worn -> glasses must be 'Yes'.
+3. If any detail is unclear -> Set as ""Unknown"" and do NOT guess.
+4. Only return the JSON object.";
+
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new object[]
+                        {
+                            new { text = promptText },
+                            new
+                            {
+                                inlineData = new
+                                {
+                                    mimeType = mimeType,
+                                    data = base64Image
+                                }
+                            }
+                        }
+                    }
+                },
+                generationConfig = new
+                {
+                    responseMimeType = "application/json",
+                    temperature = 0.2
+                }
+            };
+
+            return await CallGeminiApiAsync(requestBody);
+        }
+
         #region Private Helpers
 
         private async Task<string> CallGeminiApiAsync(object requestBody)
         {
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_options.ChatModel}:generateContent?key={_options.ApiKey}";
-            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync(url, content);
-            if (!response.IsSuccessStatusCode)
+            var modelsToTry = new List<string> { _options.ChatModel };
+            if (_options.ChatModel != "gemini-1.5-flash")
             {
-                var errorText = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Gemini API error. Status: {response.StatusCode}. Details: {errorText}");
+                modelsToTry.Add("gemini-1.5-flash");
+            }
+            if (_options.ChatModel != "gemini-2.5-flash" && !modelsToTry.Contains("gemini-2.5-flash"))
+            {
+                modelsToTry.Add("gemini-2.5-flash");
             }
 
-            var responseString = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(responseString);
-            
-            if (doc.RootElement.TryGetProperty("candidates", out var candidates) &&
-                candidates.GetArrayLength() > 0 &&
-                candidates[0].TryGetProperty("content", out var contentProp) &&
-                contentProp.TryGetProperty("parts", out var parts) &&
-                parts.GetArrayLength() > 0 &&
-                parts[0].TryGetProperty("text", out var textProp))
+            Exception lastException = null!;
+
+            foreach (var model in modelsToTry)
             {
-                var rawText = textProp.GetString() ?? string.Empty;
-                return SanitizeJson(rawText);
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={_options.ApiKey}";
+                const int maxRetries = 3;
+
+                for (int attempt = 1; attempt <= maxRetries; attempt++)
+                {
+                    try
+                    {
+                        var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+                        var response = await _httpClient.PostAsync(url, content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var responseString = await response.Content.ReadAsStringAsync();
+                            using var doc = JsonDocument.Parse(responseString);
+                            
+                            if (doc.RootElement.TryGetProperty("candidates", out var candidates) &&
+                                candidates.GetArrayLength() > 0 &&
+                                candidates[0].TryGetProperty("content", out var contentProp) &&
+                                contentProp.TryGetProperty("parts", out var parts) &&
+                                parts.GetArrayLength() > 0 &&
+                                parts[0].TryGetProperty("text", out var textProp))
+                            {
+                                var rawText = textProp.GetString() ?? string.Empty;
+                                return SanitizeJson(rawText);
+                            }
+                            throw new Exception("Unexpected response structure from Gemini API: " + responseString);
+                        }
+
+                        var statusCode = (int)response.StatusCode;
+                        var errorText = await response.Content.ReadAsStringAsync();
+                        
+                        _logger.LogWarning("Gemini API call to model {Model} failed on attempt {Attempt}/{MaxRetries}. Status: {Status}. Details: {Details}",
+                            model, attempt, maxRetries, response.StatusCode, errorText);
+
+                        lastException = new Exception($"Gemini API error. Status: {response.StatusCode}. Details: {errorText}");
+
+                        // Retry only on transient errors (503 ServiceUnavailable, 429 TooManyRequests, or >=500 server errors)
+                        if (attempt < maxRetries && (statusCode == 503 || statusCode == 429 || statusCode >= 500))
+                        {
+                            var delayMs = 1000 * (int)Math.Pow(2, attempt - 1);
+                            await Task.Delay(delayMs);
+                            continue;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Transient exception in Gemini API call to model {Model} on attempt {Attempt}/{MaxRetries}.", model, attempt, maxRetries);
+                        lastException = ex;
+                        if (attempt < maxRetries)
+                        {
+                            var delayMs = 1000 * (int)Math.Pow(2, attempt - 1);
+                            await Task.Delay(delayMs);
+                            continue;
+                        }
+                    }
+                    break; 
+                }
+                
+                _logger.LogWarning("Model {Model} failed all attempts or returned a non-transient error. Trying next fallback model if available.", model);
             }
 
-            throw new Exception("Unexpected response structure from Gemini API: " + responseString);
+            throw lastException ?? new Exception("Gemini API call failed with unknown error.");
         }
 
         private string SanitizeJson(string rawText)
