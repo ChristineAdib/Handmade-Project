@@ -842,6 +842,23 @@ namespace HandoraApplication.Services
                 };
                 await conversationRepo.AddAsync(conversation);
                 await _unitOfWork.SaveChangesAsync();
+
+                // Notify admin
+                var admins = await _userManager.GetUsersInRoleAsync(AppRoles.Admin);
+                foreach (var admin in admins)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = admin.Id,
+                        TitleEn = "New Custom Chat Created",
+                        TitleAr = "تم إنشاء دردشة مخصصة جديدة",
+                        MessageEn = "A new custom chat has been created.",
+                        MessageAr = "تم إنشاء محادثة مخصصة جديدة.",
+                        Type = NotificationType.System,
+                        ReferenceId = conversation.Id,
+                        ReferenceType = "Conversation"
+                    }, ct);
+                }
             }
 
             try
@@ -1555,6 +1572,23 @@ namespace HandoraApplication.Services
                 };
                 await conversationRepo.AddAsync(conversation);
                 await _unitOfWork.SaveChangesAsync();
+
+                // Notify admin
+                var admins = await _userManager.GetUsersInRoleAsync(AppRoles.Admin);
+                foreach (var admin in admins)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = admin.Id,
+                        TitleEn = "New Custom Chat Created",
+                        TitleAr = "تم إنشاء دردشة مخصصة جديدة",
+                        MessageEn = "A new custom chat has been created.",
+                        MessageAr = "تم إنشاء محادثة مخصصة جديدة.",
+                        Type = NotificationType.System,
+                        ReferenceId = conversation.Id,
+                        ReferenceType = "Conversation"
+                    }, ct);
+                }
             }
 
             service.ConversationId = conversation.Id;
@@ -1849,23 +1883,48 @@ namespace HandoraApplication.Services
                 var order = await orderRepo.GetByIdAsync(request.ProjectWorkspace.OrderId.Value);
                 if (order != null)
                 {
-                    if (milestoneStep == 6 && order.Status != OrderStatus.Shipped)
+                    if (milestoneStep == 6)
                     {
-                        order.Status = OrderStatus.Shipped;
-                        await orderRepo.UpdateAsync(order);
-                        
-                        // Notify Buyer of order shipped
-                        await _notificationService.SendAsync(new SendNotificationDto
+                        if (order.Status == OrderStatus.Delivered || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Refunded)
                         {
-                            UserId = order.UserId,
-                            TitleEn = "Order Shipped",
-                            TitleAr = "تم شحن الطلب",
-                            MessageEn = $"Your custom doll order #{order.Id.ToString().Substring(0, 8).ToUpper()} has been shipped. Tracking: {trackingNumber ?? "N/A"}",
-                            MessageAr = $"تم شحن طلب دمية الاستوديو المخصصة الخاص بك #{order.Id.ToString().Substring(0, 8).ToUpper()}. التتبع: {trackingNumber ?? "لا يوجد"}",
-                            Type = NotificationType.OrderStatusChanged,
-                            ReferenceId = order.Id,
-                            ReferenceType = "Order"
-                        }, ct);
+                            return Result<CustomRequestDetailDto>.Failure($"Cannot ship order: Invalid order status transition from {order.Status} to Shipped.");
+                        }
+
+                        if (order.Status != OrderStatus.Shipped)
+                        {
+                            order.Status = OrderStatus.Shipped;
+                            await orderRepo.UpdateAsync(order);
+                            
+                            // Notify Buyer of order shipped
+                            await _notificationService.SendAsync(new SendNotificationDto
+                            {
+                                UserId = order.UserId,
+                                TitleEn = "Order Shipped",
+                                TitleAr = "تم شحن الطلب",
+                                MessageEn = $"Your custom order has been shipped. It is now on its way. Tracking: {trackingNumber ?? "N/A"}",
+                                MessageAr = $"تم شحن طلبك المخصص وهو في طريقه إليك. التتبع: {trackingNumber ?? "لا يوجد"}",
+                                Type = NotificationType.OrderStatusChanged,
+                                ReferenceId = order.Id,
+                                ReferenceType = "CustomOrder"
+                            }, ct);
+
+                            // Notify Admin(s) of order shipped
+                            var admins = await _userManager.GetUsersInRoleAsync(AppRoles.Admin);
+                            foreach (var admin in admins)
+                            {
+                                await _notificationService.SendAsync(new SendNotificationDto
+                                {
+                                    UserId = admin.Id,
+                                    TitleEn = "Custom Order Shipped",
+                                    TitleAr = "تم شحن الطلب المخصص",
+                                    MessageEn = $"Seller has marked a custom order as shipped. Order ID: {order.Id}",
+                                    MessageAr = $"قام البائع بتحديد الطلب المخصص كـ مشحون. رقم الطلب: {order.Id}",
+                                    Type = NotificationType.OrderStatusChanged,
+                                    ReferenceId = order.Id,
+                                    ReferenceType = "CustomOrder"
+                                }, ct);
+                            }
+                        }
                     }
                     else if (milestoneStep == 7 && order.Status != OrderStatus.Delivered)
                     {
@@ -1882,7 +1941,7 @@ namespace HandoraApplication.Services
                             MessageAr = $"تم تسليم واكتمال طلب دمية الاستوديو المخصصة الخاص بك #{order.Id.ToString().Substring(0, 8).ToUpper()}.",
                             Type = NotificationType.OrderStatusChanged,
                             ReferenceId = order.Id,
-                            ReferenceType = "Order"
+                            ReferenceType = "CustomOrder"
                         }, ct);
                     }
                 }
@@ -2202,6 +2261,17 @@ namespace HandoraApplication.Services
             }
 
             var dto = request.Adapt<CustomRequestDetailDto>();
+
+            // Restrict ProjectWorkspace access to assigned seller and admin only
+            if (userId != null && userRole != AppRoles.Admin)
+            {
+                bool isAssignedSeller = request.SelectedSeller != null && request.SelectedSeller.OwnerId == userId;
+                if (!isAssignedSeller)
+                {
+                    dto.ProjectWorkspace = null;
+                }
+            }
+
             if (request.SelectedSellerId.HasValue)
             {
                 var shopRepo = _unitOfWork.Repository<Shop, Guid>();
@@ -2763,6 +2833,23 @@ namespace HandoraApplication.Services
                 };
                 await conversationRepo.AddAsync(conversation);
                 await _unitOfWork.SaveChangesAsync();
+
+                // Notify admin
+                var admins = await _userManager.GetUsersInRoleAsync(AppRoles.Admin);
+                foreach (var admin in admins)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = admin.Id,
+                        TitleEn = "New Custom Chat Created",
+                        TitleAr = "تم إنشاء دردشة مخصصة جديدة",
+                        MessageEn = "A new custom chat has been created.",
+                        MessageAr = "تم إنشاء محادثة مخصصة جديدة.",
+                        Type = NotificationType.System,
+                        ReferenceId = conversation.Id,
+                        ReferenceType = "Conversation"
+                    }, ct);
+                }
             }
 
             if (request != null)
@@ -3200,6 +3287,61 @@ namespace HandoraApplication.Services
             }
             catch {}
             return "Inspired by reference photo";
+        }
+
+        public async Task<Result<ProjectWorkspaceDto>> GetWorkspaceDetailsAsync(
+            Guid requestId, string userId, string userRole, CancellationToken ct = default)
+        {
+            var repo = _unitOfWork.Repository<CustomRequest, Guid>();
+            var requests = await repo.GetAllAsNoTracking();
+            var request = await requests
+                .Include(r => r.SelectedSeller)
+                .Include(r => r.ProjectWorkspace)
+                    .ThenInclude(w => w.TimelineEntries)
+                .FirstOrDefaultAsync(r => r.Id == requestId, ct);
+
+            if (request == null)
+            {
+                return Result<ProjectWorkspaceDto>.Failure("Custom Request not found.");
+            }
+
+            if (request.ProjectWorkspace == null)
+            {
+                return Result<ProjectWorkspaceDto>.Failure("Project workspace has not been initialized for this request yet.");
+            }
+
+            // Access Control Validation for Workspace
+            if (userRole == AppRoles.Admin)
+            {
+                return Result<ProjectWorkspaceDto>.Success(request.ProjectWorkspace.Adapt<ProjectWorkspaceDto>());
+            }
+
+            if (userRole == AppRoles.Seller)
+            {
+                // Must be the assigned seller
+                if (request.SelectedSeller != null && request.SelectedSeller.OwnerId == userId)
+                {
+                    return Result<ProjectWorkspaceDto>.Success(request.ProjectWorkspace.Adapt<ProjectWorkspaceDto>());
+                }
+            }
+
+            // Buyer or unauthorized seller are forbidden
+            return Result<ProjectWorkspaceDto>.Failure("Unauthorized access to this workspace.");
+        }
+
+        public async Task<bool> IsAssignedSellerAsync(Guid requestId, string sellerUserId, CancellationToken ct = default)
+        {
+            var repo = _unitOfWork.Repository<CustomRequest, Guid>();
+            var request = await (await repo.GetAllAsNoTracking())
+                .Include(r => r.SelectedSeller)
+                .FirstOrDefaultAsync(r => r.Id == requestId, ct);
+
+            if (request == null || request.SelectedSeller == null)
+            {
+                return false;
+            }
+
+            return request.SelectedSeller.OwnerId == sellerUserId;
         }
     }
 }

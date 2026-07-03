@@ -1,4 +1,5 @@
 using HandoraApplication.AI.Interfaces;
+using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using System;
@@ -11,20 +12,38 @@ namespace HandoraApplication.AI.Embeddings
 {
     public class OnnxEmbeddingService : IEmbeddingService, IDisposable
     {
-        private readonly InferenceSession _session;
-        private readonly Tokenizers.DotNet.Tokenizer _tokenizer;
-          
-        public OnnxEmbeddingService()
-        {
-            var modelPath = Path.Combine(AppContext.BaseDirectory, "AI", "Embeddings", "Models", "model.onnx");
-            var tokenizerPath = Path.Combine(AppContext.BaseDirectory, "AI", "Embeddings", "Models", "tokenizer.json");
+        private readonly InferenceSession? _session;
+        private readonly Tokenizers.DotNet.Tokenizer? _tokenizer;
+        private readonly bool _isAvailable;
+        private readonly ILogger<OnnxEmbeddingService>? _logger;
 
-            _session = new InferenceSession(modelPath);
-            _tokenizer = new Tokenizers.DotNet.Tokenizer(tokenizerPath);
+        public OnnxEmbeddingService(ILogger<OnnxEmbeddingService>? logger = null)
+        {
+            _logger = logger;
+            try
+            {
+                var modelPath = Path.Combine(AppContext.BaseDirectory, "AI", "Embeddings", "Models", "model.onnx");
+                var tokenizerPath = Path.Combine(AppContext.BaseDirectory, "AI", "Embeddings", "Models", "tokenizer.json");
+
+                _session = new InferenceSession(modelPath);
+                _tokenizer = new Tokenizers.DotNet.Tokenizer(tokenizerPath);
+                _isAvailable = true;
+            }
+            catch (Exception ex)
+            {
+                _isAvailable = false;
+                _logger?.LogWarning(ex, "ONNX Runtime is not available on this host. AI embedding features will be disabled. Products and other endpoints will continue to function normally.");
+            }
         }
-       
+
         public async Task<float[]> GetEmbeddingAsync(string text)
         {
+            if (!_isAvailable || _session == null || _tokenizer == null)
+            {
+                // Return empty vector — embedding features unavailable on this host
+                return Array.Empty<float>();
+            }
+
             // 1. Tokenize
             var encoding = _tokenizer.Encode(text);
 

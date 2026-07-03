@@ -41,8 +41,30 @@
         font-weight: 500;
         color: #888;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 10px;
+    .responsive-details-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    @@media (max-width: 992px) {
+        .responsive-details-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @@media (max-width: 480px) {
+        .responsive-details-grid {
+            grid-template-columns: 1fr;
+        }
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .page-header a, .page-header span {
+            width: 100%;
+            text-align: center;
+        }
     }
 </style>
 <div class="page-header">
@@ -66,7 +88,7 @@
     </div>
 }
 
-<div class="details-grid" style="grid-template-columns: repeat(4, 1fr);">
+<div class="details-grid responsive-details-grid">
     <div class="detail-card">
         <h3>Customer</h3>
         <p>@Model.BuyerEmail</p>

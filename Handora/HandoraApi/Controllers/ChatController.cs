@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using HandoraApplication.Helpers.AuthHelper;
 
 namespace HandoraApi.Controllers
 {
@@ -55,7 +56,8 @@ namespace HandoraApi.Controllers
         public async Task<IActionResult> GetConversations(CancellationToken ct)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var result = await _chatService.GetUserConversationsAsync(userId, ct);
+            var isAdmin = User.IsInRole(AppRoles.Admin);
+            var result = await _chatService.GetUserConversationsAsync(userId, isAdmin, ct);
             return Ok(ApiResponse<IReadOnlyList<ConversationDto>>.Ok(result));
         }
 
@@ -63,7 +65,8 @@ namespace HandoraApi.Controllers
         public async Task<IActionResult> GetMessages(Guid conversationId, CancellationToken ct)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var result = await _chatService.GetMessagesAsync(conversationId, userId, ct);
+            var isAdmin = User.IsInRole(AppRoles.Admin);
+            var result = await _chatService.GetMessagesAsync(conversationId, userId, isAdmin, ct);
             return Ok(ApiResponse<IReadOnlyList<MessageDto>>.Ok(result));
         }
 
@@ -71,9 +74,24 @@ namespace HandoraApi.Controllers
         public async Task<IActionResult> SendMessage(
             [FromBody] SendMessageDto dto, CancellationToken ct)
         {
-            var senderId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var result = await _chatService.SendMessageAsync(senderId, dto, ct);
-            return Ok(ApiResponse<MessageDto>.Ok(result, "Message sent."));
+            try
+            {
+                var senderId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                var result = await _chatService.SendMessageAsync(senderId, dto, ct);
+                return Ok(ApiResponse<MessageDto>.Ok(result, "Message sent."));
+            }
+            catch (AuthException ex)
+            {
+                if (ex.Message.Contains("closed") || ex.Message.Contains("delivered"))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<MessageDto>.Fail(ex.Message));
+                }
+                return Unauthorized(ApiResponse<MessageDto>.Fail(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<MessageDto>.Fail(ex.Message));
+            }
         }
 
         [HttpPost("upload")]

@@ -55,5 +55,7 @@ namespace HandoraApplication.IServices
         Task<Result<PagedResultDto<CustomRequestSummaryDto>>> GetSellerRequestsAsync(GetSellerRequestsQuery query, CancellationToken ct = default);
         Task<Result<PagedResultDto<CustomRequestSummaryDto>>> SearchCustomRequestsAsync(SearchCustomRequestsQuery query, CancellationToken ct = default);
         Task<Result<CustomRequestDetailDto>> GetCustomRequestByConversationIdAsync(Guid conversationId, CancellationToken ct = default);
+        Task<Result<ProjectWorkspaceDto>> GetWorkspaceDetailsAsync(Guid requestId, string userId, string userRole, CancellationToken ct = default);
+        Task<bool> IsAssignedSellerAsync(Guid requestId, string sellerUserId, CancellationToken ct = default);
     }
 }

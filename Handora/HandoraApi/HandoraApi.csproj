@@ -4,6 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>3f882a3b-1f1c-41e7-8163-2adc5572e81b</UserSecretsId>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CloudinaryDotNet" Version="1.29.1" />
@@ -20,9 +21,15 @@
   <ItemGroup>
     <ProjectReference Include="..\HandoraInfrastructure\HandoraInfrastructure.csproj" />
     <ProjectReference Include="..\HandoraApplication\HandoraApplication.csproj" />
+    <ProjectReference Include="..\HandoraMVC\HandoraMVC.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="wwwroot\" />
   </ItemGroup>
-  <ProjectExtensions><VisualStudio><UserProperties properties_4launchsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+  <Target Name="CopyVCConfig" AfterTargets="Publish">
+    <ItemGroup>
+      <VCDlls Include="C:\Windows\System32\vcruntime140.dll;C:\Windows\System32\msvcp140.dll;C:\Windows\System32\vcruntime140_1.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(VCDlls)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

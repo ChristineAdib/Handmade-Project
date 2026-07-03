@@ -273,6 +273,23 @@ public class PaymentService : IPaymentService
                             await conversationRepo.AddAsync(conversation);
                             await _unitOfWork.SaveChangesAsync();
 
+                            // Notify admin
+                            var admins = await _authRepository.GetUsersInRoleAsync(AppRoles.Admin);
+                            foreach (var admin in admins)
+                            {
+                                await _notificationService.SendAsync(new SendNotificationDto
+                                {
+                                    UserId = admin.Id,
+                                    TitleEn = "New Custom Chat Created",
+                                    TitleAr = "تم إنشاء دردشة مخصصة جديدة",
+                                    MessageEn = "A new custom chat has been created.",
+                                    MessageAr = "تم إنشاء محادثة مخصصة جديدة.",
+                                    Type = NotificationType.System,
+                                    ReferenceId = conversation.Id,
+                                    ReferenceType = "Conversation"
+                                });
+                            }
+
                             // 2. Create the Project Workspace
                             var workspace = new ProjectWorkspace
                             {

@@ -79,7 +79,7 @@ namespace HandoraApi.Middleware
             {
                 _logger.LogError(ex, "Unhandled exception.");
                 await WriteResponseAsync(context, StatusCodes.Status500InternalServerError,
-                    "An unexpected error occurred.");
+                    ex.ToString());
             }
         }
 

@@ -319,7 +319,12 @@ namespace HandoraApplication.Services
             var token = await _authRepo.GeneratePasswordResetTokenAsync(user);
             var encodedToken = Uri.EscapeDataString(token);
             var encodedEmail = Uri.EscapeDataString(user.Email!);
-            var resetUrl = $"http://localhost:4200/reset-password?email={encodedEmail}&token={encodedToken}";
+            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
+            if (!frontendUrl.EndsWith("/"))
+            {
+                frontendUrl += "/";
+            }
+            var resetUrl = $"{frontendUrl}reset-password?email={encodedEmail}&token={encodedToken}";
 
             var subject = "Reset Your Password - Handora";
             var body = $@"

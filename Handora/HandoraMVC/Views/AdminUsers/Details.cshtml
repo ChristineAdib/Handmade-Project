@@ -373,6 +373,46 @@
         background: #1b5e20;
         transform: translateY(-1px);
     }
+
+    @@media (max-width: 768px) {
+        .profile-header-card {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        .profile-header-left {
+            flex-direction: column;
+            align-items: center;
+        }
+        .profile-header-meta {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .profile-header-actions {
+            width: 100%;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .profile-header-actions form,
+        .profile-header-actions button,
+        .profile-header-actions a {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .profile-header-actions button,
+        .profile-header-actions a {
+            justify-content: center;
+        }
+        .details-card {
+            padding: 16px;
+        }
+        .details-card table {
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
 </style>
 
 <div class="details-container">
