@@ -4,14 +4,33 @@
     ViewData["Title"] = "Product Review - " + Model.TitleEn;
 }
 
+<style>
+    .responsive-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    @@media (max-width: 768px) {
+        .responsive-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .responsive-header > div {
+            width: 100%;
+        }
+    }
+</style>
+
 <div style="margin-bottom: 20px;">
     <a href="@Url.Action("Index", "Products")" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">
         <i class="ti-arrow-left"></i> Back to Products
     </a>
 </div>
 
-<div class="page-header" style="align-items: center; gap: 16px;">
-    <div style="display: flex; align-items: center; gap: 16px;">
+<div class="page-header responsive-header">
+    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
         <div>
             <h2 style="margin: 0; font-size: 22px;">@Model.TitleEn</h2>
             <div style="margin-top: 4px; display: flex; align-items: center; gap: 8px;">
@@ -151,7 +170,8 @@
             </h3>
         </div>
 
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <table style="width: 100%; min-width: 600px; border-collapse: collapse; font-size: 13px;">
             <thead>
                 <tr style="background: #f5f0e1;">
                     <th style="padding: 8px 12px; text-align: left; border-bottom: 2px solid #e6d9b8; width: 20%; color: #7a6225;">Field</th>
@@ -277,7 +297,8 @@
                     </tr>
                 }
             </tbody>
-        </table>
+            </table>
+        </div>
     </div>
 }
 @if (Model.Images.Any())

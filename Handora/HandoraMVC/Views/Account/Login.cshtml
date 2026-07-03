@@ -1,4 +1,4 @@
-﻿@model HandoraMVC.ViewModels.LoginViewModel
+@model HandoraMVC.ViewModels.LoginViewModel
 
 @{
     Layout = null;
@@ -459,6 +459,20 @@
             @@keyframes spin {
                 to {
                     transform: rotate(360deg);
+                }
+            }
+
+            @@media (max-width: 768px) {
+                body {
+                    flex-direction: column;
+                    overflow-y: auto;
+                }
+                .login-left {
+                    display: none;
+                }
+                .login-right {
+                    min-height: 100vh;
+                    padding: 30px 16px;
                 }
             }
     </style>

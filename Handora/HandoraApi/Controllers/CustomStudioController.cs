@@ -843,22 +843,17 @@ namespace HandoraApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var userRole = User.IsInRole(AppRoles.Admin) ? AppRoles.Admin : (User.IsInRole(AppRoles.Seller) ? AppRoles.Seller : AppRoles.Buyer);
 
-            var requestResult = await _customStudioService.GetCustomRequestDetailsAsync(new GetCustomRequestDetailsQuery(id), ct, userId, userRole);
-            if (!requestResult.IsSuccess)
+            var result = await _customStudioService.GetWorkspaceDetailsAsync(id, userId, userRole, ct);
+            if (!result.IsSuccess)
             {
-                if (requestResult.Errors?.Any(e => e.Contains("Unauthorized")) == true)
+                if (result.Errors?.Any(e => e.Contains("Unauthorized")) == true)
                 {
                     return Forbid();
                 }
-                return NotFound(ApiResponse<object>.Fail("Request not found", requestResult.Errors));
+                return NotFound(ApiResponse<object>.Fail(result.Errors?.FirstOrDefault() ?? "Workspace not found", result.Errors));
             }
 
-            if (requestResult.Data!.ProjectWorkspace == null)
-            {
-                return NotFound(ApiResponse<object>.Fail("Project workspace has not been initialized for this request yet. Accept an offer to initialize."));
-            }
-
-            return Ok(ApiResponse<ProjectWorkspaceDto>.Ok(requestResult.Data.ProjectWorkspace));
+            return Ok(ApiResponse<ProjectWorkspaceDto>.Ok(result.Data!));
         }
 
         public class UpdateProgressRequest

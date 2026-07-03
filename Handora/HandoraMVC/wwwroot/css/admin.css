@@ -674,3 +674,63 @@ tr:hover td {
     font-size: 12px;
 }
 
+/* ─── RESPONSIVENESS OVERRIDES ─── */
+@media (max-width: 992px) {
+    #adminSidebarToggle {
+        display: inline-flex !important;
+    }
+    
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 1000;
+    }
+    
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+        box-shadow: 4px 0 25px rgba(60, 30, 10, 0.15);
+    }
+    
+    .main {
+        margin-left: 0 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    .details-grid .detail-card {
+        grid-column: span 1 !important;
+    }
+    .table-card {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table-card table {
+        min-width: 650px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .form-card {
+        padding: 16px;
+    }
+    .table-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+}
+

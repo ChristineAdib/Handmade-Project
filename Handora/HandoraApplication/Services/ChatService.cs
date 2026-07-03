@@ -87,9 +87,30 @@ namespace HandoraApplication.Services
         }
 
         public async Task<IReadOnlyList<ConversationDto>> GetUserConversationsAsync(
-            string userId, CancellationToken ct = default)
+            string userId, bool isAdmin = false, CancellationToken ct = default)
         {
-            var conversations = await _chatRepo.GetUserConversationsAsync(userId, ct);
+            IReadOnlyList<Conversation> conversations;
+            if (isAdmin)
+            {
+                var workspaceRepo = _unitOfWork.Repository<ProjectWorkspace, Guid>();
+                var workspaces = await workspaceRepo.GetAllAsNoTracking();
+                var conversationRepo = _unitOfWork.Repository<Conversation, Guid>();
+                var conversationsQuery = await conversationRepo.GetAllAsNoTracking();
+                
+                conversations = await conversationsQuery
+                    .Include(c => c.Buyer)
+                    .Include(c => c.Seller)
+                    .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
+                        .ThenInclude(m => m.Sender)
+                    .Where(c => (c.ActiveDesignRequestId.HasValue || workspaces.Any(w => w.ChatConversationId == c.Id)) && !c.IsDeleted)
+                    .OrderByDescending(c => c.Messages.Max(m => (DateTime?)m.CreatedAt) ?? c.CreatedAt)
+                    .ToListAsync(ct);
+            }
+            else
+            {
+                conversations = await _chatRepo.GetUserConversationsAsync(userId, ct);
+            }
+
             var result = new List<ConversationDto>();
 
             foreach (var c in conversations)
@@ -99,11 +120,11 @@ namespace HandoraApplication.Services
         }
 
         public async Task<IReadOnlyList<MessageDto>> GetMessagesAsync(
-            Guid conversationId, string userId, CancellationToken ct = default)
+            Guid conversationId, string userId, bool isAdmin = false, CancellationToken ct = default)
         {
-            // تأكد إن اليوزر ده طرف في المحادثة
+            // تأكد إن اليوزر ده طرف في المحادثة أو أدمن
             var conversation = await _chatRepo.GetConversationByIdAsync(conversationId, ct);
-            if (conversation is null || (conversation.BuyerId != userId && conversation.SellerId != userId))
+            if (conversation is null || (!isAdmin && conversation.BuyerId != userId && conversation.SellerId != userId))
                 throw new AuthException("Unauthorized access to this conversation.");
 
             var messages = await _chatRepo.GetMessagesAsync(conversationId, ct);
@@ -135,6 +156,32 @@ namespace HandoraApplication.Services
             if (conversation is null ||
                 (conversation.BuyerId != senderId && conversation.SellerId != senderId))
                 throw new AuthException("Unauthorized access to this conversation.");
+
+            // Check if custom chat is closed due to delivery
+            var customRequestRepo = _unitOfWork.Repository<CustomRequest, Guid>();
+            var customRequests = await customRequestRepo.GetAllAsNoTracking();
+            var associatedRequest = await customRequests
+                .Include(r => r.ProjectWorkspace)
+                .FirstOrDefaultAsync(r => r.ProjectWorkspace != null && r.ProjectWorkspace.ChatConversationId == dto.ConversationId, ct);
+
+            if (associatedRequest != null)
+            {
+                bool isClosed = associatedRequest.Status == CustomRequestStatus.Completed;
+                if (!isClosed && associatedRequest.ProjectWorkspace != null && associatedRequest.ProjectWorkspace.OrderId.HasValue)
+                {
+                    var orderRepo = _unitOfWork.Repository<HandoraDomain.Models.OrderEntity.Order, Guid>();
+                    var order = await orderRepo.GetByIdAsync(associatedRequest.ProjectWorkspace.OrderId.Value);
+                    if (order != null && order.Status == HandoraDomain.Models.OrderEntity.OrderStatus.Delivered)
+                    {
+                        isClosed = true;
+                    }
+                }
+
+                if (isClosed)
+                {
+                    throw new AuthException("This conversation has been closed because the custom order has been delivered.");
+                }
+            }
 
             if (conversation.BuyerId == conversation.SellerId)
                 throw new AuthException("You cannot send messages to yourself.");

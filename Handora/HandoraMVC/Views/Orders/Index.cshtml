@@ -1,9 +1,17 @@
-﻿@model HandoraMVC.ViewModels.OrderIndexViewModel
+@model HandoraMVC.ViewModels.OrderIndexViewModel
 
 @{
     ViewData["Title"] = "Orders";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
+
+<style>
+    @@media (max-width: 480px) {
+        .form-input {
+            width: 100%;
+        }
+    }
+</style>
 
 <div class="page-header">
     <h2>Orders</h2>

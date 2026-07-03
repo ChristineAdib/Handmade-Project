@@ -20,6 +20,7 @@ public static class AuthenticationExtension
         services.AddAuthentication(options =>
         {
             options.DefaultScheme = "SmartScheme";
+            options.DefaultAuthenticateScheme = "SmartScheme";
             options.DefaultChallengeScheme = "SmartScheme";
         })
         .AddPolicyScheme("SmartScheme", "SmartScheme", options =>
@@ -30,33 +31,6 @@ public static class AuthenticationExtension
                 if (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase) || 
                     path.StartsWith("/hubs", StringComparison.OrdinalIgnoreCase))
                 {
-                    // If request has Bearer authorization header or access_token in query (SignalR fallback), use JWT
-                    var authHeader = context.Request.Headers["Authorization"].ToString();
-                    if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return JwtBearerDefaults.AuthenticationScheme;
-                    }
-
-                    if (context.Request.Query.ContainsKey("access_token"))
-                    {
-                        return JwtBearerDefaults.AuthenticationScheme;
-                    }
-
-                    // If request has an ASP.NET Identity authentication cookie, use Cookie auth
-                    var hasCookie = context.Request.Cookies.Keys.Any(k => k.StartsWith(".AspNetCore.Identity.Application", StringComparison.OrdinalIgnoreCase));
-                    if (hasCookie)
-                    {
-                        return Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme;
-                    }
-
-                    // Otherwise, fallback to the configured Auth Mode (default to Bearer)
-                    var configuration = context.RequestServices.GetRequiredService<IConfiguration>();
-                    var authMode = configuration["Auth:Mode"] ?? "Bearer";
-                    if (authMode.Equals("Cookie", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme;
-                    }
-
                     return JwtBearerDefaults.AuthenticationScheme;
                 }
                 return Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme;
@@ -67,6 +41,7 @@ public static class AuthenticationExtension
             o.IncludeErrorDetails = true;
             o.RequireHttpsMetadata = false;
             o.SaveToken = false;
+
             o.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
@@ -79,25 +54,38 @@ public static class AuthenticationExtension
                     Encoding.UTF8.GetBytes(configuration[$"{JwtOptions.SectionName}:Key"]!)),
                 ClockSkew = TimeSpan.Zero
             };
+
             o.Events = new JwtBearerEvents
             {
                 OnMessageReceived = context =>
                 {
-                    var accessToken = context.Request.Query["access_token"];
-
-                    // If the request is for our hubs...
-                    var path = context.HttpContext.Request.Path;
-                    if (!string.IsNullOrEmpty(accessToken) &&
-                        (path.StartsWithSegments("/hubs/chat") || path.StartsWithSegments("/hubs/notifications")))
+                    // 1- ???? ?????? ?? HttpOnly Cookie
+                    if (context.Request.Cookies.TryGetValue("accessToken", out var cookieToken) &&
+                        !string.IsNullOrWhiteSpace(cookieToken))
                     {
-                        // Read the token out of the query string
+                        context.Token = cookieToken;
+                        return Task.CompletedTask;
+                    }
+
+                    // 2- ??? SignalR ??? ??
+                    var accessToken = context.Request.Query["access_token"];
+                    var path = context.HttpContext.Request.Path;
+
+                    if (!string.IsNullOrEmpty(accessToken) &&
+                        (path.StartsWithSegments("/hubs/chat") ||
+                         path.StartsWithSegments("/hubs/notifications")))
+                    {
                         context.Token = accessToken;
                     }
+
                     return Task.CompletedTask;
                 },
+
                 OnTokenValidated = async context =>
                 {
-                    var authRepository = context.HttpContext.RequestServices.GetRequiredService<IAuthRepository>();
+                    var authRepository = context.HttpContext.RequestServices
+                        .GetRequiredService<IAuthRepository>();
+
                     var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier)
                                  ?? context.Principal?.FindFirstValue("sub")
                                  ?? context.Principal?.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub);
@@ -121,8 +109,6 @@ public static class AuthenticationExtension
         {
             options.LoginPath = "/Account/Login";
             options.AccessDeniedPath = "/Account/AccessDenied";
-            options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
-            options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
         });
     }
 }
