@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.OrderDTOs;
+using HandoraApplication.DTOs.OrderDTOs;
 using HandoraApplication.DTOs.ProductDTOs;
 using HandoraDomain.Models.OrderEntity;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -15,6 +15,7 @@ public class ShopListItemViewModel
     public int ReviewCount { get; set; }
     public decimal TotalSales { get; set; }
     public int ProductCount { get; set; }
+    public bool IsVerified { get; set; }
 }
 
 public class ShopFullViewModel

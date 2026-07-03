@@ -1,4 +1,4 @@
-﻿using HandoraApplication.DTOs.OrderDTOs;
+using HandoraApplication.DTOs.OrderDTOs;
 using HandoraApplication.IServices;
 using HandoraDomain.Models.OrderEntity;
 using HandoraMVC.ViewModels;
@@ -41,7 +41,8 @@ public class ShopsController : Controller
             Rating = s.Rating,
             ReviewCount = s.ReviewCount,
             TotalSales = s.TotalSales,
-            ProductCount = s.ProductCount
+            ProductCount = s.ProductCount,
+            IsVerified = s.IsVerified
         }).ToList();
 
         ViewData["Search"] = search;
