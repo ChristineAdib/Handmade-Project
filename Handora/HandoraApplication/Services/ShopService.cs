@@ -21,6 +21,7 @@ namespace HandoraApplication.Services
 
             var shop = await query
                 .Include(s => s.Owner)
+                .Include(s => s.Products.Where(p => !p.IsDeleted))
                 .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
 
             return shop is null
@@ -53,6 +54,7 @@ namespace HandoraApplication.Services
 
             var shop = await query
                 .Include(s => s.Owner)
+                .Include(s => s.Products.Where(p => !p.IsDeleted))
                 .FirstOrDefaultAsync(s => s.OwnerId == ownerId && !s.IsDeleted);
 
             return shop is null
@@ -90,12 +92,13 @@ namespace HandoraApplication.Services
             var query = await repo.GetAllAsNoTracking();
 
             var shops = await query
-     .Include(s => s.Owner)
-     .Where(s => !s.IsDeleted && s.IsVerified)
-     .OrderByDescending(s => s.Rating)
-     .ThenByDescending(s => s.ReviewCount)
-     .Take(count)
-     .ToListAsync();
+      .Include(s => s.Owner)
+      .Include(s => s.Products.Where(p => !p.IsDeleted))
+      .Where(s => !s.IsDeleted && s.IsVerified)
+      .OrderByDescending(s => s.Rating)
+      .ThenByDescending(s => s.ReviewCount)
+      .Take(count)
+      .ToListAsync();
 
             return Result<IEnumerable<ShopDto>>.Success(shops.Adapt<IEnumerable<ShopDto>>());
         }
@@ -106,8 +109,9 @@ namespace HandoraApplication.Services
             var query = await repo.GetAllAsNoTracking();
 
             var shops = query
-     .Include(s => s.Owner)
-     .Where(s => !s.IsDeleted);
+      .Include(s => s.Owner)
+      .Include(s => s.Products.Where(p => !p.IsDeleted))
+      .Where(s => !s.IsDeleted);
 
             if (!string.IsNullOrEmpty(filter.Search))
                 shops = shops.Where(s =>
@@ -249,6 +253,7 @@ namespace HandoraApplication.Services
 
             var shops = await query
                 .Include(s => s.Owner)
+                .Include(s => s.Products.Where(p => !p.IsDeleted))
                 .Where(s => !s.IsDeleted)
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();
