@@ -57,8 +57,14 @@ public class ProductService(
                 (p.DescriptionEn != null && p.DescriptionEn.ToLower().Contains(search)));
         }
 
-        if (query.CategoryId.HasValue)
+        if (query.CategoryIds != null && query.CategoryIds.Any())
+        {
+            productsQuery = productsQuery.Where(p => query.CategoryIds.Contains(p.CategoryId));
+        }
+        else if (query.CategoryId.HasValue)
+        {
             productsQuery = productsQuery.Where(p => p.CategoryId == query.CategoryId.Value);
+        }
 
         if (query.ShopId.HasValue)
             productsQuery = productsQuery.Where(p => p.ShopId == query.ShopId.Value);
