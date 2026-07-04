@@ -80,7 +80,9 @@ namespace HandoraApi.Controllers
                 {
                     Expires = DateTimeOffset.UtcNow.AddDays(7),
                     HttpOnly = true,
-                    IsEssential = true
+                    IsEssential = true,
+                    SameSite = SameSiteMode.None,
+                    Secure = true
                 });
             }
 

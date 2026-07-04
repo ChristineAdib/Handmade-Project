@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HandoraApplication.DTOs.AuthDTOs;
 using HandoraApplication.IServices;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
+using HandoraDomain.Models.AppUser;
+using Microsoft.Extensions.Configuration;
 
 namespace HandoraApi.Controllers
 {
@@ -11,10 +14,20 @@ namespace HandoraApi.Controllers
     public sealed class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly SignInManager<User> _signInManager;
+        private readonly UserManager<User> _userManager;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService)
+        public AuthController(
+            IAuthService authService,
+            SignInManager<User> signInManager,
+            UserManager<User> userManager,
+            IConfiguration configuration)
         {
             _authService = authService;
+            _signInManager = signInManager;
+            _userManager = userManager;
+            _configuration = configuration;
         }
 
         [HttpPost("register")]
@@ -58,6 +71,17 @@ namespace HandoraApi.Controllers
             CancellationToken ct)
         {
             var result = await _authService.LoginAsync(dto, ct);
+
+            var authMode = _configuration["Auth:Mode"] ?? "Bearer";
+            if (authMode.Equals("Cookie", StringComparison.OrdinalIgnoreCase))
+            {
+                var user = await _userManager.FindByEmailAsync(dto.Email);
+                if (user != null)
+                {
+                    await _signInManager.SignInAsync(user, isPersistent: true);
+                }
+            }
+
             return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Login successful."));
         }
 
@@ -142,6 +166,17 @@ namespace HandoraApi.Controllers
             try
             {
                 var result = await _authService.GoogleLoginAsync(dto, ct);
+
+                var authMode = _configuration["Auth:Mode"] ?? "Bearer";
+                if (authMode.Equals("Cookie", StringComparison.OrdinalIgnoreCase))
+                {
+                    var user = await _userManager.FindByEmailAsync(result.Email);
+                    if (user != null)
+                    {
+                        await _signInManager.SignInAsync(user, isPersistent: true);
+                    }
+                }
+
                 return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Google login successful."));
             }
             catch (Exception ex)

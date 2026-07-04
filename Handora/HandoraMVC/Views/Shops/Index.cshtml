@@ -440,6 +440,23 @@
         color: #7a5433;
     }
 
+        .shop-card-stats i {
+            margin-right: 4px;
+        }
+
+    @@media (max-width: 480px) {
+        .filter-bar {
+            display: flex;
+            width: 100%;
+        }
+        .form-input {
+            max-width: 100% !important;
+            flex: 1;
+        }
+        .shop-card-stats {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
     .shop-card:hover .card-hover-footer i {
         transform: translateX(4px);
     }

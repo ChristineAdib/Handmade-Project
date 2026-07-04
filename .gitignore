@@ -1,4 +1,13 @@
+# Publish folders
+publish/
+**/publish/
 
+# Logs
+logs/
+**/logs/
+
+# Production settings
+**/appsettings.Production.json
 # Visual Studio
 .vs/
 **/bin/

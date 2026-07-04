@@ -137,10 +137,41 @@
         font-weight: 700;
         color: var(--br);
     }
+
+    .studio-overview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    @@media (max-width: 992px) {
+        .stats-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .studio-overview-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .studio-overview-header div {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .studio-overview-header a {
+            width: 100%;
+            text-align: center;
+        }
+    }
 </style>
 
 <div class="dashboard-container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div class="studio-overview-header">
         <h2 style="font-size: 20px; font-weight: 600; color: var(--br);">Studio Overview</h2>
         <div style="display: flex; gap: 8px;">
             <a asp-action="ExportRequests" class="ptab"><i class="ti ti-download"></i> Export Requests</a>

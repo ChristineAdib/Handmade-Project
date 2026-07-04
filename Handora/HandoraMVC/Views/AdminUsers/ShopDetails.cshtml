@@ -4,14 +4,33 @@
     ViewData["Title"] = "Shop Details - " + Model.Name;
 }
 
+<style>
+    .responsive-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    @@media (max-width: 768px) {
+        .responsive-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .responsive-header > div {
+            width: 100%;
+        }
+    }
+</style>
+
 <div style="margin-bottom: 20px;">
     <a href="@Url.Action("Index")" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">
         <i class="ti-arrow-left"></i> Back to Users
     </a>
 </div>
 
-<div class="page-header" style="align-items: center; gap: 16px;">
-    <div style="display: flex; align-items: center; gap: 16px;">
+<div class="page-header responsive-header">
+    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
         @if (!string.IsNullOrEmpty(Model.Logo))
         {
             <img src="@Model.Logo" alt="@Model.Name Logo" class="cat-img" style="width: 64px; height: 64px; border-radius: 12px;" />

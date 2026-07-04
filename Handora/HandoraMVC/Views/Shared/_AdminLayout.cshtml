@@ -146,7 +146,12 @@
         <!-- Main -->
         <div class="main">
             <header class="topbar">
-                <span class="topbar-title">@ViewData["Title"]</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="topbar-icon-btn" id="adminSidebarToggle" aria-label="Toggle Sidebar" style="display: none; background: none; border: none; font-size: 20px; cursor: pointer; color: #7a5433; padding: 4px;">
+                        <i class="ti ti-menu-2" aria-hidden="true" style="font-size: 20px;"></i>
+                    </button>
+                    <span class="topbar-title">@ViewData["Title"]</span>
+                </div>
                 <div class="topbar-right">
                     <div class="notification-dropdown-wrapper">
                         <button class="topbar-icon-btn" id="notifBell" aria-label="Notifications">
@@ -175,7 +180,7 @@
                                 {
                                     @foreach (var notif in recentNotifications)
                                     {
-                                        <a href="/Products" class="notif-item @(notif.IsRead ? "" : "unread")">
+                                        <a href="/Admin/ClickNotification/@notif.Id" class="notif-item @(notif.IsRead ? "" : "unread")">
                                             <div class="notif-item-title">@notif.TitleEn</div>
                                             <div class="notif-item-desc">@notif.MessageEn</div>
                                             <div class="notif-item-time">@notif.CreatedAt.ToString("g")</div>
@@ -210,6 +215,20 @@
                 document.addEventListener('click', function (e) {
                     if (!menu.contains(e.target) && e.target !== bell) {
                         menu.classList.remove('show');
+                    }
+                });
+            }
+
+            var sidebar = document.querySelector('.sidebar');
+            var sidebarToggle = document.getElementById('adminSidebarToggle');
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    sidebar.classList.toggle('sidebar-open');
+                });
+                document.addEventListener('click', function (e) {
+                    if (!sidebar.contains(e.target) && e.target !== sidebarToggle) {
+                        sidebar.classList.remove('sidebar-open');
                     }
                 });
             }
@@ -251,7 +270,7 @@
                         var dateStr = new Date(notification.createdAt).toLocaleString('en-US', dateOptions);
 
                         var newNotifHtml = `
-                            <a href="/Products" class="notif-item unread">
+                            <a href="/Admin/ClickNotification/${notification.id}" class="notif-item unread">
                                 <div class="notif-item-title">${notification.titleEn}</div>
                                 <div class="notif-item-desc">${notification.messageEn}</div>
                                 <div class="notif-item-time">${dateStr}</div>

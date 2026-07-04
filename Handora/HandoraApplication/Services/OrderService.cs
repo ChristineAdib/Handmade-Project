@@ -3,6 +3,7 @@ using HandoraApplication.DTOs.OrderDTOs;
 using HandoraApplication.Helpers;
 using HandoraApplication.IServices;
 using HandoraDomain.Interfaces;
+using HandoraDomain.Models.AppUser;
 using HandoraDomain.Models.CartEntities;
 using HandoraDomain.Models.ShopEntities;
 using HandoraDomain.Models.OrderEntity;
@@ -18,12 +19,14 @@ public class OrderService(
     IOrderRepository orderRepository,
     IUnitOfWork unitOfWork,
     IEscrowService escrowService,
-    INotificationService notificationService) : IOrderService
+    INotificationService notificationService,
+    IAuthRepository authRepository) : IOrderService
 {
     private readonly IOrderRepository _orderRepository = orderRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IEscrowService _escrowService = escrowService;
     private readonly INotificationService _notificationService = notificationService;
+    private readonly IAuthRepository _authRepository = authRepository;
 
     public async Task<Result<OrderResponseDto>> CreateOrder(string userId, string buyerEmail, CreateOrderDto dto)
     {
@@ -383,6 +386,7 @@ public class OrderService(
                     break;
             }
 
+            // Notify the buyer
             await _notificationService.SendAsync(new SendNotificationDto
             {
                 UserId = order.UserId,
@@ -394,6 +398,26 @@ public class OrderService(
                 ReferenceId = order.Id,
                 ReferenceType = "Order"
             });
+
+            // Notify all admins when a seller updates the order status
+            if (!isAdmin)
+            {
+                var admins = await _authRepository.GetUsersInRoleAsync(AppRoles.Admin);
+                foreach (var admin in admins)
+                {
+                    await _notificationService.SendAsync(new SendNotificationDto
+                    {
+                        UserId = admin.Id,
+                        TitleEn = "Seller Updated Order Status",
+                        TitleAr = "السيلر غيّر حالة الطلب",
+                        MessageEn = $"Order {order.Id} status was changed to {statusEn} by the seller.",
+                        MessageAr = $"قام السيلر بتغيير حالة الطلب {order.Id} إلى {statusAr}.",
+                        Type = NotificationType.OrderStatusChanged,
+                        ReferenceId = order.Id,
+                        ReferenceType = "Order"
+                    });
+                }
+            }
         }
         catch (System.Exception)
         {
