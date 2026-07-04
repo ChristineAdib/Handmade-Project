@@ -52,7 +52,7 @@ You must gather the following preferences:
 - interests (e.g. art, gaming, cooking, reading)
 - stylePreferences (e.g. vintage, modern, minimalist, handmade)
 - colorPreferences (e.g. blue, pastel, warm colors)
-- budget (e.g. under $50, $50-$100)
+- budget (e.g. under 250 EGP, 250-500 EGP)
 - occasion (e.g. birthday, wedding, graduation, Christmas)
 - additionalNotes (any other user preferences)
 
@@ -60,7 +60,7 @@ Follow these rules:
 1. Ask only 1-2 questions at a time. Do not overwhelm the user with a long list of questions.
 2. Be conversational and natural. Adapt your questions based on what the user has already told you.
 3. Keep track of the current preferences state. Update the fields as the user provides details.
-4. Parse the budget text. If a specific price (e.g. ""price 99"", ""99 dollars"") or budget range/limit is mentioned, extract and output the minPrice and maxPrice (as numeric values) in the state. If the user specifies an exact target price (e.g. 99), set both minPrice and maxPrice to that value (99).
+4. Parse the budget text. If a specific price (e.g. ""price 99"", ""99 EGP"") or budget range/limit is mentioned, extract and output the minPrice and maxPrice (as numeric values) in the state. If the user specifies an exact target price (e.g. 99), set both minPrice and maxPrice to that value (99).
 5. You must ask a maximum of 5 questions before generating recommendations. If you have already asked 5 questions (i.e. 'Number of questions asked by the assistant so far' is 5 or more), or if you already have enough information before reaching 5 questions, you MUST set readyToRecommend to true, stop asking any more questions, and generate a search query string to search our product catalog based on the preferences collected so far.
 6. You only recommend in-stock products from our catalog, and never invent or suggest unavailable or out-of-stock items.
 7. Output your response as a JSON object matching this schema:
@@ -245,7 +245,7 @@ Retrieved Candidate Products Catalog:
                     var sorted = numbers.OrderBy(n => n).ToList();
                     state.MinPrice = sorted[0];
                     state.MaxPrice = sorted[1];
-                    state.Budget = $"${sorted[0]} - ${sorted[1]}";
+                    state.Budget = $"{sorted[0]} - {sorted[1]} EGP";
                 }
             }
             else
@@ -253,26 +253,26 @@ Retrieved Candidate Products Catalog:
                 // Fallback to standard descriptive terms if no exact number is present
                 if (message.Contains("affordable") || message.Contains("cheap"))
                 {
-                    state.Budget = "Under $25";
+                    state.Budget = "Under 250 EGP";
                     state.MinPrice = 0;
-                    state.MaxPrice = 25;
+                    state.MaxPrice = 250;
                 }
                 else if (message.Contains("moderate") || message.Contains("medium"))
                 {
-                    state.Budget = "$50 - $100";
-                    state.MinPrice = 50;
-                    state.MaxPrice = 100;
+                    state.Budget = "250 - 500 EGP";
+                    state.MinPrice = 250;
+                    state.MaxPrice = 500;
                 }
                 else if (message.Contains("premium"))
                 {
-                    state.Budget = "$100 - $200";
-                    state.MinPrice = 100;
-                    state.MaxPrice = 200;
+                    state.Budget = "500 - 1000 EGP";
+                    state.MinPrice = 500;
+                    state.MaxPrice = 1000;
                 }
                 else if (message.Contains("luxury") || message.Contains("expensive") || message.Contains("high end") || message.Contains("no limit") || message.Contains("any budget"))
                 {
-                    state.Budget = "Luxury ($200+)";
-                    state.MinPrice = 200;
+                    state.Budget = "Luxury (1000+ EGP)";
+                    state.MinPrice = 1000;
                     state.MaxPrice = 10000;
                 }
             }
@@ -333,7 +333,7 @@ Retrieved Candidate Products Catalog:
             }
             else if (string.IsNullOrEmpty(state.Budget))
             {
-                reply = $"Perfect! A {state.Occasion.ToLower()} gift for your {state.RecipientType.ToLower()}. 💰 What's your budget range? Something affordable (under $50), moderate ($50–$100), or more premium?";
+                reply = $"Perfect! A {state.Occasion.ToLower()} gift for your {state.RecipientType.ToLower()}. 💰 What's your budget range? Something affordable (under 250 EGP), moderate (250–500 EGP), or more premium?";
             }
             else if (state.Interests.Count == 0)
             {

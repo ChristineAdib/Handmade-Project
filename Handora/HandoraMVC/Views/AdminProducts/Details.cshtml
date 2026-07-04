@@ -110,12 +110,12 @@
                 <div class="stat-val">
                     @if (Model.DiscountPrice.HasValue)
                     {
-                        <span style="text-decoration: line-through; color: #888; font-size: 0.8em; margin-right: 6px;">$@Model.Price.ToString("N2")</span>
-                        <span style="color: #d9534f;">$@Model.DiscountPrice.Value.ToString("N2")</span>
+                        <span style="text-decoration: line-through; color: #888; font-size: 0.8em; margin-right: 6px;">EGP @Model.Price.ToString("N2")</span>
+                        <span style="color: #d9534f;">EGP @Model.DiscountPrice.Value.ToString("N2")</span>
                     }
                     else
                     {
-                        <span>$@Model.Price.ToString("N2")</span>
+                        <span>EGP @Model.Price.ToString("N2")</span>
                     }
                 </div>
             </div>
@@ -216,16 +216,16 @@
                 {
                     <tr style="background: #fff8e1;">
                         <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Price</td>
-                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888; text-decoration: line-through;">$@Model.Price.ToString("N2")</td>
-                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; color: #2e7d32;">$@draft.Price.Value.ToString("N2")</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888; text-decoration: line-through;">EGP @Model.Price.ToString("N2")</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; color: #2e7d32;">EGP @draft.Price.Value.ToString("N2")</td>
                     </tr>
                 }
                 @if (draft.DiscountPrice.HasValue)
                 {
                     <tr style="background: #fff8e1;">
                         <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600;">Discount Price</td>
-                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888; text-decoration: line-through;">@(Model.DiscountPrice.HasValue ? "$" + Model.DiscountPrice.Value.ToString("N2") : "—")</td>
-                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; color: #2e7d32;">$@draft.DiscountPrice.Value.ToString("N2")</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #888; text-decoration: line-through;">@(Model.DiscountPrice.HasValue ? "EGP " + Model.DiscountPrice.Value.ToString("N2") : "—")</td>
+                        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; color: #2e7d32;">EGP @draft.DiscountPrice.Value.ToString("N2")</td>
                     </tr>
                 }
                 @if (draft.Quantity.HasValue)
