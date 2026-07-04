@@ -12,6 +12,7 @@ namespace HandoraApplication.DTOs.ProductDTOs
     {
         public string? Search { get; set; }
         public Guid? CategoryId { get; set; }
+        public List<Guid>? CategoryIds { get; set; }
         public Guid? ShopId { get; set; }
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }
