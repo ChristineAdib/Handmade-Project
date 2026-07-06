@@ -148,15 +148,25 @@ namespace HandoraInfrastructure.Services
                 var formatted = FormatLockedAttributes(geminiJson);
                 sb.Append(formatted);
 
-                // Hijab coverage rule: If Hijab/Scarf is visible, make sure the negative prompt excludes hair!
                 try
                 {
                     using var doc = JsonDocument.Parse(geminiJson);
                     var root = doc.RootElement;
+
+                    // Hijab coverage rule: If Hijab/Scarf is visible, make sure the negative prompt excludes hair!
                     if (root.TryGetProperty("hairOrHeadCoverage", out var headCov) &&
                         headCov.TryGetProperty("headCovered", out var headCovered) && headCovered.GetString() == "Yes")
                     {
                         negativePrompt += ", hair, hair showing, hairline visible";
+                    }
+
+                    // No-glasses rule: If the person is NOT wearing glasses, explicitly exclude them
+                    // to prevent the AI from hallucinating glasses on the doll.
+                    if (root.TryGetProperty("personIdentity", out var identity) &&
+                        identity.TryGetProperty("glasses", out var glasses) && glasses.GetString() != "Yes")
+                    {
+                        negativePrompt += ", glasses, eyeglasses, spectacles, eyewear, frames on face";
+                        sb.Append("IMPORTANT: The person is NOT wearing glasses. The doll must NOT have any glasses, eyeglasses, spectacles, or eyewear of any kind. ");
                     }
                 }
                 catch {}
@@ -209,12 +219,17 @@ namespace HandoraInfrastructure.Services
                     if (identity.TryGetProperty("glasses", out var glasses))
                     {
                         var hasGlasses = glasses.GetString();
-                        sb.Append($"- Glasses: {hasGlasses}");
-                        if (hasGlasses == "Yes" && identity.TryGetProperty("glassesDetails", out var glassesDetails))
+                        // Only mention glasses when the person IS wearing them.
+                        // Mentioning "Glasses: No" paradoxically primes the AI to add glasses.
+                        if (hasGlasses == "Yes")
                         {
-                            sb.Append($" ({glassesDetails.GetString()})");
+                            sb.Append("- Glasses: Yes");
+                            if (identity.TryGetProperty("glassesDetails", out var glassesDetails))
+                            {
+                                sb.Append($" ({glassesDetails.GetString()})");
+                            }
+                            sb.AppendLine();
                         }
-                        sb.AppendLine();
                     }
                     if (identity.TryGetProperty("facialHair", out var facialHair))
                     {
@@ -268,7 +283,27 @@ namespace HandoraInfrastructure.Services
                 {
                     sb.Append("- Accessories: ");
                     var accList = new System.Collections.Generic.List<string>();
-                    if (accessories.TryGetProperty("headAccessories", out var ha) && ha.GetString() != "None") accList.Add($"Headwear: {ha.GetString()}");
+                    if (accessories.TryGetProperty("headAccessories", out var ha) && ha.GetString() != "None")
+                    {
+                        // Filter out "Glasses" from headAccessories when the person doesn't wear glasses,
+                        // to avoid contradicting the glasses=No signal from personIdentity.
+                        var headAccVal = ha.GetString() ?? "";
+                        bool personWearsGlasses = false;
+                        if (root.TryGetProperty("personIdentity", out var pid) &&
+                            pid.TryGetProperty("glasses", out var gl) && gl.GetString() == "Yes")
+                        {
+                            personWearsGlasses = true;
+                        }
+                        if (!personWearsGlasses)
+                        {
+                            // Remove any mention of glasses from headAccessories
+                            headAccVal = System.Text.RegularExpressions.Regex.Replace(headAccVal, @"\b[Gg]lasses\b", "").Trim(' ', ',', '/');
+                        }
+                        if (!string.IsNullOrWhiteSpace(headAccVal) && headAccVal != "None")
+                        {
+                            accList.Add($"Headwear: {headAccVal}");
+                        }
+                    }
                     if (accessories.TryGetProperty("jewelry", out var j) && j.GetString() != "None") accList.Add($"Jewelry: {j.GetString()}");
                     if (accessories.TryGetProperty("bagOrPurse", out var bp) && bp.GetString() != "No") accList.Add($"Bag: {bp.GetString()}");
                     if (accessories.TryGetProperty("shoes", out var s) && s.GetString() != "None") accList.Add($"Shoes: {s.GetString()}");

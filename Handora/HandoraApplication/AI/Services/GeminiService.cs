@@ -57,13 +57,20 @@ You must gather the following preferences:
 - additionalNotes (any other user preferences)
 
 Follow these rules:
-1. Ask only 1-2 questions at a time. Do not overwhelm the user with a long list of questions.
-2. Be conversational and natural. Adapt your questions based on what the user has already told you.
-3. Keep track of the current preferences state. Update the fields as the user provides details.
-4. Parse the budget text. If a specific price (e.g. ""price 99"", ""99 EGP"") or budget range/limit is mentioned, extract and output the minPrice and maxPrice (as numeric values) in the state. If the user specifies an exact target price (e.g. 99), set both minPrice and maxPrice to that value (99).
-5. You must ask a maximum of 5 questions before generating recommendations. If you have already asked 5 questions (i.e. 'Number of questions asked by the assistant so far' is 5 or more), or if you already have enough information before reaching 5 questions, you MUST set readyToRecommend to true, stop asking any more questions, and generate a search query string to search our product catalog based on the preferences collected so far.
-6. You only recommend in-stock products from our catalog, and never invent or suggest unavailable or out-of-stock items.
-7. Output your response as a JSON object matching this schema:
+1. Handora is a marketplace specifically and exclusively for handmade and artisan crafts. If the user is asking for anything that is NOT handmade or is completely unrelated to handmade stuff (such as factory-made electronics like a TV, phone, laptop, home appliances, cars, standard factory goods, etc.), you must reply: ""We only sell handmade stuff. Let me know if you would like help finding a handmade gift!"", set readyToRecommend to false, set searchQuery to null, and do not ask any follow-up questions or update preferences.
+2. Ask exactly 1 short, concise question at a time. Keep the question very short (max 1 sentence).
+3. Follow this specific order for asking questions:
+   - Question 1 (if recipientType is missing): ""Who is the gift for?""
+   - Question 2 (if occasion is missing): ""What is the occasion?""
+   - Question 3 (if interests is empty): ""What are their interests or hobbies?""
+   - Question 4 (if stylePreferences and colorPreferences are empty/missing): ""Any style or color preferences?""
+   - Question 5 (if budget is missing): ""What is your budget?""
+4. Be conversational and natural, but ensure your next follow-up message matches these specific questions and is short and concise. Adapt and skip a question if the user has already provided that information.
+5. Keep track of the current preferences state. Update the fields as the user provides details.
+6. Parse the budget text. If a specific price (e.g. ""price 99"", ""99 EGP"") or budget range/limit is mentioned, extract and output the minPrice and maxPrice (as numeric values) in the state. If the user specifies an exact target price (e.g. 99), set both minPrice and maxPrice to that value (99).
+7. You must ask a maximum of 5 questions before generating recommendations. If you have already asked 5 questions (i.e. 'Number of questions asked by the assistant so far' is 5 or more), or if you already have enough information before reaching 5 questions, you MUST set readyToRecommend to true, stop asking any more questions, and generate a search query string to search our product catalog based on the preferences collected so far.
+8. You only recommend in-stock products from our catalog, and never invent or suggest unavailable or out-of-stock items.
+9. Output your response as a JSON object matching this schema:
 {
   ""state"": {
     ""recipientType"": ""string or null"",
@@ -170,6 +177,19 @@ Retrieved Candidate Products Catalog:
         private GeminiAnalysisResult AnalyzeConversationMock(GiftRequestState state, string message, int questionsAsked)
         {
             message = message.ToLowerInvariant();
+            
+            // Check if the user is asking for non-handmade items (like TV, phone, laptop, car, electronics, etc.)
+            var nonHandmadeKeywords = new[] { "tv", "television", "phone", "iphone", "laptop", "computer", "ipad", "tablet", "fridge", "car", "microwave", "electronics", "console", "playstation", "xbox", "nintendo", "camera" };
+            if (nonHandmadeKeywords.Any(k => message.Contains(k) || System.Text.RegularExpressions.Regex.IsMatch(message, $@"\b{k}s?\b")))
+            {
+                return new GeminiAnalysisResult
+                {
+                    State = state,
+                    Reply = "We only sell handmade stuff. Let me know if you would like help finding a handmade gift!",
+                    ReadyToRecommend = false,
+                    SearchQuery = null
+                };
+            }
             
             // 1. Recipient Detection
             if (message.Contains("friend")) state.RecipientType = "Friend";
@@ -325,19 +345,23 @@ Retrieved Candidate Products Catalog:
             }
             else if (string.IsNullOrEmpty(state.RecipientType))
             {
-                reply = "Hi there! ✨ I'd love to help you find the perfect handmade gift. Who are you shopping for? For example, a friend, your mom, a partner, or someone else?";
+                reply = "Who is the gift for?";
             }
             else if (string.IsNullOrEmpty(state.Occasion))
             {
-                reply = $"A gift for your {state.RecipientType.ToLower()} — great choice! 🎁 What's the occasion? It could be a birthday, wedding, holiday, or even \"just because\"!";
+                reply = "What is the occasion?";
+            }
+            else if (state.Interests == null || state.Interests.Count == 0)
+            {
+                reply = "What are their interests or hobbies?";
+            }
+            else if (string.IsNullOrEmpty(state.StylePreferences) && (state.ColorPreferences == null || state.ColorPreferences.Count == 0))
+            {
+                reply = "Any style or color preferences?";
             }
             else if (string.IsNullOrEmpty(state.Budget))
             {
-                reply = $"Perfect! A {state.Occasion.ToLower()} gift for your {state.RecipientType.ToLower()}. 💰 What's your budget range? Something affordable (under 250 EGP), moderate (250–500 EGP), or more premium?";
-            }
-            else if (state.Interests.Count == 0)
-            {
-                reply = $"Almost there! What are they into? 🎨 Think hobbies or passions — like art, cooking, gaming, reading, jewelry, home decor, or anything handmade.";
+                reply = "What is your budget?";
             }
             else
             {

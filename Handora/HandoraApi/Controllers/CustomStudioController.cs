@@ -495,29 +495,72 @@ namespace HandoraApi.Controllers
         /// <summary>
         /// Return recommended matching sellers.
         /// </summary>
+        /// <summary>
+        /// Return recommended matching sellers.
+        /// </summary>
         [HttpGet("request/{id:guid}/recommended-sellers")]
         [ProducesResponseType(typeof(ApiResponse<List<SellerRecommendationDto>>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetRecommendedSellers(Guid id, CancellationToken ct)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var userRole = User.IsInRole(AppRoles.Admin) ? AppRoles.Admin : (User.IsInRole(AppRoles.Seller) ? AppRoles.Seller : AppRoles.Buyer);
-
-            var authResult = await _customStudioService.GetCustomRequestDetailsAsync(new GetCustomRequestDetailsQuery(id), ct, userId, userRole);
-            if (!authResult.IsSuccess)
+            try
             {
-                if (authResult.Errors?.Any(e => e.Contains("Unauthorized")) == true)
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                var userRole = User.IsInRole(AppRoles.Admin) ? AppRoles.Admin : (User.IsInRole(AppRoles.Seller) ? AppRoles.Seller : AppRoles.Buyer);
+
+                var authResult = await _customStudioService.GetCustomRequestDetailsAsync(new GetCustomRequestDetailsQuery(id), ct, userId, userRole);
+                if (!authResult.IsSuccess)
                 {
-                    return Forbid();
+                    if (authResult.Errors?.Any(e => e.Contains("Unauthorized")) == true)
+                    {
+                        return Forbid();
+                    }
+                    return NotFound(ApiResponse<object>.Fail("Request not found", authResult.Errors));
                 }
-                return NotFound(ApiResponse<object>.Fail("Request not found", authResult.Errors));
-            }
 
-            var result = await _customStudioService.GetRecommendedSellersAsync(new GetRecommendedSellersQuery(id), ct);
-            if (result.IsSuccess)
-            {
-                return Ok(ApiResponse<List<SellerRecommendationDto>>.Ok(result.Data!));
+                var result = await _customStudioService.GetRecommendedSellersAsync(new GetRecommendedSellersQuery(id), ct);
+                if (result.IsSuccess)
+                {
+                    return Ok(ApiResponse<List<SellerRecommendationDto>>.Ok(result.Data!));
+                }
+                return BadRequest(ApiResponse<object>.Fail("Failed to fetch recommended sellers", result.Errors));
             }
-            return BadRequest(ApiResponse<object>.Fail("Failed to fetch recommended sellers", result.Errors));
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.Fail($"Internal error: {ex.Message}", new List<string> { ex.StackTrace ?? "" }));
+            }
+        }
+
+        /// <summary>
+        /// Diagnostic endpoint: debug seller recommendation flow.
+        /// </summary>
+        [HttpGet("request/{id:guid}/debug-sellers")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> DebugRecommendedSellers(Guid id, CancellationToken ct)
+        {
+            var diag = new Dictionary<string, object?>();
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                diag["userId"] = userId;
+                diag["requestId"] = id.ToString();
+
+                var result = await _customStudioService.GetRecommendedSellersAsync(new GetRecommendedSellersQuery(id), ct);
+                diag["resultSuccess"] = result.IsSuccess;
+                diag["resultErrors"] = result.Errors;
+                diag["resultDataCount"] = result.Data?.Count ?? 0;
+                if (result.Data != null)
+                {
+                    diag["sellers"] = result.Data.Select(s => new { s.ShopId, s.ShopName, s.MatchingScore, s.Reason }).ToList();
+                }
+                return Ok(ApiResponse<object>.Ok(diag));
+            }
+            catch (Exception ex)
+            {
+                diag["exception"] = ex.Message;
+                diag["stackTrace"] = ex.StackTrace;
+                diag["innerException"] = ex.InnerException?.Message;
+                return Ok(ApiResponse<object>.Ok(diag));
+            }
         }
 
         #endregion

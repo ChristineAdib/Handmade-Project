@@ -44,27 +44,42 @@ namespace HandoraApplication.AI.Embeddings
                 return Array.Empty<float>();
             }
 
-            // 1. Tokenize
+            // 1. Tokenize — the tokenizer returns a fixed-length array (128) padded with 0s
             var encoding = _tokenizer.Encode(text);
 
             var inputIds = encoding
                 .Select(x => (long)x)
                 .ToArray();
 
-            var attentionMask = Enumerable
-                .Repeat(1L, inputIds.Length)
-                .ToArray();
+            // 2. Detect actual token length (non-padding).
+            //    The tokenizer pads with 0 (PAD token). Find the last non-zero token.
+            int actualLength = 0;
+            for (int i = 0; i < inputIds.Length; i++)
+            {
+                if (inputIds[i] != 0)
+                {
+                    actualLength = i + 1;
+                }
+            }
+            if (actualLength == 0) actualLength = 1; // safety fallback
+
+            // 3. Build attention mask: 1 for real tokens, 0 for padding
+            var attentionMask = new long[inputIds.Length];
+            for (int i = 0; i < inputIds.Length; i++)
+            {
+                attentionMask[i] = i < actualLength ? 1L : 0L;
+            }
 
             var tokenTypeIds = Enumerable
                 .Repeat(0L, inputIds.Length)
                 .ToArray();
 
-            // 2. Create tensors
+            // 4. Create tensors
             var inputIdsTensor = new DenseTensor<long>(inputIds, new[] { 1, inputIds.Length });
             var attentionMaskTensor = new DenseTensor<long>(attentionMask, new[] { 1, attentionMask.Length });
             var tokenTypeIdsTensor = new DenseTensor<long>(tokenTypeIds, new[] { 1, tokenTypeIds.Length });
 
-            // 3. Feed model
+            // 5. Feed model
             var inputs = new List<NamedOnnxValue>
             {
                 NamedOnnxValue.CreateFromTensor("input_ids", inputIdsTensor),
@@ -74,23 +89,22 @@ namespace HandoraApplication.AI.Embeddings
 
             using var results = _session.Run(inputs);
 
-            // 4. Extract embeddings
+            // 6. Extract embeddings
             var output = results.First().AsTensor<float>();
 
-            // 5. Mean pooling (important for sentence embeddings)
-            var vector = MeanPooling(output);
+            // 7. Mean pooling over ONLY the actual (non-padding) tokens, then L2-normalize
+            var vector = MeanPooling(output, actualLength);
 
             return vector;
         }
 
-        private float[] MeanPooling(Tensor<float> tokenEmbeddings)
+        private float[] MeanPooling(Tensor<float> tokenEmbeddings, int actualLength)
         {
-            var length = tokenEmbeddings.Dimensions[1];
             var dim = tokenEmbeddings.Dimensions[2];
-
             var result = new float[dim];
 
-            for (int i = 0; i < length; i++)
+            // Sum only the actual (non-padding) token embeddings
+            for (int i = 0; i < actualLength; i++)
             {
                 for (int j = 0; j < dim; j++)
                 {
@@ -98,9 +112,25 @@ namespace HandoraApplication.AI.Embeddings
                 }
             }
 
+            // Divide by actual token count (not the full padded length)
             for (int j = 0; j < dim; j++)
             {
-                result[j] /= length;
+                result[j] /= actualLength;
+            }
+
+            // L2 normalize the vector for optimal cosine similarity
+            double norm = 0.0;
+            for (int j = 0; j < dim; j++)
+            {
+                norm += result[j] * result[j];
+            }
+            norm = Math.Sqrt(norm);
+            if (norm > 0)
+            {
+                for (int j = 0; j < dim; j++)
+                {
+                    result[j] = (float)(result[j] / norm);
+                }
             }
 
             return result;

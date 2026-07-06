@@ -49,7 +49,8 @@ namespace HandoraApi.Extensions
                 configuration.GetSection(GeminiOptions.SectionName));
             services.AddHttpClient<IGeminiService, GeminiService>();
 
-            services.AddSingleton<IEmbeddingService, OnnxEmbeddingService>();
+            // Use Gemini API for embeddings (works on all hosting, no local ONNX model needed)
+            services.AddHttpClient<IEmbeddingService, GeminiEmbeddingService>();
             services.AddSingleton<IVectorStoreService, QdrantService>();
             services.AddSingleton<IChunkService, ChunkService>();
             services.AddScoped<IRagService, RagService>();
