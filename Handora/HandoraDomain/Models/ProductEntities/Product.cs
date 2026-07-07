@@ -36,7 +36,7 @@ namespace HandoraDomain.Models.ProductEntities
         public ICollection<ProductImage> Images { get; set; } = [];
         public ICollection<Review> Reviews { get; set; } = [];
         public ICollection<Tag> Tags { get; set; } = [];
-        public ICollection<OrderItem> OrderItems { get; set; } = [];
+        // public ICollection<OrderItem> OrderItems { get; set; } = [];
         public ICollection<CartItem> CartItems { get; set; } = [];
         public ICollection<WishListItem> WishListItems { get; set; } = [];
 

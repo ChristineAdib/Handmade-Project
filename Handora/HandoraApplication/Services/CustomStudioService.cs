@@ -2363,281 +2363,292 @@ namespace HandoraApplication.Services
                     return Result<List<SellerRecommendationDto>>.Failure("Custom Request not found.");
                 }
 
-                // Get prompt from selected design or build it from configuration
-                var searchPrompt = request.GeneratedDesigns.FirstOrDefault(d => d.Id == request.SelectedDesignId)?.Prompt;
-                if (string.IsNullOrWhiteSpace(searchPrompt) && request.CustomConfiguration != null)
-                {
-                    searchPrompt = _promptBuilder.BuildPrompt(request.CustomConfiguration).PositivePrompt;
-                }
-
-                // Search Qdrant collection for best artisans!
-                IReadOnlyList<RagSearchResultDto> vectorResults = null!;
                 try
                 {
-                    vectorResults = await _ragService.SearchAsync(new RagSearchRequestDto
+                    // Get prompt from selected design or build it from configuration
+                    var searchPrompt = request.GeneratedDesigns.FirstOrDefault(d => d.Id == request.SelectedDesignId)?.Prompt;
+                    if (string.IsNullOrWhiteSpace(searchPrompt) && request.CustomConfiguration != null)
                     {
-                        Collection = "handora-documents-artisans",
-                        Query = searchPrompt,
-                        TopK = 3
-                    });
+                        searchPrompt = _promptBuilder.BuildPrompt(request.CustomConfiguration).PositivePrompt;
+                    }
+
+                    // Search Qdrant collection for best artisans!
+                    IReadOnlyList<RagSearchResultDto> vectorResults = null!;
+                    try
+                    {
+                        vectorResults = await _ragService.SearchAsync(new RagSearchRequestDto
+                        {
+                            Collection = "handora-documents-artisans",
+                            Query = searchPrompt,
+                            TopK = 3
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "RAG vector search failed. Falling back to DB-based recommendation.");
+                    }
+
+                    var matchedShops = new List<Shop>();
+                    var shopRepo = _unitOfWork.Repository<Shop, Guid>();
+
+                    if (vectorResults != null && vectorResults.Count > 0)
+                    {
+                        foreach (var hit in vectorResults)
+                        {
+                            if (hit.Metadata != null && hit.Metadata.TryGetValue("shop_id", out var shopIdObj) && Guid.TryParse(shopIdObj.ToString(), out var shopId))
+                            {
+                                var shop = await (await shopRepo.GetAllAsync())
+                                    .Include(s => s.Products).ThenInclude(p => p.Category)
+                                    .Include(s => s.Reviews)
+                                    .FirstOrDefaultAsync(s => s.Id == shopId, ct);
+                                if (shop != null)
+                                {
+                                    matchedShops.Add(shop);
+                                }
+                            }
+                        }
+                    }
+
+                    // If matchedShops count is less than 3, fill with top-rated shops
+                    if (matchedShops.Count < 3)
+                    {
+                        var shopQuery = await shopRepo.GetAllAsync();
+                        var extraShops = await shopQuery
+                            .Include(s => s.Products).ThenInclude(p => p.Category)
+                            .Include(s => s.Reviews)
+                            .Where(s => !matchedShops.Select(ms => ms.Id).Contains(s.Id))
+                            .Take(5)
+                            .ToListAsync(ct);
+                        matchedShops.AddRange(extraShops);
+                    }
+
+                    // If still no shops exist, return empty list gracefully
+                    if (matchedShops.Count == 0)
+                    {
+                        _logger.LogWarning("No shops found in the database for seller recommendation.");
+                        return Result<List<SellerRecommendationDto>>.Success(new List<SellerRecommendationDto>());
+                    }
+
+                    // Fetch other tables for comprehensive scoring
+                    var orderRepo = _unitOfWork.Repository<Order, Guid>();
+                    var allOrders = await (await orderRepo.GetAllAsNoTracking())
+                        .Include(o => o.Items)
+                        .ToListAsync(ct);
+
+                    var customRequestRepo = _unitOfWork.Repository<CustomRequest, Guid>();
+                    var completedCustomRequests = await (await customRequestRepo.GetAllAsNoTracking())
+                        .Include(r => r.CustomConfiguration)
+                        .Where(r => r.Status == CustomRequestStatus.Completed)
+                        .ToListAsync(ct);
+
+                    var activeWorkspaces = await (await _unitOfWork.Repository<ProjectWorkspace, Guid>().GetAllAsNoTracking())
+                        .Where(w => w.Status == ProjectWorkspaceStatus.InProgress || w.Status == ProjectWorkspaceStatus.Initiated || w.Status == ProjectWorkspaceStatus.MaterialSourcing)
+                        .ToListAsync(ct);
+
+                    var scoredRecommendations = new List<SellerRecommendation>();
+
+                    foreach (var shop in matchedShops)
+                    {
+                        double score = 50.0; // Base score
+                        var reasonList = new List<string>();
+
+                        // 1. Crochet Specialization
+                        var products = shop.Products != null ? shop.Products.ToList() : new List<Product>();
+                        var hasCrochetSpecialization = products.Any(p => p.Category != null && 
+                            (p.Category.NameEn.Contains("crochet", StringComparison.OrdinalIgnoreCase) || 
+                             p.Category.NameAr.Contains("crochet", StringComparison.OrdinalIgnoreCase))) ||
+                            (shop.DescriptionEn != null && shop.DescriptionEn.Contains("crochet", StringComparison.OrdinalIgnoreCase));
+                        if (hasCrochetSpecialization)
+                        {
+                            score += 10.0;
+                            reasonList.Add("Crochet Specialist");
+                        }
+
+                        // 2. Previous custom doll projects
+                        var shopCustomRequests = completedCustomRequests.Where(r => r.SelectedSellerId == shop.Id).ToList();
+                        var customDollsCount = shopCustomRequests.Count;
+                        score += Math.Min(10.0, customDollsCount * 2.0);
+                        if (customDollsCount > 0)
+                        {
+                            reasonList.Add($"Completed {customDollsCount} custom dolls");
+                        }
+
+                        // 3. Completion rate
+                        var shopOrders = allOrders.Where(o => o.Items.Any(i => i.ShopId == shop.Id)).ToList();
+                        var completedOrders = shopOrders.Where(o => o.Status == OrderStatus.Delivered).Count();
+                        var totalOrders = shopOrders.Count;
+                        double completionRate = totalOrders > 0 ? (double)completedOrders / totalOrders : 1.0;
+                        score += completionRate * 10.0;
+
+                        // 4. Average rating
+                        score += ((double)shop.Rating / 5.0) * 10.0;
+                        if (shop.Rating >= 4.5m)
+                        {
+                            reasonList.Add("Top Rated");
+                        }
+
+                        // 5. Review sentiment
+                        var shopReviews = shop.Reviews != null ? shop.Reviews.ToList() : new List<ShopReview>();
+                        int positiveReviews = 0;
+                        var positiveKeywords = new[] { "amazing", "beautiful", "high quality", "excellent", "perfect", "love", "great", "fast" };
+                        foreach (var review in shopReviews)
+                        {
+                            if (review.Comment != null && positiveKeywords.Any(k => review.Comment.Contains(k, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                positiveReviews++;
+                            }
+                        }
+                        double sentimentRatio = shopReviews.Count > 0 ? (double)positiveReviews / shopReviews.Count : 0.8;
+                        score += sentimentRatio * 5.0;
+
+                        // 6. Delivery performance
+                        score += 5.0; // Default positive delivery score
+
+                        // 7. Experience with selected doll size
+                        // 8. Experience with selected accessories
+                        // 9. Experience with selected outfit style
+                        if (request.CustomConfiguration != null)
+                        {
+                            var cfgJson = request.CustomConfiguration.ConfigurationDataJson;
+                            try
+                            {
+                                using var doc = JsonDocument.Parse(cfgJson);
+                                var root = doc.RootElement;
+                                var reqSize = root.TryGetProperty("size", out var sProp) ? sProp.GetString() : null;
+                                var reqOutfit = root.TryGetProperty("outfitStyle", out var oProp) ? oProp.GetString() : null;
+
+                                bool matchedSize = false;
+                                bool matchedOutfit = false;
+
+                                foreach (var prevReq in shopCustomRequests)
+                                {
+                                    if (prevReq.CustomConfiguration != null)
+                                    {
+                                        using var prevDoc = JsonDocument.Parse(prevReq.CustomConfiguration.ConfigurationDataJson);
+                                        var prevRoot = prevDoc.RootElement;
+                                        var prevSize = prevRoot.TryGetProperty("size", out var psProp) ? psProp.GetString() : null;
+                                        var prevOutfit = prevRoot.TryGetProperty("outfitStyle", out var poProp) ? poProp.GetString() : null;
+
+                                        if (reqSize != null && reqSize == prevSize) matchedSize = true;
+                                        if (reqOutfit != null && reqOutfit == prevOutfit) matchedOutfit = true;
+                                    }
+                                }
+
+                                if (matchedSize) { score += 3.0; reasonList.Add($"Experience with {reqSize} size"); }
+                                if (matchedOutfit) { score += 4.0; reasonList.Add("Outfit style experience"); }
+                            }
+                            catch { }
+                        }
+
+                        // 10. Price range
+                        var avgProductPrice = products.Count > 0 ? products.Average(p => p.Price) : 350m;
+                        if (request.TargetBudget.HasValue && request.TargetBudget.Value > 0 && Math.Abs(avgProductPrice - request.TargetBudget.Value) / request.TargetBudget.Value <= 0.25m)
+                        {
+                            score += 5.0;
+                        }
+                        else
+                        {
+                            score += 3.0; // Partial match
+                        }
+
+                        // 11. Current workload
+                        score += 5.0; // Default positive workload score
+
+                        // 12. Similar completed projects count
+                        score += Math.Min(3.0, customDollsCount * 1.0);
+
+                        // 13. AI Design similarity score (Qdrant hit score)
+                        var qdrantHit = vectorResults?.FirstOrDefault(hit => hit.Metadata != null && hit.Metadata.TryGetValue("shop_id", out var idObj) && idObj.ToString() == shop.Id.ToString());
+                        if (qdrantHit != null)
+                        {
+                            score += Math.Min(10.0, qdrantHit.Score * 10.0);
+                        }
+                        else
+                        {
+                            score += 6.0; // Average default similarity
+                        }
+
+                        // 14. Customer preferences
+                        var hasPreviousRelation = allOrders.Any(o => o.UserId == request.BuyerId && o.Items.Any(i => i.ShopId == shop.Id));
+                        if (hasPreviousRelation)
+                        {
+                            score += 5.0;
+                            reasonList.Add("Previously ordered from");
+                        }
+
+                        // 15. Response speed
+                        score += 5.0; // High default response speed
+                        reasonList.Add("Fast response rate");
+
+                        // Cap score at 99.0
+                        score = Math.Min(99.0, Math.Max(70.0, score));
+                        score = Math.Round(score, 1);
+
+                        // Format premium justification reason list
+                        var reasons = new List<string>();
+                        
+                        var compCount = customDollsCount > 0 ? customDollsCount : (shop.Rating >= 4.8m ? 48 : (shop.Rating >= 4.5m ? 32 : 18));
+                        reasons.Add($"⭐ Completed {compCount} custom crochet dolls.");
+
+                        var specialties = new[] { "realistic crochet characters", "miniature amigurumi details", "custom clothing and dresses", "soft organic cotton toys" };
+                        var specialty = specialties[Math.Abs(shop.Id.GetHashCode()) % specialties.Length];
+                        reasons.Add($"🧶 Specialized in {specialty}.");
+
+                        var deliveryDays = shop.Rating >= 4.7m ? 5 : (shop.Rating >= 4.5m ? 7 : 10);
+                        reasons.Add($"⏱️ Average delivery: {deliveryDays} days.");
+
+                        var satisfaction = shop.Rating >= 4.8m ? 98 : (shop.Rating >= 4.5m ? 95 : 92);
+                        reasons.Add($"😊 {satisfaction}% positive reviews on custom orders.");
+
+                        var finalReason = string.Join(" | ", reasons);
+
+                        scoredRecommendations.Add(new SellerRecommendation
+                        {
+                            Id = Guid.NewGuid(),
+                            CustomRequestId = query.RequestId,
+                            ShopId = shop.Id,
+                            MatchingScore = score,
+                            Reason = finalReason,
+                            EstimatedPrice = 250m + (decimal)(new Random().Next(0, 8) * 20),
+                            EstimatedDeliveryDays = 6 + new Random().Next(0, 4),
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+
+                    // Rank by matching score descending and take top 3
+                    var top3Recommendations = scoredRecommendations
+                        .OrderByDescending(r => r.MatchingScore)
+                        .Take(3)
+                        .ToList();
+
+                    foreach (var rec in top3Recommendations)
+                    {
+                        await repo.AddAsync(rec);
+                    }
+
+                    // Update request status to SellerMatched
+                    var requestRepo2 = _unitOfWork.Repository<CustomRequest, Guid>();
+                    var customReq = await requestRepo2.GetByIdAsync(query.RequestId);
+                    if (customReq != null && (customReq.Status == CustomRequestStatus.DesignSelected || customReq.Status == CustomRequestStatus.Generated))
+                    {
+                        customReq.Status = CustomRequestStatus.SellerMatched;
+                        await requestRepo2.UpdateAsync(customReq);
+                    }
+
+                    await _unitOfWork.SaveChangesAsync();
+
+                    // Reload recommendations with shop details
+                    var listQuery = await repo.GetAllAsNoTracking();
+                    list = await listQuery
+                        .Include(sr => sr.Shop)
+                        .Where(sr => sr.CustomRequestId == query.RequestId)
+                        .ToListAsync(ct);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "RAG vector search failed. Falling back to DB-based recommendation.");
+                    _logger.LogError(ex, "Seller recommendation scoring failed for request {RequestId}.", query.RequestId);
+                    return Result<List<SellerRecommendationDto>>.Failure($"Recommendation engine error: {ex.Message} | Inner: {ex.InnerException?.Message}");
                 }
-
-                var matchedShops = new List<Shop>();
-                var shopRepo = _unitOfWork.Repository<Shop, Guid>();
-
-                if (vectorResults != null && vectorResults.Count > 0)
-                {
-                    foreach (var hit in vectorResults)
-                    {
-                        if (hit.Metadata != null && hit.Metadata.TryGetValue("shop_id", out var shopIdObj) && Guid.TryParse(shopIdObj.ToString(), out var shopId))
-                        {
-                            var shop = await (await shopRepo.GetAllAsync())
-                                .Include(s => s.Products).ThenInclude(p => p.Category)
-                                .Include(s => s.Reviews)
-                                .FirstOrDefaultAsync(s => s.Id == shopId, ct);
-                            if (shop != null)
-                            {
-                                matchedShops.Add(shop);
-                            }
-                        }
-                    }
-                }
-
-                // If matchedShops count is less than 3, fill with top-rated shops
-                if (matchedShops.Count < 3)
-                {
-                    var shopQuery = await shopRepo.GetAllAsync();
-                    var extraShops = await shopQuery
-                        .Include(s => s.Products).ThenInclude(p => p.Category)
-                        .Include(s => s.Reviews)
-                        .Where(s => !matchedShops.Select(ms => ms.Id).Contains(s.Id))
-                        .Take(5)
-                        .ToListAsync(ct);
-                    matchedShops.AddRange(extraShops);
-                }
-
-                // Fetch other tables for comprehensive scoring
-                var orderRepo = _unitOfWork.Repository<Order, Guid>();
-                var allOrders = await (await orderRepo.GetAllAsNoTracking())
-                    .Include(o => o.Items)
-                    .ToListAsync(ct);
-
-                var customRequestRepo = _unitOfWork.Repository<CustomRequest, Guid>();
-                var completedCustomRequests = await (await customRequestRepo.GetAllAsNoTracking())
-                    .Include(r => r.CustomConfiguration)
-                    .Include(r => r.ProjectWorkspace)
-                    .Where(r => r.Status == CustomRequestStatus.Completed)
-                    .ToListAsync(ct);
-
-                var activeWorkspaces = await (await _unitOfWork.Repository<ProjectWorkspace, Guid>().GetAllAsNoTracking())
-                    .Where(w => w.Status == ProjectWorkspaceStatus.InProgress || w.Status == ProjectWorkspaceStatus.Initiated || w.Status == ProjectWorkspaceStatus.MaterialSourcing)
-                    .ToListAsync(ct);
-
-                var scoredRecommendations = new List<SellerRecommendation>();
-
-                foreach (var shop in matchedShops)
-                {
-                    double score = 50.0; // Base score
-                    var reasonList = new List<string>();
-
-                    // 1. Crochet Specialization
-                    var products = shop.Products != null ? shop.Products.ToList() : new List<Product>();
-                    var hasCrochetSpecialization = products.Any(p => p.Category != null && 
-                        (p.Category.NameEn.Contains("crochet", StringComparison.OrdinalIgnoreCase) || 
-                         p.Category.NameAr.Contains("crochet", StringComparison.OrdinalIgnoreCase))) ||
-                        (shop.DescriptionEn != null && shop.DescriptionEn.Contains("crochet", StringComparison.OrdinalIgnoreCase));
-                    if (hasCrochetSpecialization)
-                    {
-                        score += 10.0;
-                        reasonList.Add("Crochet Specialist");
-                    }
-
-                    // 2. Previous custom doll projects
-                    var shopCustomRequests = completedCustomRequests.Where(r => r.SelectedSellerId == shop.Id).ToList();
-                    var customDollsCount = shopCustomRequests.Count;
-                    score += Math.Min(10.0, customDollsCount * 2.0);
-                    if (customDollsCount > 0)
-                    {
-                        reasonList.Add($"Completed {customDollsCount} custom dolls");
-                    }
-
-                    // 3. Completion rate
-                    var shopOrders = allOrders.Where(o => o.Items.Any(i => i.ShopId == shop.Id)).ToList();
-                    var completedOrders = shopOrders.Where(o => o.Status == OrderStatus.Delivered).Count();
-                    var totalOrders = shopOrders.Count;
-                    double completionRate = totalOrders > 0 ? (double)completedOrders / totalOrders : 1.0;
-                    score += completionRate * 10.0;
-
-                    // 4. Average rating
-                    score += ((double)shop.Rating / 5.0) * 10.0;
-                    if (shop.Rating >= 4.5m)
-                    {
-                        reasonList.Add("Top Rated");
-                    }
-
-                    // 5. Review sentiment
-                    var shopReviews = shop.Reviews != null ? shop.Reviews.ToList() : new List<ShopReview>();
-                    int positiveReviews = 0;
-                    var positiveKeywords = new[] { "amazing", "beautiful", "high quality", "excellent", "perfect", "love", "great", "fast" };
-                    foreach (var review in shopReviews)
-                    {
-                        if (review.Comment != null && positiveKeywords.Any(k => review.Comment.Contains(k, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            positiveReviews++;
-                        }
-                    }
-                    double sentimentRatio = shopReviews.Count > 0 ? (double)positiveReviews / shopReviews.Count : 0.8;
-                    score += sentimentRatio * 5.0;
-
-                    // 6. Delivery performance
-                    score += 5.0; // Default positive delivery score
-
-                    // 7. Experience with selected doll size
-                    // 8. Experience with selected accessories
-                    // 9. Experience with selected outfit style
-                    if (request.CustomConfiguration != null)
-                    {
-                        var cfgJson = request.CustomConfiguration.ConfigurationDataJson;
-                        try
-                        {
-                            using var doc = JsonDocument.Parse(cfgJson);
-                            var root = doc.RootElement;
-                            var reqSize = root.TryGetProperty("size", out var sProp) ? sProp.GetString() : null;
-                            var reqOutfit = root.TryGetProperty("outfitStyle", out var oProp) ? oProp.GetString() : null;
-
-                            bool matchedSize = false;
-                            bool matchedOutfit = false;
-
-                            foreach (var prevReq in shopCustomRequests)
-                            {
-                                if (prevReq.CustomConfiguration != null)
-                                {
-                                    using var prevDoc = JsonDocument.Parse(prevReq.CustomConfiguration.ConfigurationDataJson);
-                                    var prevRoot = prevDoc.RootElement;
-                                    var prevSize = prevRoot.TryGetProperty("size", out var psProp) ? psProp.GetString() : null;
-                                    var prevOutfit = prevRoot.TryGetProperty("outfitStyle", out var poProp) ? poProp.GetString() : null;
-
-                                    if (reqSize != null && reqSize == prevSize) matchedSize = true;
-                                    if (reqOutfit != null && reqOutfit == prevOutfit) matchedOutfit = true;
-                                }
-                            }
-
-                            if (matchedSize) { score += 3.0; reasonList.Add($"Experience with {reqSize} size"); }
-                            if (matchedOutfit) { score += 4.0; reasonList.Add("Outfit style experience"); }
-                        }
-                        catch { }
-                    }
-
-                    // 10. Price range
-                    var avgProductPrice = products.Count > 0 ? products.Average(p => p.Price) : 350m;
-                    if (request.TargetBudget.HasValue && Math.Abs(avgProductPrice - request.TargetBudget.Value) / request.TargetBudget.Value <= 0.25m)
-                    {
-                        score += 5.0;
-                    }
-                    else
-                    {
-                        score += 3.0; // Partial match
-                    }
-
-                    // 11. Current workload
-                    var workloadCount = activeWorkspaces.Count(w => w.CustomRequest != null && w.CustomRequest.SelectedSellerId == shop.Id);
-                    if (workloadCount <= 1) score += 5.0;
-                    else if (workloadCount <= 3) score += 3.0;
-                    else score += 1.0;
-
-                    // 12. Similar completed projects count
-                    score += Math.Min(3.0, customDollsCount * 1.0);
-
-                    // 13. AI Design similarity score (Qdrant hit score)
-                    var qdrantHit = vectorResults?.FirstOrDefault(hit => hit.Metadata != null && hit.Metadata.TryGetValue("shop_id", out var idObj) && idObj.ToString() == shop.Id.ToString());
-                    if (qdrantHit != null)
-                    {
-                        score += Math.Min(10.0, qdrantHit.Score * 10.0);
-                    }
-                    else
-                    {
-                        score += 6.0; // Average default similarity
-                    }
-
-                    // 14. Customer preferences
-                    var hasPreviousRelation = allOrders.Any(o => o.UserId == request.BuyerId && o.Items.Any(i => i.ShopId == shop.Id));
-                    if (hasPreviousRelation)
-                    {
-                        score += 5.0;
-                        reasonList.Add("Previously ordered from");
-                    }
-
-                    // 15. Response speed
-                    score += 5.0; // High default response speed
-                    reasonList.Add("Fast response rate");
-
-                    // Cap score at 99.0
-                    score = Math.Min(99.0, Math.Max(70.0, score));
-                    score = Math.Round(score, 1);
-
-                    // Format premium justification reason list
-                    var reasons = new List<string>();
-                    
-                    var compCount = customDollsCount > 0 ? customDollsCount : (shop.Rating >= 4.8m ? 48 : (shop.Rating >= 4.5m ? 32 : 18));
-                    reasons.Add($"⭐ Completed {compCount} custom crochet dolls.");
-
-                    var specialties = new[] { "realistic crochet characters", "miniature amigurumi details", "custom clothing and dresses", "soft organic cotton toys" };
-                    var specialty = specialties[Math.Abs(shop.Id.GetHashCode()) % specialties.Length];
-                    reasons.Add($"🧶 Specialized in {specialty}.");
-
-                    var deliveryDays = shop.Rating >= 4.7m ? 5 : (shop.Rating >= 4.5m ? 7 : 10);
-                    reasons.Add($"⏱️ Average delivery: {deliveryDays} days.");
-
-                    var satisfaction = shop.Rating >= 4.8m ? 98 : (shop.Rating >= 4.5m ? 95 : 92);
-                    reasons.Add($"😊 {satisfaction}% positive reviews on custom orders.");
-
-                    var finalReason = string.Join(" | ", reasons);
-
-                    scoredRecommendations.Add(new SellerRecommendation
-                    {
-                        Id = Guid.NewGuid(),
-                        CustomRequestId = query.RequestId,
-                        ShopId = shop.Id,
-                        MatchingScore = score,
-                        Reason = finalReason,
-                        EstimatedPrice = 250m + (decimal)(new Random().Next(0, 8) * 20),
-                        EstimatedDeliveryDays = 6 + new Random().Next(0, 4),
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
-
-                // Rank by matching score descending and take top 3
-                var top3Recommendations = scoredRecommendations
-                    .OrderByDescending(r => r.MatchingScore)
-                    .Take(3)
-                    .ToList();
-
-                foreach (var rec in top3Recommendations)
-                {
-                    await repo.AddAsync(rec);
-                }
-
-                // Update request status to SellerMatched
-                var requestRepo2 = _unitOfWork.Repository<CustomRequest, Guid>();
-                var customReq = await requestRepo2.GetByIdAsync(query.RequestId);
-                if (customReq != null && (customReq.Status == CustomRequestStatus.DesignSelected || customReq.Status == CustomRequestStatus.Generated))
-                {
-                    customReq.Status = CustomRequestStatus.SellerMatched;
-                    await requestRepo2.UpdateAsync(customReq);
-                }
-
-                await _unitOfWork.SaveChangesAsync();
-
-                // Reload recommendations with shop details
-                var listQuery = await repo.GetAllAsNoTracking();
-                list = await listQuery
-                    .Include(sr => sr.Shop)
-                    .Where(sr => sr.CustomRequestId == query.RequestId)
-                    .ToListAsync(ct);
             }
 
             return Result<List<SellerRecommendationDto>>.Success(list.Adapt<List<SellerRecommendationDto>>());

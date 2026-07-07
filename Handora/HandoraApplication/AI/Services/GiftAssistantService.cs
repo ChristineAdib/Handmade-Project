@@ -17,7 +17,8 @@ namespace HandoraApplication.AI.Services
         IVectorStoreService vectorStoreService,
         IEmbeddingService embeddingService,
         IOptions<QdrantOptions> qdrantOptions,
-        IProductService productService) : IGiftAssistantService
+        IProductService productService,
+        ILogger<GiftAssistantService> logger) : IGiftAssistantService
     {
         private readonly IGiftConversationManager _conversationManager = conversationManager ?? throw new ArgumentNullException(nameof(conversationManager));
         private readonly IGeminiService _geminiService = geminiService ?? throw new ArgumentNullException(nameof(geminiService));
@@ -25,6 +26,7 @@ namespace HandoraApplication.AI.Services
         private readonly IEmbeddingService _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
         private readonly QdrantOptions _qdrantOptions = qdrantOptions?.Value ?? throw new ArgumentNullException(nameof(qdrantOptions));
         private readonly IProductService _productService = productService ?? throw new ArgumentNullException(nameof(productService));
+        private readonly ILogger<GiftAssistantService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         public async Task<GiftChatResponseDto> ProcessChatAsync(GiftChatRequestDto request)
         {
@@ -108,7 +110,9 @@ namespace HandoraApplication.AI.Services
             try
             {
                 // Generate vector embedding for the LLM-optimized search query
+                _logger.LogInformation("[GiftAssistant] RAG search starting. Query: '{SearchQuery}'", analysis.SearchQuery);
                 var queryVector = await _embeddingService.GetEmbeddingAsync(analysis.SearchQuery!);
+                _logger.LogInformation("[GiftAssistant] Query vector generated. Dimension: {Dim}", queryVector.Length);
 
                 // Retrieve top 50 candidates from Qdrant vector store
                 var searchResults = await _vectorStoreService.SearchAsync(
@@ -116,6 +120,7 @@ namespace HandoraApplication.AI.Services
                     embedding: queryVector,
                     topK: 50
                 );
+                _logger.LogInformation("[GiftAssistant] Qdrant returned {Count} raw results from collection '{Collection}'", searchResults.Count, collectionName);
 
                 // Map & filter candidate products, querying the ProductService sequentially to prevent EF Core concurrency exceptions
                 var validCandidates = new List<(GiftProductDto Dto, double RankingScore, Guid CategoryId, Guid? ParentCategoryId)>();
@@ -264,16 +269,23 @@ namespace HandoraApplication.AI.Services
                             }
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Ignore individual service failures to allow other products to succeed
+                        _logger.LogWarning(ex, "[GiftAssistant] Failed to lookup product {ProductId} from DB", productId);
                     }
                 }
+
+                _logger.LogInformation("[GiftAssistant] {Count} valid candidates after DB validation & stock filtering", validCandidates.Count);
 
                 // Sort candidates by final ranking score descending
                 var sortedCandidates = validCandidates
                     .OrderByDescending(c => c.RankingScore)
                     .ToList();
+
+                if (sortedCandidates.Count > 0)
+                {
+                    _logger.LogInformation("[GiftAssistant] Top candidate: '{Title}' (Score: {Score:F4})", sortedCandidates[0].Dto.Title, sortedCandidates[0].RankingScore);
+                }
 
                 var filteredProductsList = new List<GiftProductDto>();
                 var usedCategoryKeys = new HashSet<Guid>();
@@ -307,6 +319,8 @@ namespace HandoraApplication.AI.Services
                     }
                 }
 
+                _logger.LogInformation("[GiftAssistant] Diversity filter selected {Count} products for LLM explanation", filteredProductsList.Count);
+
                 if (filteredProductsList.Count > 0)
                 {
                     // Run LLM reasoning to explain why these products fit
@@ -322,10 +336,9 @@ namespace HandoraApplication.AI.Services
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Silently handle search failures — return empty list
-                // The caller will show a graceful "no matches" message
+                _logger.LogError(ex, "[GiftAssistant] CRITICAL: RAG search/explain pipeline failed for query '{SearchQuery}'. Returning empty list.", analysis.SearchQuery);
             }
 
             return (finalProducts, explanationReply);
