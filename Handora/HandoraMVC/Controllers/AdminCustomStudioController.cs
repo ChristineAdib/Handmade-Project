@@ -144,30 +144,6 @@ namespace HandoraMVC.Controllers
             return View(result.Data);
         }
 
-        // GET: /AdminCustomStudio/Projects
-        public async Task<IActionResult> Projects(
-            int? status, string? search, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
-        {
-            var result = await _adminCustomStudioService.GetProjectsAsync(status, search, pageNumber, pageSize, ct);
-            if (!result.IsSuccess)
-            {
-                return View("Error");
-            }
-            ViewData["Status"] = status;
-            ViewData["Search"] = search;
-            return View(result.Data);
-        }
-
-        // GET: /AdminCustomStudio/Analytics
-        public async Task<IActionResult> Analytics(CancellationToken ct)
-        {
-            var result = await _adminCustomStudioService.GetDashboardMetricsAsync(ct);
-            if (!result.IsSuccess)
-            {
-                return View("Error");
-            }
-            return View(result.Data);
-        }
 
         // GET: /AdminCustomStudio/Settings
         public async Task<IActionResult> Settings(CancellationToken ct)
@@ -195,19 +171,6 @@ namespace HandoraMVC.Controllers
             return RedirectToAction("Settings");
         }
 
-        // GET: /AdminCustomStudio/AuditLogs
-        public async Task<IActionResult> AuditLogs(
-            string? eventName, string? search, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
-        {
-            var result = await _adminCustomStudioService.GetAuditLogsAsync(eventName, search, pageNumber, pageSize, ct);
-            if (!result.IsSuccess)
-            {
-                return View("Error");
-            }
-            ViewData["EventName"] = eventName;
-            ViewData["Search"] = search;
-            return View(result.Data);
-        }
 
         // GET: /AdminCustomStudio/ExportRequests
         public async Task<IActionResult> ExportRequests(CancellationToken ct)
@@ -227,13 +190,5 @@ namespace HandoraMVC.Controllers
             return File(bytes, "text/csv", $"CustomOffers_{DateTime.UtcNow:yyyyMMdd}.csv");
         }
 
-        // GET: /AdminCustomStudio/ExportProjects
-        public async Task<IActionResult> ExportProjects(CancellationToken ct)
-        {
-            var result = await _adminCustomStudioService.ExportProjectsToCsvAsync(ct);
-            if (!result.IsSuccess) return BadRequest();
-            var bytes = Encoding.UTF8.GetBytes(result.Data ?? string.Empty);
-            return File(bytes, "text/csv", $"CustomProjects_{DateTime.UtcNow:yyyyMMdd}.csv");
-        }
     }
 }

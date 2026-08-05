@@ -294,6 +294,13 @@ public class OrderService(
                 }
             }
         }
+        else
+        {
+            if (dto.Status != OrderStatus.Delivered && order.Status != dto.Status)
+            {
+                return Result<OrderResponseDto>.Failure("Admins are only allowed to update order status to Delivered.");
+            }
+        }
 
         if (order.Status == OrderStatus.Delivered)
         {
