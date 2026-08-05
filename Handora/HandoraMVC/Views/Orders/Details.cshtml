@@ -134,11 +134,7 @@
                 <input type="hidden" name="id" value="@Model.Id" />
                 <div class="form-group" style="margin-bottom: 0;">
                     <select name="status" class="filter-select" style="width: 100%; height: 36px; margin-bottom: 10px;">
-                        @foreach (var val in Enum.GetValues<HandoraDomain.Models.OrderEntity.OrderStatus>())
-                        {
-                            var isSelected = Model.Status.Equals(val.ToString(), StringComparison.OrdinalIgnoreCase);
-                            <option value="@val" selected="@isSelected">@val</option>
-                        }
+                        <option value="Delivered">Delivered</option>
                     </select>
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; height: 36px;">

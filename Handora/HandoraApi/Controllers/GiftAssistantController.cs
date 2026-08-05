@@ -1,12 +1,14 @@
 using HandoraApplication.AI.DTOs;
 using HandoraApplication.AI.Interfaces;
 using HandoraApplication.DTOs.AuthDTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HandoraApi.Controllers;
 
 [ApiController]
 [Route("api/gift-assistant")]
+[Authorize]
 public class GiftAssistantController(IGiftAssistantService giftAssistantService) : ControllerBase
 {
     private readonly IGiftAssistantService _giftAssistantService = giftAssistantService;
